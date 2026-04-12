@@ -25,67 +25,163 @@ tags:
     description: Everything about reactions.
 
 paths:
-  /comments/{conversationId}/{messageId}/{commentId}:
+  /groups/{groupId}:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        description: The group id.
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["groups"]
+      summary: Returns the group informations.
+      description: Returns the group informations identified by the group id.
+      operationId: getGroup
+      responses:
+        '200':
+          description: |
+            The group id was found and the group information is in the answer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        '404':
+          description: The group id was not found.
+    post:
+      tags: ["groups"]
+      summary: Adds user to group.
+      description: Adds the user id specified in the request body in the specified group.
+      operationId: addToGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int64
+      responses:
+        '200':
+          description: The user has been added to the group.
+        '404':
+          description: The group id was not found.
+    delete:
+      tags: ["groups"]
+      summary: Removes group.
+      description: Removes the specified group id and releated informations.
+      operationId: deleteGroup
+      responses:
+        '200':
+          description: The group identified by the specified group id has been deleted.
+        '404':
+          description: The group id was not found.
+
+  /groups/{groupId}/leave:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        description: The group id.
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["groups"]
+      summary: Removes user from group.
+      description: Removes the authenticated user from the group members list.
+      operationId: leaveGroup
+      responses:
+        '200':
+          description: The authenticated user has been removed from the group members list.
+        '404':
+          description: The group id was not found.
+
+  /groups:
+    post:
+      tags: ["groups"]
+      summary: Creates a group.
+      description: Creates a group and returns the associated group id.
+      operationId: createGroup
+      responses:
+        '200':
+          description: The group has been created and the group id is in the response.
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /conversations/{conversationId}/{messageId}/comments/{commentId}:
     parameters:
       - name: conversationId
         in: path
         required: true
+        description: The conversation id.
         schema:
           type: integer
           format: int64
       - name: messageId
         in: path
         required: true
+        description: The message id.
         schema:
           type: integer
           format: int64
       - name: commentId
         in: path
         required: true
+        description: The comment id.
         schema:
           type: integer
           format: int64
     get:
       tags: ["comments"]
+      summary: Returns comment informations.
+      description: Returns the comment infomations associated with the specified comment id.
       operationId: getComment
       responses:
         '200':
-          description: Successful operation.
+          description: The comment id was found and the releated information is in the answer.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Comment"
-        '401':
-          description: The user is not authorized to delete the comment.
         '404':
-          description: Conversation, message or comment not found.
+          description: Id of the conversation, message or comment not found.
     delete:
       tags: ["comments"]
+      summary: Removes a comment.
+      description: Removes the comment specified by the comment id.
       operationId: deleteComment
       responses:
         '200':
-          description: Successful operation.
+          description: The comment id and releated informations have been removed.
         '401':
-          description: The user is not authorized to delete the comment.
+          description: The authenticated user is not authorized to delete the comment.
         '404':
-          description: Conversation, message or comment not found.
+          description: Id of the conversation, message or comment not found.
 
-  /comments/{conversationId}/{messageId}:
+  /conversations/{conversationId}/{messageId}/comments:
     parameters:
       - name: conversationId
         in: path
         required: true
+        description: The conversation id.
         schema:
           type: integer
           format: int64
       - name: messageId
         in: path
         required: true
+        description: The message id.
         schema:
           type: integer
           format: int64
     post:
       tags: ["comments"]
+      summary: Adds a comment to a message.
+      description: Adds a comment to the specified message.
       operationId: commentMessage
       requestBody:
         required: true
@@ -95,104 +191,194 @@ paths:
               type: string
       responses:
         '200':
-          description: Successful operation.
+          description: The comment has been added.
         '404':
-          description: Conversation, message or comment not found.
+          description: Id of the conversation or message not found.
 
-  /conversations/{conversationId}/{messageId}:
+  /conversations/{conversationId}/{messageId}/reaction/{reactionId}:
     parameters:
       - name: conversationId
         in: path
         required: true
+        description: The conversation id.
         schema:
           type: integer
           format: int64
       - name: messageId
         in: path
         required: true
+        description: The message id.
         schema:
           type: integer
           format: int64
-    post:
-      tags: ["messages"]
-      operationId: forwardMessage
-      responses:
-        '200':
-          description: Successful operation.
-        '404':
-          description: Conversation or message not found.
-    get:
-      tags: ["messages"]
-      operationId: getMessage
-      responses:
-        '200':
-          description: Successful operation.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Message"
-        '404':
-          description: Conversation or message not found.
-    delete:
-      tags: ["messages"]
-      operationId: deleteMessage
-      responses:
-        '200':
-          description: Successful operation.
-        '404':
-          description: Conversation or message not found.
-
-  /reactions/{reactionId}:
-    parameters:
       - name: reactionId
         in: path
         required: true
+        description: The reaction id.
         schema:
           type: integer
           format: int64
-    delete:
-      tags: ["reactions"]
-      operationId: deleteReaction
-      responses:
-        '200':
-          description: Reaction deleted.
-        '404':
-          description: Reaction not found.
     get:
       tags: ["reactions"]
+      summary: Get a reaction
+      description: Get informations about a reaction
       operationId: getReaction
       responses:
         '200':
-          description: The reaction object was found and returned.
+          description: The reaction informations are found in the answer.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Reaction"
         '404':
-          description: Reaction not found.
+          description: Id of the conversation, reaction or message not found.
+    delete:
+      tags: ["reactions"]
+      summary: Delete a reaction.
+      description: Delete the specified.
+      operationId: deleteReaction
+      responses:
+        '200':
+          description: The reaction has been deleted.
+        '404':
+          description: Id of the conversation, reaction or message not found.
+
+  /conversations/{conversationId}/{messageId}/reaction:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: The conversation id.
+        schema:
+          type: integer
+          format: int64
+      - name: messageId
+        in: path
+        required: true
+        description: The message id.
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["reactions"]
+      summary: React to a message.
+      description: React to the specified message.
+      operationId: addReaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int64
+      responses:
+        '200':
+          description: The reaction has been added to the message.
+        '404':
+          description: Id of the conversation or message not found.
+
+  /conversations/{conversationId}/{messageId}:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: The conversation id.
+        schema:
+          type: integer
+          format: int64
+      - name: messageId
+        in: path
+        required: true
+        description: The message id.
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["messages"]
+      summary: Forwards a message.
+      description: Forwards the specified message to the specified conversation.
+      operationId: forwardMessage
+      responses:
+        '200':
+          description: The message has been forwarded.
+        '401':
+          description: |
+            The authenticated user is not authorized
+            to forward a message in the specified conversation.
+        '404':
+          description: Id of the conversation or message not found.
+    get:
+      tags: ["messages"]
+      summary: Returns the message informations.
+      description: Returns the message informations associated with the specified message id.
+      operationId: getMessage
+      responses:
+        '200':
+          description: |
+            The message id was found and the associated informations
+            are found in the response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        '404':
+          description: Id of the conversation or message not found.
+    delete:
+      tags: ["messages"]
+      operationId: deleteMessage
+      responses:
+        '200':
+          description: The message has been deleted.
+        '401':
+          description: The user is not authorized to delete the message.
+        '404':
+          description: Id of the conversation or message not found.
+
+  /conversations:
+    get:
+      tags: ["conversations"]
+      summary: Returns all the conversations id.
+      description: Returns all the conversations id.
+      operationId: getMyConversations
+      responses:
+        '200':
+          description: A list of conversations id are found in the answer.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
 
   /conversations/{conversationId}:
     parameters:
       - name: conversationId
         in: path
         required: true
+        description: The conversation id.
         schema:
           type: integer
           format: int64
     get:
       tags: ["conversations"]
+      summary: Returns the conversation informations.
+      description: |
+        Returns the conversation informations associated
+        with the specified conversation id.
       operationId: getConversation
       responses:
         '200':
-          description: Successful operation.
+          description: The conversation id was found and the informations are in the answer.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conversation"
         '404':
-          description: Conversation not found.
+          description: The conversation id was not found.
     post:
       tags: ["messages"]
+      summary: Sends a message.
+      description: Sends a message to the specified conversation id.
       operationId: sendMessage
       requestBody:
         required: true
@@ -202,33 +388,9 @@ paths:
               type: string
       responses:
         '200':
-          description: Successful operation.
+          description: The message was sent successfully.
         '404':
-          description: Conversation not found.
-
-  /user/{userId}/conversations:
-    get:
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      tags: ["conversations"]
-      operationId: getMyConversations
-      responses:
-        '200':
-          description: Successful operation.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: integer
-                  format: int64
-        '404':
-          description: User not found.
+          description: The conversation id was not found.
 
   /user/{userId}/username:
     put:
@@ -236,11 +398,14 @@ paths:
         - name: userId
           in: path
           required: true
+          description: The user id whose username is to be updated.
           schema:
             type: integer
             format: int64
       tags: ["user"]
       operationId: setMyUserName
+      summary: Updates the username.
+      description: Upddates the username of the specified user id.
       requestBody:
         required: true
         content:
@@ -249,14 +414,19 @@ paths:
               $ref: "#/components/schemas/UserName"
       responses:
         '200':
-          description: Successful operation.
+          description: The username has been updated.
+        '401':
+          description: |
+            The user is not authorized to update
+            the username of the specified user.
         '404':
-          description: User not found.
+          description: The user id was not found.
 
   /user/{userId}/photo:
     parameters:
       - name: userId
         in: path
+        description: The user id whose photo is to be updated.
         required: true
         schema:
           type: integer
@@ -264,6 +434,8 @@ paths:
     put:
       tags: ["user"]
       operationId: setMyPhoto
+      summary: Updates the user's photo.
+      description: Updates the user's photo.
       requestBody:
         required: true
         content:
@@ -273,35 +445,53 @@ paths:
               format: binary
       responses:
         '200':
-          description: Successful operation.
+          description: The user's photo has been updated.
+        '401':
+          description: The user is not authorized to update the photo.
         '404':
-          description: User not found.
+          description: The user id was not found.
 
   /user/{userId}:
     parameters:
       - name: userId
         in: path
+        description: ID of the user that needs to be fetched or removed.
         required: true
         schema:
           type: integer
           format: int64
+    delete:
+      tags: ["user"]
+      summary: Deletes user.
+      description: Deletes the user specified by the user id.
+      operationId: deleteUser
+      responses:
+        '200':
+          description: The specified user has been removed.
+        '401':
+          description: The user is not authorized to delete the specified user.
+        '404':
+          description: The user id was not found.
     get:
       tags: ["user"]
+      summary: Returns the user informations.
+      description: Returns the informations about the specified user id.
       operationId: getUserById
       responses:
         '200':
-          description: Successful operation.
+          description: The user id was found. The information is in the answer.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
         '404':
-          description: User not found.
+          description: The user id was not found.
 
   /session:
     post:
       tags: ["login"]
-      summary: Logs in the user
+      summary: Logs in the user.
+      description: Logs in the user.
       operationId: doLogin
       requestBody:
         required: true
@@ -325,7 +515,6 @@ paths:
 
 components:
   schemas:
-
     GroupName:
       type: string
       pattern: '^\w+$'
@@ -336,17 +525,12 @@ components:
         id:
           type: integer
           format: int64
-        timestamp:
-          type: string
-          format: date-time
+        founder:
+          type: integer
+          format: int64
         conversation:
           type: integer
           format: int64
-        members:
-          type: array
-          items:
-            type: integer
-            format: int64
         name:
           $ref: "#/components/schemas/GroupName"
         photo:
@@ -362,6 +546,11 @@ components:
           type: string
           format: date-time
         messages:
+          type: array
+          items:
+            type: integer
+            format: int64
+        members:
           type: array
           items:
             type: integer
