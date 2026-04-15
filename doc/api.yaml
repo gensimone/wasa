@@ -610,15 +610,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /user/{userId}/name:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
+  /user/name:
     put:
       tags: ["user"]
       operationId: setMyUserName
@@ -651,15 +643,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /user/{userId}/photo:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
+  /user/photo:
     put:
       tags: ["user"]
       operationId: setMyPhoto
@@ -711,19 +695,10 @@ paths:
                     items:
                       type: integer
                       format: int64
-  /user/{userId}:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
     delete:
       tags: ["user"]
       summary: Delete user
-      description: Delete user
+      description: Delete authenticated user
       operationId: deleteUser
       responses:
         '204':
@@ -734,6 +709,15 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
+  /user/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        description: User id
+        required: true
+        schema:
+          type: integer
+          format: int64
     get:
       tags: ["user"]
       summary: Get user data
