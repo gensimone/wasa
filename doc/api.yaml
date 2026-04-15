@@ -5,6 +5,8 @@ info:
   title: WASAText
   description: Web and Software Architecture exam project.
   version: 1.0.0
+security:
+  - bearerAuth: []
 tags:
   - name: login
     description: Login releated actions.
@@ -774,6 +776,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   responses:
     BadRequest:
       description: Bad Request
