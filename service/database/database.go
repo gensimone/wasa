@@ -38,14 +38,32 @@ import (
 
 // AppDatabase is the high level interface for the DB
 type AppDatabase interface {
-	GetName() (string, error)
-	SetName(name string) error
-
-	Ping() error
+	// DoLogin(string) (int64)
 }
 
 type appdbimpl struct {
 	c *sql.DB
+}
+
+func (db *appdbimpl) DoLogin(name string) (int64, error) {
+	var id int64
+	err := db.c.QueryRow(`SELECT id FROM user WHERE username = ?`, name).Scan(&id)
+	switch err {
+	case nil:
+		return id, nil
+	case sql.ErrNoRows:
+		result, err := db.c.Exec(`INSERT INTO user (name, photo) VALUES (?, ?)`, name, nil)
+		if err == nil {
+			return -1, err
+		}
+		id, err = result.LastInsertId()
+		if err == nil {
+			return -1, err
+		}
+		return id, nil
+	default:
+		return -1, err
+	}
 }
 
 // New returns a new instance of AppDatabase based on the SQLite connection `db`.
@@ -57,20 +75,50 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 	// Check if table exists. If not, the database is empty, and we need to create the structure
 	var tableName string
-	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='example_table';`).Scan(&tableName)
+	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='user';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE example_table (id INTEGER NOT NULL PRIMARY KEY, name TEXT);`
-		_, err = db.Exec(sqlStmt)
-		if err != nil {
-			return nil, fmt.Errorf("error creating database structure: %w", err)
+		tables := []string{
+			`CREATE TABLE IF NOT EXISTS user (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                photo TEXT
+            );`,
+			// `CREATE TABLE conversation (
+			//              id,
+			// 	userId
+			//          );`,
+			// `CREATE TABLE group (
+			// 	conversationId,
+			// 	userId,
+			// 	name,
+			// 	photo,
+			// 	timestamp
+			//          );`,
+			// `CREATE TABLE message (
+			//              id,
+			//              content,
+			// 	userId,
+			//              conversationId,
+			// 	timestamp,
+			// 	isForwarded,
+			// 	messageId
+			//          );`,
+			// `CREATE TABLE reaction (
+			// 	emoji,
+			// 	messageId,
+			// 	userId
+			//          );`,
 		}
+		for _, stmt := range tables {
+			if _, err := db.Exec(stmt); err != nil {
+				return nil, fmt.Errorf("error creating database structure: %w", err)
+			}
+		}
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("error checking database structure: %w", err)
 	}
 
 	return &appdbimpl{
 		c: db,
 	}, nil
-}
-
-func (db *appdbimpl) Ping() error {
-	return db.c.Ping()
 }
