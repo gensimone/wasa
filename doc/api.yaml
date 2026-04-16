@@ -610,7 +610,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /user/name:
+  /name/user:
     put:
       tags: ["user"]
       operationId: setMyUserName
@@ -643,7 +643,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /user/photo:
+  /photo/user:
     put:
       tags: ["user"]
       operationId: setMyPhoto
