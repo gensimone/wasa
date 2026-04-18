@@ -1,6 +1,6 @@
-openapi: 3.0.4
+openapi: 3.0.0
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3000/api/v3
 info:
   title: WASAText
   description: Web and Software Architecture exam project.
@@ -57,12 +57,8 @@ paths:
                 name:
                   $ref: "#/components/schemas/Name"
       responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Group"
+        '204':
+          description: No Content
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -94,12 +90,8 @@ paths:
                 photo:
                   $ref: "#/components/schemas/Image"
       responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Group"
+        '204':
+          description: No Content
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -190,7 +182,7 @@ paths:
               description: Request body
               type: object
               properties:
-                id:
+                userId:
                   description: User id
                   type: integer
                   format: int64
@@ -259,10 +251,8 @@ paths:
               description: Request body
               type: object
               properties:
-                id:
-                  description: Emoji id
-                  type: integer
-                  format: int64
+                emoji:
+                  $ref: "#/components/schemas/Emoji"
       responses:
         '201':
           description: Created
@@ -305,7 +295,7 @@ paths:
                 type: object
                 properties:
                   reactions:
-                    description: Reactions id
+                    description: Reactions
                     type: array
                     minItems: 1
                     maxItems: 1024
@@ -339,8 +329,8 @@ paths:
               description: Request body
               type: object
               properties:
-                id:
-                  description: Message id
+                conversationId:
+                  description: Conversation id
                   type: integer
                   format: int64
       responses:
@@ -424,7 +414,7 @@ paths:
               description: Request body
               type: object
               properties:
-                content:
+                messageContent:
                   $ref: "#/components/schemas/MessageContent"
       responses:
         '201':
@@ -460,7 +450,7 @@ paths:
                     items:
                       type: object
                       properties:
-                        id:
+                        conversationId:
                           description: Conversation id
                           type: integer
                           format: int64
@@ -627,16 +617,8 @@ paths:
                 name:
                   $ref: "#/components/schemas/Name"
       responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              schema:
-                description: Successful
-                type: object
-                properties:
-                  name:
-                    $ref: "#/components/schemas/Name"
+        '204':
+          description: No Content
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -660,18 +642,16 @@ paths:
                 photo:
                   $ref: "#/components/schemas/Image"
       responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
+        '204':
+          description: No Content
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
+        '409':
+          $ref: "#/components/responses/Conflict"
   /user:
     get:
       tags: ["user"]
@@ -695,6 +675,12 @@ paths:
                     items:
                       type: integer
                       format: int64
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
     delete:
       tags: ["user"]
       summary: Delete user
@@ -758,7 +744,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                description: Created
+                type: object
+                properties:
+                  userId:
+                    description: User id
+                    type: integer
+                    format: int64
+        '400':
+          $ref: "#/components/responses/BadRequest"
 components:
   securitySchemes:
     bearerAuth:
@@ -798,6 +792,17 @@ components:
               error:
                 description: Message
                 type: string
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            description: Error
+            type: object
+            properties:
+              error:
+                description: Message
+                type: string
   schemas:
     Group:
       description: Group
@@ -807,7 +812,7 @@ components:
           description: Group conversation
           type: integer
           format: int64
-        userId:
+        founderId:
           description: Group founder
           type: integer
           format: int64
@@ -819,19 +824,23 @@ components:
           description: Group timestamp
           type: string
           format: date-time
+    Emoji:
+      description: Emoji
+      type: string
+      pattern: '^.*$'
+      minLength: 1
+      maxLength: 1024
     Reaction:
       description: Reaction
       type: object
       properties:
         emoji:
-          description: Emoji index
-          type: integer
-          format: int64
-        messageId:
+          $ref: "#/components/schemas/Emoji"
+        reactedMessageId:
           description: Reacted message
           type: integer
           format: int64
-        userId:
+        authorId:
           description: Reaction author
           type: integer
           format: int64
@@ -839,13 +848,13 @@ components:
       description: Message
       type: object
       properties:
-        id:
+        messageId:
           description: Message id
           type: integer
           format: int64
-        content:
+        messageContent:
           $ref: "#/components/schemas/MessageContent"
-        userId:
+        authorId:
           description: User id
           type: integer
           format: int64
@@ -853,14 +862,14 @@ components:
           description: Conversation id
           type: integer
           format: int64
-        timestamp:
+        sendAt:
           description: Message timestamp
           type: string
           format: date-time
         isForwarded:
           description: Message forwarded
           type: boolean
-        messageId:
+        commentedMessageId:
           description: Commented message id
           type: integer
           format: int64
@@ -868,7 +877,7 @@ components:
       description: User
       type: object
       properties:
-        id:
+        userId:
           description: User id
           type: integer
           format: int64
@@ -878,12 +887,16 @@ components:
           $ref: "#/components/schemas/Image"
     MessageContent:
       description: Message content
-      pattern: '[\d\D]+'
-      anyOf:
-        - type: string
+      type: object
+      properties:
+        messageText:
+          description: Message text
+          type: string
+          pattern: '[\d\D]+'
           minLength: 1
           maxLength: 1024
-        - $ref: "#/components/schemas/Image"
+        messageImage:
+          $ref: "#/components/schemas/Image"
     Image:
       description: Image
       type: string
