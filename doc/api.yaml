@@ -625,6 +625,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
+        '409':
+          $ref: "#/components/responses/Conflict"
   /photo/user:
     put:
       tags: ["user"]
@@ -650,8 +652,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-        '409':
-          $ref: "#/components/responses/Conflict"
   /user:
     get:
       tags: ["user"]
