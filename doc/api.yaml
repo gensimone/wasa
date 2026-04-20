@@ -87,7 +87,7 @@ paths:
               description: Request body
               type: object
               properties:
-                photo:
+                image:
                   $ref: "#/components/schemas/Image"
       responses:
         '204':
@@ -641,7 +641,7 @@ paths:
               description: Request body
               type: object
               properties:
-                photo:
+                image:
                   $ref: "#/components/schemas/Image"
       responses:
         '204':
@@ -889,13 +889,13 @@ components:
       description: Message content
       type: object
       properties:
-        messageText:
+        text:
           description: Message text
           type: string
           pattern: '[\d\D]+'
           minLength: 1
           maxLength: 1024
-        messageImage:
+        image:
           $ref: "#/components/schemas/Image"
     Image:
       description: Image
