@@ -30,9 +30,11 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Group"
-  /groups/{groupId}/name:
+  /name/groups/{groupId}:
     parameters:
       - name: groupId
         in: path
@@ -50,6 +52,8 @@ paths:
         required: true
         content:
           application/json:
+            example:
+              type: object
             schema:
               description: Request body
               type: object
@@ -65,7 +69,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /groups/{groupId}/photo:
+  /photo/groups/{groupId}:
     parameters:
       - name: groupId
         in: path
@@ -83,6 +87,8 @@ paths:
         required: true
         content:
           application/json:
+            example:
+              type: object
             schema:
               description: Request body
               type: object
@@ -98,7 +104,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /groups/{groupId}/leave:
+  /leave/groups/{groupId}:
     parameters:
       - name: groupId
         in: path
@@ -138,6 +144,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Group"
         '400':
@@ -191,6 +199,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/User"
         '400':
@@ -258,6 +268,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Reaction"
         '400':
@@ -290,6 +302,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Request body
                 type: object
@@ -338,6 +352,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Message"
         '400':
@@ -356,6 +372,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Message"
         '400':
@@ -421,6 +439,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Message"
         '400':
@@ -438,6 +458,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Successful
                 type: object
@@ -476,6 +498,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Successful
                 type: object
@@ -514,6 +538,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/Message"
         '400':
@@ -551,6 +577,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Created
                 type: object
@@ -582,6 +610,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Successful
                 type: object
@@ -637,6 +667,8 @@ paths:
         required: true
         content:
           application/json:
+            example:
+              type: object
             schema:
               description: Request body
               type: object
@@ -663,11 +695,13 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Successful
                 type: object
                 properties:
-                  users:
+                  user:
                     description: Users
                     type: array
                     minItems: 0
@@ -714,6 +748,8 @@ paths:
           description: Successful
           content:
             application/json:
+              example:
+                type: object
               schema:
                 $ref: "#/components/schemas/User"
         '400':
@@ -743,6 +779,8 @@ paths:
           description: Created
           content:
             application/json:
+              example:
+                type: object
               schema:
                 description: Created
                 type: object
