@@ -104,7 +104,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /leave/groups/{groupId}:
+  /leave/{groupId}:
     parameters:
       - name: groupId
         in: path
@@ -168,7 +168,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /groups/{groupId}/users:
+  /add/{groupId}:
     parameters:
       - name: groupId
         in: path
@@ -209,7 +209,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /groups/{groupId}/users/{userId}:
+  /remove/{groupId}/user/{userId}:
     parameters:
       - name: groupId
         in: path
@@ -239,7 +239,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /messages/{messageId}/reactions:
+  /reactions/{messageId}:
     parameters:
       - name: messageId
         in: path
@@ -396,7 +396,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /messages/{messageId}/comments:
+  /comments/{messageId}:
     parameters:
       - name: messageId
         in: path
@@ -548,7 +548,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         '404':
           $ref: "#/components/responses/NotFound"
-  /conversation/new/{userId}:
+  /start/{userId}:
     parameters:
       - name: userId
         in: path
