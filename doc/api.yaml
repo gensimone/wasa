@@ -120,11 +120,7 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
-              type: object
-              properties:
-                messageContent:
-                  $ref: "#/components/schemas/MessageContent"
+              $ref: "#/components/schemas/MessageContent"
       responses:
         '201':
           description: Created
@@ -443,11 +439,7 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
-              type: object
-              properties:
-                messageContent:
-                  $ref: "#/components/schemas/MessageContent"
+              $ref: "#/components/schemas/MessageContent"
       responses:
         '201':
           description: Created
@@ -490,7 +482,7 @@ paths:
                     items:
                       type: object
                       properties:
-                        conversationId:
+                        conversation:
                           description: Conversation id
                           type: integer
                           format: int64
@@ -635,6 +627,53 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+  /messages/{messageId}:
+    parameters:
+      - name: messageId
+        in: path
+        description: Message id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["messages"]
+      operationId: getMessage
+      summary: Get message data
+      description: Get message data
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Message"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: ["messages"]
+      operationId: deleteMessage
+      summary: Delete message
+      description: Delete message
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
   /forward/user/{userId}:
     parameters:
       - name: userId
@@ -697,11 +736,7 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
-              type: object
-              properties:
-                messageContent:
-                  $ref: "#/components/schemas/MessageContent"
+              $ref: "#/components/schemas/MessageContent"
       responses:
         '201':
           description: Created
@@ -958,11 +993,11 @@ components:
       description: Group
       type: object
       properties:
-        conversationId:
+        conversation:
           description: Group conversation
           type: integer
           format: int64
-        founderId:
+        founder:
           description: Group founder
           type: integer
           format: int64
@@ -986,48 +1021,54 @@ components:
       properties:
         emoji:
           $ref: "#/components/schemas/Emoji"
-        reactedMessageId:
-          description: Reacted message
+        message:
+          description: Message id
           type: integer
           format: int64
-        authorId:
-          description: Reaction author
+        sender:
+          description: User id
           type: integer
           format: int64
     Message:
       description: Message
       type: object
       properties:
-        messageId:
+        id:
           description: Message id
           type: integer
           format: int64
-        messageContent:
-          $ref: "#/components/schemas/MessageContent"
-        authorId:
+        text:
+          description: Message text
+          type: string
+          pattern: '[\d\D]+'
+          minLength: 1
+          maxLength: 1024
+        photo:
+          $ref: "#/components/schemas/Photo"
+        sender:
           description: User id
           type: integer
           format: int64
-        conversationId:
+        conversation:
           description: Conversation id
           type: integer
           format: int64
-        sendAt:
+        timestamp:
           description: Message timestamp
           type: string
           format: date-time
         isForwarded:
           description: Message forwarded
           type: boolean
-        commentedMessageId:
-          description: Commented message id
+        linkedMessage:
+          description: Linked message (forwarded or commented message)
           type: integer
           format: int64
     User:
       description: User
       type: object
       properties:
-        userId:
+        id:
           description: User id
           type: integer
           format: int64
