@@ -35,11 +35,12 @@ type Message struct {
 
 type Status struct {
 	User int64 `json:"user"`
+	Message int64 `json:"message"`
 	Info string `json:"info"`
 }
 
 type Reaction struct {
 	Emoji string `json:"emoji"`
 	Message int64 `json:"message"`
-	User int64 `json:"user"`
+	Sender int64 `json:"sender"`
 }

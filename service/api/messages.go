@@ -209,13 +209,112 @@ func (rt *_router) getStatus(
 }
 
 func (rt *_router) addReaction(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {}
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
+) {
+	msg, err := validateParameterInt64(w, ps, "messageId")
+	if err != nil {
+		return
+	}
+
+	emoji, err := validateEmoji(w, r)
+	if err != nil {
+		return
+	}
+
+	m, err := rt.db.GetMessage(msg)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Not Found", http.StatusNotFound)
+	} else if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+	} else if yes, err := rt.db.IsMember(sender, m.Conversation); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsMember: %w", err)
+	} else if !yes {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	} else if r, err := rt.db.GetReaction(msg, sender); errors.Is(err, sql.ErrNoRows) {
+		if _, err = rt.db.AddReaction(emoji, msg, sender); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("AddReaction: %w", err)
+		} else if r, err = rt.db.GetReaction(msg, sender); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetReaction: %w", err)
+		} else {
+			sendResponse(w, *r, http.StatusCreated)
+		}
+	} else if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetReaction: %w", err)
+	} else if r.Emoji == emoji {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+	} else if _, err = rt.db.UpdateReaction(emoji, msg, sender); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("UpdateReaction: %w", err)
+	} else if r, err = rt.db.GetReaction(msg, sender); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetReaction: %w", err)
+	} else {
+		sendResponse(w, *r, http.StatusCreated)
+	}
+}
+
+func (rt *_router) deleteReaction(
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
+) {
+	msg, err := validateParameterInt64(w, ps, "messageId")
+	if err != nil {
+		return
+	}
+
+	m, err := rt.db.GetMessage(msg)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Not Found", http.StatusNotFound)
+	} else if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+	} else if yes, err := rt.db.IsMember(sender, m.Conversation); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsMember: %w", err)
+	} else if !yes {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	} else if _, err := rt.db.GetReaction(msg, sender); errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+	} else if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("DeleteReaction: %w", err)
+	} else if _, err := rt.db.DeleteReaction(msg, sender); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("DeleteReaction: %w", err)
+	} else {
+		sendResponse(w, nil, http.StatusNoContent)
+	}
+}
 
 func (rt *_router) getReactions(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {}
+) {
+	msg, err := validateParameterInt64(w, ps, "messageId")
+	if err != nil {
+		return
+	}
 
-func (rt *_router) deleteReaction(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {}
+	m, err := rt.db.GetMessage(msg)
+	if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, "Not Found", http.StatusNotFound)
+	} else if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+	} else if yes, err := rt.db.IsMember(user, m.Conversation); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsMember: %w", err)
+	} else if !yes {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	} else if reactions, err := rt.db.GetReactions(msg); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetReactions: %w", err)
+	} else {
+		sendResponse(w, struct {
+			Reactions []database.Reaction
+		}{Reactions: reactions}, http.StatusOK)
+	}
+}

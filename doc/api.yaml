@@ -644,15 +644,7 @@ paths:
                     minItems: 1
                     maxItems: 1024
                     items:
-                      type: object
-                      properties:
-                        user:
-                          description: User id
-                          type: integer
-                          format: int64
-                        info:
-                          description: Read, received not received.
-                          type: string
+                      $ref: "#/components/schemas/Status"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -1098,6 +1090,21 @@ components:
           description: Linked message (forwarded or commented message)
           type: integer
           format: int64
+    Status:
+      description: Status
+      type: object
+      properties:
+        user:
+          description: User id
+          type: integer
+          format: int64
+        message:
+          description: Message id
+          type: integer
+          format: int64
+        info:
+          description: Info
+          type: string
     User:
       description: User
       type: object

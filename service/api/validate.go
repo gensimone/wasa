@@ -19,6 +19,9 @@ type msgId struct {
 type name struct {
 	Name string `json:"name"`
 }
+type emoji struct {
+	Emoji string `json:"emoji"`
+}
 type photo struct {
 	Photo os.File `json:"photo"`
 }
@@ -28,6 +31,16 @@ type Content struct {
 }
 
 var validateNameRegex = regexp.MustCompile(`^[\p{L}\p{N}_]+$`)
+
+func validateEmoji(w http.ResponseWriter, r *http.Request) (string, error) {
+	var s emoji
+	err := json.NewDecoder(r.Body).Decode(&s)
+	// TODO: check emoji validity
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	return s.Emoji, err
+}
 
 func validateMsgId(w http.ResponseWriter, r *http.Request) (int64, error) {
 	var s msgId

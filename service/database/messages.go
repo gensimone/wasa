@@ -104,7 +104,6 @@ func (db *appdbimpl) DeleteMessage(id int64) (sql.Result, error) {
 	return db.c.Exec(`DELETE FROM messages WHERE id = ?`, id)
 }
 
-
 func (db *appdbimpl) UpdateStatus(msg int64, user int64, info string) (sql.Result, error) {
 	return db.c.Exec(`UPDATE status SET info = ? WHERE message = ? AND user = ?`, info, msg, user)
 }
@@ -112,8 +111,8 @@ func (db *appdbimpl) UpdateStatus(msg int64, user int64, info string) (sql.Resul
 func (db *appdbimpl) GetStatusOf(msg int64, user int64) (*Status, error) {
 	var s Status
 	if err := db.c.QueryRow(
-		`SELECT user, info FROM status WHERE message = ? AND user = ?`, msg, user,
-	).Scan(&s.User, &s.Info); err != nil {
+		`SELECT message, user, info FROM status WHERE message = ? AND user = ?`, msg, user,
+	).Scan(&s.Message, &s.User, &s.Info); err != nil {
 		return nil, err
 	}
 
@@ -121,19 +120,64 @@ func (db *appdbimpl) GetStatusOf(msg int64, user int64) (*Status, error) {
 }
 
 func (db *appdbimpl) GetStatus(msg int64) ([]Status, error) {
-	rows, err := db.c.Query(`SELECT user, info FROM status WHERE message = ?`, msg)
+	rows, err := db.c.Query(`SELECT message, user, info FROM status WHERE message = ?`, msg)
 	if err != nil {
 		return nil, err
 	}
 
 	var status []Status
 	for rows.Next() {
-    	var s Status
-    	if err := rows.Scan(&s.User, &s.Info); err != nil {
+		var s Status
+		if err := rows.Scan(&s.Message, &s.User, &s.Info); err != nil {
 			return nil, err
-    	}
-    	status = append(status, s)
+		}
+		status = append(status, s)
 	}
 
 	return status, nil
+}
+
+func (db *appdbimpl) GetReactions(msg int64) ([]Reaction, error) {
+	rows, err := db.c.Query(`SELECT emoji, message, sender FROM reactions WHERE message = ?`, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	var reactions []Reaction
+	for rows.Next() {
+		var r Reaction
+		if err := rows.Scan(&r.Emoji, &r.Message, &r.Sender); err != nil {
+			return nil, err
+		}
+		reactions = append(reactions, r)
+	}
+
+	return reactions, nil
+}
+
+func (db *appdbimpl) GetReaction(msg int64, sender int64) (*Reaction, error) {
+	var r Reaction
+	if err := db.c.QueryRow(
+		`SELECT emoji, message, sender FROM reactions WHERE message = ? AND sender = ?`,
+		msg, sender,
+	).Scan(&r.Emoji, &r.Message, &r.Sender); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+func (db *appdbimpl) AddReaction(emoji string, msg int64, sender int64) (sql.Result, error) {
+	return db.c.Exec(
+		`INSERT INTO reactions (emoji, message, sender) VALUES (?, ?, ?)`,
+		emoji, msg, sender,
+	)
+}
+
+func (db *appdbimpl) DeleteReaction(msg int64, sender int64) (sql.Result, error) {
+	return db.c.Exec(`DELETE FROM reactions WHERE message = ? AND sender = ?`, msg, sender)
+}
+
+func (db *appdbimpl) UpdateReaction(emoji string, msg int64, sender int64) (sql.Result, error) {
+	return db.c.Exec(`UPDATE reactions SET emoji = ? WHERE message = ? AND sender = ?`, emoji, msg, sender)
 }

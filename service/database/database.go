@@ -14,6 +14,11 @@ type AppDatabase interface {
 	GetStatus(int64) ([]Status, error)
 	GetStatusOf(int64, int64) (*Status, error)
 	UpdateStatus(int64, int64, string) (sql.Result, error)
+	AddReaction(string, int64, int64) (sql.Result, error)
+	UpdateReaction(string, int64, int64) (sql.Result, error)
+	DeleteReaction(int64, int64) (sql.Result, error)
+	GetReactions(int64) ([]Reaction, error)
+	GetReaction(int64, int64) (*Reaction, error)
 
 	// Conversations.
 	GetMembers(int64) ([]int64, error)

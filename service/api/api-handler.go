@@ -28,7 +28,6 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/conversations/:conversationId", rt.validateAuthorization(rt.getConversation))
 
 	// Reactions.
-	// TODO:
 	rt.router.POST("/reactions/:messageId", rt.validateAuthorization(rt.addReaction))
 	rt.router.GET("/reactions/:messageId", rt.validateAuthorization(rt.getReactions))
 	rt.router.DELETE("/reactions/:messageId", rt.validateAuthorization(rt.deleteReaction))
