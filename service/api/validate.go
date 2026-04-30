@@ -13,11 +13,30 @@ import (
 	"strconv"
 )
 
-type name struct { Name string `json:"name"` }
-type photo struct { Photo os.File `json:"photo"` }
-type text struct { Text string `json:"text"` }
+type msgId struct {
+	MsgId int64 `json:"messageId"`
+}
+type name struct {
+	Name string `json:"name"`
+}
+type photo struct {
+	Photo os.File `json:"photo"`
+}
+type Content struct {
+	Text  string   `json:"text"`
+	Photo *os.File `json:"photo"`
+}
 
 var validateNameRegex = regexp.MustCompile(`^[\p{L}\p{N}_]+$`)
+
+func validateMsgId(w http.ResponseWriter, r *http.Request) (int64, error) {
+	var s msgId
+	err := json.NewDecoder(r.Body).Decode(&s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	return s.MsgId, err
+}
 
 func (rt *_router) validateGroup(w http.ResponseWriter, id int64) (*database.Group, error) {
 	g, err := rt.db.GetGroupById(id)
@@ -25,14 +44,16 @@ func (rt *_router) validateGroup(w http.ResponseWriter, id int64) (*database.Gro
 		http.Error(w, fmt.Sprintf("Group not found: %d", id), http.StatusNotFound)
 	} else if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetGroupById: %w", err)
 	}
 	return g, err
 }
 
-func (rt *_router) validateFounder(w http.ResponseWriter, groupId int64, userId int64) (bool, error){
+func (rt *_router) validateFounder(w http.ResponseWriter, groupId int64, userId int64) (bool, error) {
 	yes, err := rt.db.IsFounder(groupId, userId)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsFounder: %w", err)
 	} else if !yes {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	}
@@ -45,6 +66,7 @@ func (rt *_router) validateUser(w http.ResponseWriter, id int64) (*database.User
 		http.Error(w, fmt.Sprintf("User not found: %d", id), http.StatusNotFound)
 	} else if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetUserById: %w", err)
 	}
 	return u, err
 }
@@ -57,13 +79,13 @@ func validateParameterInt64(w http.ResponseWriter, ps httprouter.Params, p strin
 	return id, err
 }
 
-func validateText(w http.ResponseWriter, r *http.Request) (string, error) {
-	var s text
+func validateMessage(w http.ResponseWriter, r *http.Request) (Content, error) {
+	var s Content
 	err := json.NewDecoder(r.Body).Decode(&s)
 	if err != nil {
-		http.Error(w, "Invalid json: expected `text:<string>`", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	return s.Text, err
+	return s, err
 }
 
 func validatePhoto(w http.ResponseWriter, r *http.Request) (os.File, error) {
@@ -99,15 +121,17 @@ func (rt *_router) validateAuthorization(
 
 		id, err := strconv.ParseInt(auth, 10, 64)
 		if err != nil {
-			http.Error(w, "Authentication token must be of type int64", http.StatusBadRequest)
+			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
 
-		if _, err := rt.db.GetUserById(id); err != nil {
-			http.Error(w, fmt.Sprintf("User with id %d not found", id), http.StatusNotFound)
-			return
+		if _, err := rt.db.GetUserById(id); errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "Not Found", http.StatusNotFound)
+		} else if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetUserById: %w", err)
+		} else {
+			fn(w, r, ps, id)
 		}
-
-		fn(w, r, ps, id)
 	}
 }

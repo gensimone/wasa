@@ -147,6 +147,40 @@ paths:
         schema:
           type: integer
           format: int64
+    post:
+      tags: ["groups"]
+      summary: Add to group
+      description: Add to group
+      operationId: addToGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: Request body
+              type: object
+              properties:
+                userId:
+                  description: The user to add
+                  type: integer
+                  format: int64
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/User"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
     get:
       tags: ["groups"]
       summary: Get group data
@@ -1060,7 +1094,7 @@ components:
         isForwarded:
           description: Message forwarded
           type: boolean
-        linkedMessage:
+        commentTo:
           description: Linked message (forwarded or commented message)
           type: integer
           format: int64

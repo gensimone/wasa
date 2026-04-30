@@ -25,16 +25,15 @@ type Conversation struct {
 type Message struct {
 	Id int64 `json:"id"`
 	Text string `json:"text"`
-	Image *os.File `json:"image"`
+	Photo *os.File `json:"photo"`
 	Sender int64 `json:"sender"`
 	Conversation int64 `json:"conversation"`
 	Timestamp string `json:"timestamp"`
 	IsForwarded bool `json:"isForwarded"`
-	ForwardedMessage *int64 `json:"forwardedMessage"`
+	CommentTo *int64 `json:"commentTo"`
 }
 
 type Status struct {
-	Message int64 `json:"message"`
 	User int64 `json:"user"`
 	Info string `json:"info"`
 }

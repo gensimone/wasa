@@ -6,11 +6,28 @@ import (
 	"errors"
 )
 
+func (db *appdbimpl) DoLogin(name string) (*int64, error) {
+	var id int64
+
+	err := db.c.QueryRow(`SELECT id FROM users WHERE name = ?`, name).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		if res, err := db.c.Exec(`INSERT INTO users (name, photo) VALUES (?, ?)`, name, nil); err != nil {
+			return nil, err
+		} else if id, err := res.LastInsertId(); err != nil{
+			return nil, err
+		} else {
+			return &id, nil
+		}
+	} else if err != nil {
+		return nil, err
+	} else {
+		return &id, nil
+	}
+}
+
 func (db *appdbimpl) GetUserIds() ([]int64, error) {
 	rows, err := db.c.Query(`SELECT id FROM users`)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
@@ -69,36 +86,14 @@ func (db *appdbimpl) GetUserByName(name string) (*User, error) {
 	return &u, nil
 }
 
-
-func (db *appdbimpl) SetMyUserName(id int64, name string) error {
-	_, err := db.c.Exec(`UPDATE users SET name = ? WHERE id = ?`, name, id)
-	return err
+func (db *appdbimpl) SetMyUserName(id int64, name string) (sql.Result, error) {
+	return db.c.Exec(`UPDATE users SET name = ? WHERE id = ?`, name, id)
 }
 
-func (db *appdbimpl) SetMyPhoto(id int64, photo os.File) error {
-	_, err := db.c.Exec(`UPDATE users SET photo = ? WHERE id = ?`, photo, id)
-	return err
+func (db *appdbimpl) SetMyPhoto(id int64, photo os.File) (sql.Result, error) {
+	return db.c.Exec(`UPDATE users SET photo = ? WHERE id = ?`, photo, id)
 }
 
-func (db *appdbimpl) DeleteUser(id int64) error {
-	_, err := db.c.Exec(`DELETE FROM users WHERE id = ?`, id)
-	return err
-}
-
-func (db *appdbimpl) DoLogin(name string) (int64, error) {
-	var id int64
-
-	err := db.c.QueryRow(`SELECT id FROM users WHERE name = ?`, name).Scan(&id)
-	if errors.Is(err, sql.ErrNoRows) {
-		res, err := db.c.Exec(`INSERT INTO users (name, photo) VALUES (?, ?)`, name, nil)
-		id, err = res.LastInsertId()
-		if err != nil {
-			return -1, err
-		}
-		return id, nil
-	} else if err != nil {
-		return -1, err
-	}
-
-	return id, nil
+func (db *appdbimpl) DeleteUser(id int64) (sql.Result, error) {
+	return db.c.Exec(`DELETE FROM users WHERE id = ?`, id)
 }

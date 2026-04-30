@@ -1,0 +1,6 @@
+#!/bin/sh
+
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data "{\"name\":\"$1\"}" \
+  http://localhost:3000/session

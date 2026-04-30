@@ -1,124 +1,123 @@
-/*
-Package database is the middleware between the app database and the code. All data (de)serialization (save/load) from a
-persistent database are handled here. Database specific logic should never escape this package.
-
-To use this package you need to apply migrations to the database if needed/wanted, connect to it (using the database
-data source name from config), and then initialize an instance of AppDatabase from the DB connection.
-
-For example, this code adds a parameter in `webapi` executable for the database data source name (add it to the
-main.WebAPIConfiguration structure):
-
-	DB struct {
-		Filename string `conf:""`
-	}
-
-This is an example on how to migrate the DB and connect to it:
-
-	// Start Database
-	logger.Println("initializing database support")
-	db, err := sql.Open("sqlite3", "./foo.db")
-	if err != nil {
-		logger.WithError(err).Error("error opening SQLite DB")
-		return fmt.Errorf("opening SQLite: %w", err)
-	}
-	defer func() {
-		logger.Debug("database stopping")
-		_ = db.Close()
-	}()
-
-Then you can initialize the AppDatabase and pass it to the api package.
-*/
 package database
 
 import (
 	"database/sql"
 	"errors"
-	"fmt"
+	"os"
 )
 
-// AppDatabase is the high level interface for the DB
 type AppDatabase interface {
-	// DoLogin(string) (int64)
+	// Messages.
+	InsertMessage(int64, int64, string, *os.File, bool, *int64) (*Message, error)
+	DeleteMessage(int64) (sql.Result, error)
+	GetMessage(int64) (*Message, error)
+	GetStatus(int64) ([]Status, error)
+	GetStatusOf(int64, int64) (*Status, error)
+	UpdateStatus(int64, int64, string) (sql.Result, error)
+
+	// Conversations.
+	GetMembers(int64) ([]int64, error)
+	IsMember(int64, int64) (bool, error)
+	DeleteConversation(int64) (sql.Result, error)
+	DeleteUserConversation(int64, int64) (sql.Result, error)
+	CreateConversation(int64, int64, string, *os.File, bool) (*Message, error)
+	GetConversation(int64, int64) (*int64, error)
+	GetConversations(int64) ([]int64, error)
+	GetMessages(int64) ([]int64, error)
+
+	// Groups.
+	SetGroupName(int64, string) (sql.Result, error)
+	SetGroupPhoto(int64, os.File) (sql.Result, error)
+	DeleteGroup(int64) (sql.Result, error)
+	GetGroupById(int64) (*Group, error)
+	IsFounder(int64, int64) (bool, error)
+	IsGroup(int64) (bool, error)
+
+	// Users.
+	SetMyPhoto(int64, os.File) (sql.Result, error)
+	SetMyUserName(int64, string) (sql.Result, error)
+	GetUserIds() ([]int64, error)
+	GetUsers() ([]User, error)
+	GetUserById(int64) (*User, error)
+	GetUserByName(string) (*User, error)
+	DeleteUser(int64) (sql.Result, error)
+	DoLogin(string) (*int64, error)
 }
 
 type appdbimpl struct {
 	c *sql.DB
 }
 
-func (db *appdbimpl) DoLogin(name string) (int64, error) {
-	var id int64
-	err := db.c.QueryRow(`SELECT id FROM user WHERE username = ?`, name).Scan(&id)
-	switch err {
-	case nil:
-		return id, nil
-	case sql.ErrNoRows:
-		result, err := db.c.Exec(`INSERT INTO user (name, photo) VALUES (?, ?)`, name, nil)
-		if err == nil {
-			return -1, err
-		}
-		id, err = result.LastInsertId()
-		if err == nil {
-			return -1, err
-		}
-		return id, nil
-	default:
-		return -1, err
-	}
+func (db *appdbimpl) GetTransaction() (*sql.Tx, error) {
+	return db.c.Begin()
 }
 
-// New returns a new instance of AppDatabase based on the SQLite connection `db`.
-// `db` is required - an error will be returned if `db` is `nil`.
 func New(db *sql.DB) (AppDatabase, error) {
-	if db == nil {
-		return nil, errors.New("database is required when building a AppDatabase")
-	}
-
-	// Check if table exists. If not, the database is empty, and we need to create the structure
 	var tableName string
-	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='user';`).Scan(&tableName)
+	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='users';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		tables := []string{
-			`CREATE TABLE IF NOT EXISTS user (
+		stmts := []string{
+			`CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
                 name TEXT,
-                photo TEXT
+                photo BLOB
             );`,
-			// `CREATE TABLE conversation (
-			//              id,
-			// 	userId
-			//          );`,
-			// `CREATE TABLE group (
-			// 	conversationId,
-			// 	userId,
-			// 	name,
-			// 	photo,
-			// 	timestamp
-			//          );`,
-			// `CREATE TABLE message (
-			//              id,
-			//              content,
-			// 	userId,
-			//              conversationId,
-			// 	timestamp,
-			// 	isForwarded,
-			// 	messageId
-			//          );`,
-			// `CREATE TABLE reaction (
-			// 	emoji,
-			// 	messageId,
-			// 	userId
-			//          );`,
+			`CREATE TABLE groups (
+                conversation INTEGER PRIMARY KEY,
+                founder INTEGER,
+				name TEXT,
+                photo BLOB,
+				timestamp TIMESTAMP,
+				FOREIGN KEY (conversation) REFERENCES conversations(id) ON DELETE CASCADE,
+				FOREIGN KEY (founder) REFERENCES users(id) ON DELETE CASCADE
+            );`,
+			`CREATE TABLE messages (
+                id INTEGER PRIMARY KEY,
+                text INTEGER,
+				photo BLOB,
+                sender INTEGER,
+				conversation INTEGER,
+				timestamp TIMESTAMP,
+				isForwarded BOOL DEFAULT 0,
+				commentTo INTEGER,
+				FOREIGN KEY (conversation) REFERENCES conversations(id),
+				FOREIGN KEY (sender) REFERENCES users(id),
+				FOREIGN KEY (commentTo) REFERENCES messages(id)
+            );`,
+			`CREATE TABLE status (
+				message INTEGER,
+				user INTEGER,
+                info TEXT NOT NULL CHECK (info IN ('read', 'not received', 'received')),
+				PRIMARY KEY (message, user),
+                FOREIGN KEY (message) REFERENCES messages(id) ON DELETE CASCADE
+				FOREIGN KEY (user) REFERENCES users(id)
+            );`,
+			`CREATE TABLE conversations (
+				id INTEGER PRIMARY KEY
+			);`,
+			`CREATE TABLE userConversations (
+				conversation INTEGER,
+			    user INTEGER,
+				PRIMARY KEY (conversation, user),
+                FOREIGN KEY (user) REFERENCES users(id) ON DELETE CASCADE,
+				FOREIGN KEY (conversation) REFERENCES conversations(id) ON DELETE CASCADE
+            );`,
+			`CREATE TABLE reactions (
+				emoji TEXT,
+				message INTEGER,
+				sender INTEGER,
+				PRIMARY KEY (message, sender),
+                FOREIGN KEY (message) REFERENCES messages(id) ON DELETE CASCADE,
+				FOREIGN KEY (sender) REFERENCES users(id) ON DELETE CASCADE
+            );`,
 		}
-		for _, stmt := range tables {
+		for _, stmt := range stmts {
 			if _, err := db.Exec(stmt); err != nil {
-				return nil, fmt.Errorf("error creating database structure: %w", err)
+				return nil, err
 			}
 		}
-	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("error checking database structure: %w", err)
+	} else if err != nil {
+		return nil, err
 	}
-
-	return &appdbimpl{
-		c: db,
-	}, nil
+	return &appdbimpl{c: db}, nil
 }
