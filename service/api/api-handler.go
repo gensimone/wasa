@@ -8,18 +8,16 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/context", rt.wrap(rt.getContextReply))
 	rt.router.GET("/liveness", rt.liveness)
 
-
 	// Groups.
 	rt.router.GET("/groups/:groupId", rt.validateAuthorization(rt.getGroup))
 	rt.router.DELETE("/groups/:groupId", rt.validateAuthorization(rt.deleteGroup))
 	rt.router.PUT("/name/group/:groupId", rt.validateAuthorization(rt.setGroupName))
 	rt.router.PUT("/photo/group/:groupId", rt.validateAuthorization(rt.setGroupPhoto))
 	rt.router.DELETE("/leave/:groupId", rt.validateAuthorization(rt.leaveGroup))
-	// TODO:
-	rt.router.POST("/groups/:groupId", rt.validateAuthorization(rt.addToGroup))
-	rt.router.POST("/groups", rt.validateAuthorization(rt.createGroup))
 	rt.router.POST("/forward/groups/:groupId", rt.validateAuthorization(rt.forwardMessageToGroup))
 	rt.router.POST("/send/groups/:groupId", rt.validateAuthorization(rt.sendMessageToGroup))
+	rt.router.POST("/groups/:groupId", rt.validateAuthorization(rt.addToGroup))
+	rt.router.POST("/groups", rt.validateAuthorization(rt.createGroup))
 	rt.router.DELETE("/remove/:groupId/user/:userId", rt.validateAuthorization(rt.removeUser))
 
 	// Conversations.

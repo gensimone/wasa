@@ -20,20 +20,20 @@ func (db *appdbimpl) GetConversation(userA int64, userB int64) (*int64, error) {
 		return nil, err
 	}
 
-    set := make(map[int64]struct{}, len(convsA))
-    for _, x := range convsA {
-        set[x] = struct{}{}
-    }
+	set := make(map[int64]struct{}, len(convsA))
+	for _, x := range convsA {
+		set[x] = struct{}{}
+	}
 
-    for _, c := range convsB {
-        if _, ok := set[c]; ok {
+	for _, c := range convsB {
+		if _, ok := set[c]; ok {
 			if yes, err := db.IsGroup(c); err != nil {
 				return nil, err
 			} else if !yes {
 				return &c, nil
 			}
-        }
-    }
+		}
+	}
 
 	return nil, nil
 }
@@ -59,12 +59,16 @@ func (db *appdbimpl) CreateConversation(
 		return nil, err
 	}
 
-	res, err = tx.Exec(`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, sender)
+	res, err = tx.Exec(
+		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, sender,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err = tx.Exec(`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, receiver)
+	res, err = tx.Exec(
+		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, receiver,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -98,15 +102,19 @@ func (db *appdbimpl) CreateConversation(
 	}
 
 	return &Message{
-		Id: msg,
-		Text: text,
-		Photo: photo,
-		Sender: sender,
+		Id:           msg,
+		Text:         text,
+		Photo:        photo,
+		Sender:       sender,
 		Conversation: conv,
-		Timestamp: timestamp,
-		IsForwarded: isForwarded,
-		CommentTo: nil,
+		Timestamp:    timestamp,
+		IsForwarded:  isForwarded,
+		CommentTo:    nil,
 	}, nil
+}
+
+func (db *appdbimpl) AddConversation(conv int64, user int64) (sql.Result, error) {
+	return db.c.Exec(`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, user)
 }
 
 func (db *appdbimpl) DeleteConversation(conv int64) (sql.Result, error) {
@@ -114,7 +122,7 @@ func (db *appdbimpl) DeleteConversation(conv int64) (sql.Result, error) {
 }
 
 func (db *appdbimpl) DeleteUserConversation(conv int64, user int64) (sql.Result, error) {
-	return db.c.Exec(`DELETE FROM userConversations WHERE conversation = ?, user = ?`, conv, user)
+	return db.c.Exec(`DELETE FROM userConversations WHERE conversation = ? AND user = ?`, conv, user)
 }
 
 func (db *appdbimpl) IsMember(user int64, conv int64) (bool, error) {
@@ -140,11 +148,11 @@ func (db *appdbimpl) GetMembers(conv int64) ([]int64, error) {
 
 	var users []int64
 	for rows.Next() {
-    	var user int64
-    	if err := rows.Scan(&user); err != nil {
+		var user int64
+		if err := rows.Scan(&user); err != nil {
 			return nil, err
-    	}
-    	users = append(users, user)
+		}
+		users = append(users, user)
 	}
 
 	return users, nil
@@ -158,11 +166,11 @@ func (db *appdbimpl) GetConversations(user int64) ([]int64, error) {
 
 	var ids []int64
 	for rows.Next() {
-    	var id int64
-    	if err := rows.Scan(&id); err != nil {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
-    	}
-    	ids = append(ids, id)
+		}
+		ids = append(ids, id)
 	}
 
 	if err = rows.Err(); err != nil {

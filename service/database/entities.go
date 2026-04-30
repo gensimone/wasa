@@ -10,10 +10,10 @@ type User struct {
 }
 
 type Group struct {
-	Conversation *int64 `json:"conversation"`
+	Conversation int64 `json:"conversation"`
 	Founder int64 `json:"founder"`
 	Name string `json:"name"`
-	Photo os.File `json:"photo"`
+	Photo *os.File `json:"photo"`
 	Timestamp string `json:"timestamp"`
 }
 

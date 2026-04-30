@@ -23,6 +23,7 @@ type AppDatabase interface {
 	// Conversations.
 	GetMembers(int64) ([]int64, error)
 	IsMember(int64, int64) (bool, error)
+	AddConversation(int64, int64) (sql.Result, error)
 	DeleteConversation(int64) (sql.Result, error)
 	DeleteUserConversation(int64, int64) (sql.Result, error)
 	CreateConversation(int64, int64, string, *os.File, bool) (*Message, error)
@@ -33,10 +34,11 @@ type AppDatabase interface {
 	// Groups.
 	SetGroupName(int64, string) (sql.Result, error)
 	SetGroupPhoto(int64, os.File) (sql.Result, error)
-	DeleteGroup(int64) (sql.Result, error)
 	GetGroupById(int64) (*Group, error)
 	IsFounder(int64, int64) (bool, error)
 	IsGroup(int64) (bool, error)
+	GroupExists(int64, string) (bool, error)
+	CreateGroup(int64, string, *os.File) (*Group, error)
 
 	// Users.
 	SetMyPhoto(int64, os.File) (sql.Result, error)
@@ -85,7 +87,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 				timestamp TIMESTAMP,
 				isForwarded BOOL DEFAULT 0,
 				commentTo INTEGER,
-				FOREIGN KEY (conversation) REFERENCES conversations(id),
+				FOREIGN KEY (conversation) REFERENCES conversations(id) ON DELETE CASCADE,
 				FOREIGN KEY (sender) REFERENCES users(id),
 				FOREIGN KEY (commentTo) REFERENCES messages(id)
             );`,

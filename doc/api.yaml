@@ -172,7 +172,13 @@ paths:
               example:
                 type: object
               schema:
-                $ref: "#/components/schemas/User"
+                description: The user id
+                type: object
+                properties:
+                  userId:
+                    description: The user to add
+                    type: integer
+                    format: int64
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
