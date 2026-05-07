@@ -52,11 +52,11 @@ func (db *appdbimpl) CreateGroup(founder int64, name string, photo *os.File) (*G
 
 	conv, err := res.LastInsertId()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 
-	res, err = tx.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, founder,
 	)
 	if err != nil {
@@ -64,7 +64,7 @@ func (db *appdbimpl) CreateGroup(founder int64, name string, photo *os.File) (*G
 	}
 
 	timestamp := globaltime.Now().Format(time.DateTime)
-	res, err = tx.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO groups (conversation, founder, name, photo, timestamp) VALUES (?, ?, ?, ?, ?)`,
 		conv, founder, name, photo, timestamp,
 	)
@@ -78,10 +78,10 @@ func (db *appdbimpl) CreateGroup(founder int64, name string, photo *os.File) (*G
 
 	return &Group{
 		Conversation: conv,
-		Founder: founder,
-		Name: name,
-		Photo: photo,
-		Timestamp: timestamp,
+		Founder:      founder,
+		Name:         name,
+		Photo:        photo,
+		Timestamp:    timestamp,
 	}, nil
 }
 

@@ -1,27 +1,27 @@
 package database
 
 import (
-	"os"
 	"database/sql"
-	"errors"
+	"os"
 )
 
 func (db *appdbimpl) DoLogin(name string) (*int64, error) {
 	var id int64
 
 	err := db.c.QueryRow(`SELECT id FROM users WHERE name = ?`, name).Scan(&id)
-	if errors.Is(err, sql.ErrNoRows) {
+	switch err {
+	case sql.ErrNoRows:
 		if res, err := db.c.Exec(`INSERT INTO users (name, photo) VALUES (?, ?)`, name, nil); err != nil {
 			return nil, err
-		} else if id, err := res.LastInsertId(); err != nil{
+		} else if id, err := res.LastInsertId(); err != nil {
 			return nil, err
 		} else {
 			return &id, nil
 		}
-	} else if err != nil {
-		return nil, err
-	} else {
+	case nil:
 		return &id, nil
+	default:
+		return nil, err
 	}
 }
 
@@ -34,11 +34,11 @@ func (db *appdbimpl) GetUserIds() ([]int64, error) {
 
 	var ids []int64
 	for rows.Next() {
-    	var id int64
-    	if err := rows.Scan(&id); err != nil {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
-    	}
-    	ids = append(ids, id)
+		}
+		ids = append(ids, id)
 	}
 
 	return ids, nil

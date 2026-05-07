@@ -3,7 +3,6 @@ package api
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -24,7 +23,6 @@ func (rt *_router) getGroup(w http.ResponseWriter, _ *http.Request, ps httproute
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %w", err)
 	} else if !yes {
-		fmt.Println("here")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	} else {
 		sendResponse(w, g, http.StatusOK)
@@ -167,7 +165,9 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("AddConversation: %w", err)
 	} else {
-		sendResponse(w, struct{User int64 `json:"userId"`}{User: user}, http.StatusCreated)
+		sendResponse(w, struct {
+			User int64 `json:"userId"`
+		}{User: user}, http.StatusCreated)
 	}
 }
 
@@ -226,8 +226,6 @@ func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request,
 	if err != nil {
 		return
 	}
-
-	fmt.Println(msgId)
 
 	m, err := rt.db.GetMessage(msgId)
 	if errors.Is(err, sql.ErrNoRows) {

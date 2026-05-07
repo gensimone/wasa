@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Logger logrus.FieldLogger
+	Logger   logrus.FieldLogger
 	Database database.AppDatabase
 }
 
@@ -39,7 +39,7 @@ func New(cfg Config) (Router, error) {
 }
 
 type _router struct {
-	router *httprouter.Router
+	router     *httprouter.Router
 	baseLogger logrus.FieldLogger
-	db database.AppDatabase
+	db         database.AppDatabase
 }

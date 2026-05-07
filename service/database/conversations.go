@@ -55,18 +55,18 @@ func (db *appdbimpl) CreateConversation(
 
 	conv, err := res.LastInsertId()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 
-	res, err = tx.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, sender,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err = tx.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, receiver,
 	)
 	if err != nil {
@@ -84,7 +84,7 @@ func (db *appdbimpl) CreateConversation(
 
 	msg, err := res.LastInsertId()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (db *appdbimpl) CreateConversation(
 		`INSERT INTO status (message, user, info) VALUES (?, ?, ?)`,
 		msg, receiver, "not received",
 	); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 

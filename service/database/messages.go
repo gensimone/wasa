@@ -29,14 +29,14 @@ func (db *appdbimpl) InsertMessage(
 
 	msg, err := res.LastInsertId()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 
 	// Status
 	members, err := db.GetMembers(conv)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return nil, err
 	}
 	for _, m := range members {
@@ -47,7 +47,7 @@ func (db *appdbimpl) InsertMessage(
 			`INSERT INTO status (message, user, info) VALUES (?, ?, ?)`,
 			msg, m, "not received",
 		); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return nil, err
 		}
 	}

@@ -166,10 +166,13 @@ func (rt *_router) getMessage(
 				rt.baseLogger.Errorf("GetStatusOf: %w", err)
 				return
 			} else if s.Info == "not received" {
-				rt.db.UpdateStatus(msg, user, "received")
+				_, err = rt.db.UpdateStatus(msg, user, "received")
+				if err != nil {
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					rt.baseLogger.Errorf("UpdateStatus: %w", err)
+				}
 			}
 		}
-
 		sendResponse(w, m, http.StatusOK)
 	}
 }
