@@ -46,7 +46,9 @@ func (db *appdbimpl) CreateConversation(
 		return nil, err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	res, err := tx.Exec(`INSERT INTO conversations DEFAULT VALUES`)
 	if err != nil {
@@ -155,6 +157,10 @@ func (db *appdbimpl) GetMembers(conv int64) ([]int64, error) {
 		users = append(users, user)
 	}
 
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return users, nil
 }
 
@@ -163,6 +169,8 @@ func (db *appdbimpl) GetConversations(user int64) ([]int64, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	var ids []int64
 	for rows.Next() {
@@ -174,11 +182,6 @@ func (db *appdbimpl) GetConversations(user int64) ([]int64, error) {
 	}
 
 	if err = rows.Err(); err != nil {
-		rows.Close()
-		return nil, err
-	}
-
-	if err := rows.Close(); err != nil {
 		return nil, err
 	}
 

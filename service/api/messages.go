@@ -186,28 +186,43 @@ func (rt *_router) getStatus(
 	}
 
 	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
 		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
+
+	case err != nil:
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(user, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
+		rt.baseLogger.Errorf("GetMessage: %v", err)
+
+	case func() bool {
+		yes, err := rt.db.IsMember(user, m.Conversation)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("IsMember: %v", err)
+			return true
+		}
+		if !yes {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return true
+		}
+		return false
+	}():
+
+	case user != m.Sender:
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if user != m.Sender {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-	} else {
+
+	default:
 		status, err := rt.db.GetStatus(msg)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetStatus: %w", err)
-		} else {
-			sendResponse(w, struct {
-				Status []database.Status `json:"status"`
-			}{Status: status}, http.StatusOK)
+			rt.baseLogger.Errorf("GetStatus: %v", err)
+			return
 		}
+
+		sendResponse(w, struct {
+			Status []database.Status `json:"status"`
+		}{Status: status}, http.StatusOK)
 	}
 }
 

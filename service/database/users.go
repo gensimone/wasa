@@ -30,6 +30,7 @@ func (db *appdbimpl) GetUserIds() ([]int64, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var ids []int64
@@ -39,6 +40,10 @@ func (db *appdbimpl) GetUserIds() ([]int64, error) {
 			return nil, err
 		}
 		ids = append(ids, id)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return ids, nil

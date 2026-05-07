@@ -16,7 +16,9 @@ func (db *appdbimpl) InsertMessage(
 		return nil, err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	timestamp := globaltime.Now().Format(time.DateTime)
 	res, err := tx.Exec(
@@ -85,6 +87,10 @@ func (db *appdbimpl) GetMessages(conv int64) ([]int64, error) {
 		ids = append(ids, id)
 	}
 
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return ids, nil
 }
 
@@ -125,6 +131,8 @@ func (db *appdbimpl) GetStatus(msg int64) ([]Status, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	var status []Status
 	for rows.Next() {
 		var s Status
@@ -132,6 +140,10 @@ func (db *appdbimpl) GetStatus(msg int64) ([]Status, error) {
 			return nil, err
 		}
 		status = append(status, s)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return status, nil
@@ -143,6 +155,8 @@ func (db *appdbimpl) GetReactions(msg int64) ([]Reaction, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	var reactions []Reaction
 	for rows.Next() {
 		var r Reaction
@@ -150,6 +164,10 @@ func (db *appdbimpl) GetReactions(msg int64) ([]Reaction, error) {
 			return nil, err
 		}
 		reactions = append(reactions, r)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return reactions, nil
