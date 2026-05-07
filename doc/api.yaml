@@ -58,86 +58,6 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /forward/groups/{groupId}:
-    parameters:
-      - name: groupId
-        in: path
-        description: Group id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
-      tags: ["groups"]
-      summary: Forward a message to a group
-      description: Forward a message to a group
-      operationId: forwardMessageToGroup
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              description: Request body
-              type: object
-              properties:
-                messageId:
-                  description: The message to forward
-                  type: integer
-                  format: int64
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-  /send/groups/{groupId}:
-    parameters:
-      - name: groupId
-        in: path
-        description: Group id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
-      tags: ["groups"]
-      summary: Send a message to a group
-      description: Send a message to a group
-      operationId: sendMessageToGroup
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MessageContent"
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
   /groups/{groupId}:
     parameters:
       - name: groupId
@@ -225,7 +145,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /name/groups/{groupId}:
+  /groups/{groupId}/name:
     parameters:
       - name: groupId
         in: path
@@ -262,7 +182,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /photo/groups/{groupId}:
+  /groups/{groupId}/photo:
     parameters:
       - name: groupId
         in: path
@@ -299,7 +219,87 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /leave/{groupId}:
+  /groups/{groupId}/message:
+    parameters:
+      - name: groupId
+        in: path
+        description: Group id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["groups"]
+      summary: Send a message to a group
+      description: Send a message to a group
+      operationId: sendMessageToGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageContent"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Message"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /groups/{groupId}/fmessage:
+    parameters:
+      - name: groupId
+        in: path
+        description: Group id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["groups"]
+      summary: Forward a message to a group
+      description: Forward a message to a group
+      operationId: forwardMessageToGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: Request body
+              type: object
+              properties:
+                messageId:
+                  description: The message to forward
+                  type: integer
+                  format: int64
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Message"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /groups/{groupId}/user:
     parameters:
       - name: groupId
         in: path
@@ -324,7 +324,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /remove/{groupId}/user/{userId}:
+  /groups/{groupId}/user/{userId}:
     parameters:
       - name: groupId
         in: path
@@ -578,7 +578,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /members/{conversationId}:
+  /conversations/{conversationId}/members:
     parameters:
       - name: conversationId
         in: path
@@ -619,7 +619,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /status/{messageId}:
+  /messages/{messageId}/status:
     parameters:
       - name: messageId
         in: path
@@ -706,144 +706,6 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /forward/user/{userId}:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
-      tags: ["messages"]
-      summary: Forward a message to a user
-      description: Forward a message to a group
-      operationId: forwardMessage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              description: Request body
-              type: object
-              properties:
-                messageId:
-                  description: The message to forward
-                  type: integer
-                  format: int64
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-  /send/user/{userId}:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
-      tags: ["messages"]
-      summary: Send a message to a user
-      description: Send a message to a user
-      operationId: sendMessage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MessageContent"
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-  /name/user:
-    put:
-      tags: ["users"]
-      operationId: setMyUserName
-      summary: Update user name
-      description: Update user name
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              description: Request body
-              type: object
-              properties:
-                name:
-                  $ref: "#/components/schemas/Name"
-      responses:
-        '204':
-          description: No Content
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '409':
-          $ref: "#/components/responses/Conflict"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-  /photo/user:
-    put:
-      tags: ["users"]
-      operationId: setMyPhoto
-      summary: Update user photo
-      description: Update user photo
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              type: object
-            schema:
-              description: Request body
-              type: object
-              properties:
-                photo:
-                  $ref: "#/components/schemas/Photo"
-      responses:
-        '204':
-          description: No Content
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
   /user:
     get:
       tags: ["users"]
@@ -916,6 +778,160 @@ paths:
                 type: object
               schema:
                 $ref: "#/components/schemas/User"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /user/{userId}/name:
+    parameters:
+      - name: userId
+        in: path
+        description: User id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    put:
+      tags: ["users"]
+      operationId: setMyUserName
+      summary: Update user name
+      description: Update user name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: Request body
+              type: object
+              properties:
+                name:
+                  $ref: "#/components/schemas/Name"
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '409':
+          $ref: "#/components/responses/Conflict"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /user/{userId}/photo:
+    parameters:
+      - name: userId
+        in: path
+        description: User id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    put:
+      tags: ["users"]
+      operationId: setMyPhoto
+      summary: Update user photo
+      description: Update user photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              type: object
+            schema:
+              description: Request body
+              type: object
+              properties:
+                photo:
+                  $ref: "#/components/schemas/Photo"
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /user/{userId}/message:
+    parameters:
+      - name: userId
+        in: path
+        description: User id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["messages"]
+      summary: Send a message to a user
+      description: Send a message to a user
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageContent"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Message"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /user/{userId}/fmessage:
+    parameters:
+      - name: userId
+        in: path
+        description: User id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: ["messages"]
+      summary: Forward a message to a user
+      description: Forward a message to a group
+      operationId: forwardMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: Request body
+              type: object
+              properties:
+                messageId:
+                  description: The message to forward
+                  type: integer
+                  format: int64
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Message"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
