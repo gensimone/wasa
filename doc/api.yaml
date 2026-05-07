@@ -20,6 +20,8 @@ tags:
     description: Reactions
   - name: comments
     description: Comments
+  - name: authentication
+    description: Authentication
 paths:
   /groups:
     post:
@@ -870,7 +872,7 @@ paths:
           type: integer
           format: int64
     post:
-      tags: ["messages"]
+      tags: ["users"]
       summary: Send a message to a user
       description: Send a message to a user
       operationId: sendMessage
@@ -907,7 +909,7 @@ paths:
           type: integer
           format: int64
     post:
-      tags: ["messages"]
+      tags: ["users"]
       summary: Forward a message to a user
       description: Forward a message to a group
       operationId: forwardMessage
@@ -942,7 +944,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
   /session:
     post:
-      tags: ["users"]
+      tags: ["authentication"]
       summary: Logs in the user
       description: Logs in the user
       operationId: doLogin
