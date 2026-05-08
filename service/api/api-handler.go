@@ -48,6 +48,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/user", rt.validateAuthorization(rt.getUsers))
 	rt.router.DELETE("/user", rt.validateAuthorization(rt.deleteUser))
 
+	// authentication
 	rt.router.POST("/session", rt.doLogin)
 
 	return rt.router
