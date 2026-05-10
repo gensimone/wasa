@@ -1,14 +1,31 @@
-import {createRouter, createWebHashHistory} from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import Login from '../views/Login.vue'
+import Home from '../views/Home.vue'
+import Settings from '../views/Settings.vue'
 
 const router = createRouter({
-	history: createWebHashHistory(import.meta.env.BASE_URL),
-	routes: [
-		{path: '/', component: HomeView},
-		{path: '/link1', component: HomeView},
-		{path: '/link2', component: HomeView},
-		{path: '/some/:id/link', component: HomeView},
-	]
+    history: createWebHashHistory(import.meta.env.BASE_URL),
+    routes: [
+        {path: '/', component: Login},
+        {path: '/Home', component: Home, meta: {requiresAuth: true}},
+        {path: '/settings', component: Settings, meta: {requiresAuth: true}},
+    ]
 })
+
+router.beforeEach((to, from, next) => {
+  const username = localStorage.getItem("username");
+
+  if (to.path === "/" && username) {
+    next("/home");
+    return;
+  }
+
+  if (to.meta.requiresAuth && !username) {
+    console.log("Redirected: ", to.path);
+    next("/");
+  } else {
+    next();
+  }
+});
 
 export default router

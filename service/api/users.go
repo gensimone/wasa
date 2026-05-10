@@ -83,6 +83,6 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, _ httprouter.
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("DoLogin: %w", err)
 	} else {
-		sendResponse(w, struct{ Id int64 }{Id: *id}, http.StatusCreated)
+		sendResponse(w, struct{Id int64 `json:"id"`}{Id: *id}, http.StatusCreated)
 	}
 }

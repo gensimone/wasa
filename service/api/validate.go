@@ -152,8 +152,8 @@ func validateName(w http.ResponseWriter, r *http.Request) (string, error) {
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 	} else if !validateNameRegex.MatchString(s.Name) {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		err = fmt.Errorf("Bad Request")
+		http.Error(w, "Invalid format", http.StatusBadRequest)
+		err = fmt.Errorf("Invalid format")
 	}
 	return s.Name, err
 }
