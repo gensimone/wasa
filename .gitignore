@@ -13,4 +13,4 @@ docker-compose.log
 /doc/markdown
 .vscode/*
 !.vscode/extensions.json
-webui/.yarn/cache/*
+webui/.yarn/*
