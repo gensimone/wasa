@@ -1,17 +1,23 @@
 openapi: 3.0.0
+
 servers:
   - url: http://localhost:3000/api/v3
+
 info:
   title: WASAText
   description: Web And Software Architecture Exam Project
   version: 1.0.0
+
 security:
   - bearerAuth: []
+
 tags:
   - name: users
     description: Users
   - name: messages
     description: Messages
+  - name: attachments
+    description: Attachments
   - name: conversations
     description: Conversations
   - name: groups
@@ -22,6 +28,7 @@ tags:
     description: Comments
   - name: authentication
     description: Authentication
+
 paths:
   /groups:
     post:
@@ -41,8 +48,8 @@ paths:
               properties:
                 name:
                   $ref: "#/components/schemas/Name"
-                photo:
-                  $ref: "#/components/schemas/Photo"
+                photoUrl:
+                  $ref: "#/components/schemas/PhotoUrl"
       responses:
         '201':
           description: Created
@@ -60,6 +67,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}:
     parameters:
       - name: groupId
@@ -147,6 +155,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/name:
     parameters:
       - name: groupId
@@ -174,8 +183,18 @@ paths:
                 name:
                   $ref: "#/components/schemas/Name"
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Successful
+                type: object
+                properties:
+                  name:
+                    $ref: "#/components/schemas/Name"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -184,6 +203,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/photo:
     parameters:
       - name: groupId
@@ -201,18 +221,34 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            example:
-              type: object
+          multipart/form-data:
             schema:
               description: Request body
               type: object
               properties:
                 photo:
-                  $ref: "#/components/schemas/Photo"
+                  description: Photo
+                  type: string
+                  format: binary
+                  minLength: 1
+                  maxLength: 1014
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Successful
+                type: object
+                properties:
+                  photoUrl:
+                    description: Photo URL
+                    type: string
+                    format: url
+                    minLength: 1
+                    maxLength: 1024
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -221,6 +257,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/message:
     parameters:
       - name: groupId
@@ -238,7 +275,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: "#/components/schemas/MessageContent"
       responses:
@@ -258,6 +295,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/fmessage:
     parameters:
       - name: groupId
@@ -301,6 +339,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/user:
     parameters:
       - name: groupId
@@ -326,6 +365,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/user/{userId}:
     parameters:
       - name: groupId
@@ -358,6 +398,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /reactions/{messageId}:
     parameters:
       - name: messageId
@@ -380,8 +421,8 @@ paths:
               description: Request body
               type: object
               properties:
-                emoji:
-                  $ref: "#/components/schemas/Emoji"
+                emojiCode:
+                  $ref: "#/components/schemas/EmojiCode"
       responses:
         '201':
           description: Created
@@ -446,6 +487,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /comments/{messageId}:
     parameters:
       - name: messageId
@@ -479,7 +521,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: "#/components/schemas/MessageContent"
       responses:
@@ -499,6 +541,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /conversations:
     get:
       tags: ["conversations"]
@@ -524,7 +567,7 @@ paths:
                     items:
                       type: object
                       properties:
-                        conversation:
+                        conversationId:
                           description: Conversation id
                           type: integer
                           format: int64
@@ -539,6 +582,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /conversations/{conversationId}:
     parameters:
       - name: conversationId
@@ -570,6 +614,7 @@ paths:
                     minItems: 1
                     maxItems: 1024
                     items:
+                      description: Message id
                       type: integer
                       format: int64
         '400':
@@ -580,6 +625,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /conversations/{conversationId}/members:
     parameters:
       - name: conversationId
@@ -611,6 +657,7 @@ paths:
                     minItems: 1
                     maxItems: 1024
                     items:
+                      description: User id
                       type: integer
                       format: int64
         '400':
@@ -621,6 +668,39 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
+  /attachments/{messageId}:
+    parameters:
+      - name: messageId
+        in: path
+        description: Message id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["attachments"]
+      summary: Get the attachment data associated with the specified message id
+      description: Get the attachment data associated with the specified message id
+      operationId: getAttachment
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Attachment"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
   /messages/{messageId}/status:
     parameters:
       - name: messageId
@@ -661,6 +741,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /messages/{messageId}:
     parameters:
       - name: messageId
@@ -725,12 +806,13 @@ paths:
                 description: Successful
                 type: object
                 properties:
-                  users:
+                  user:
                     description: Users
                     type: array
                     minItems: 0
                     maxItems: 1024
                     items:
+                      description: User id
                       type: integer
                       format: int64
         '400':
@@ -757,6 +839,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /user/{userId}:
     parameters:
       - name: userId
@@ -788,6 +871,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /user/{userId}/name:
     parameters:
       - name: userId
@@ -813,8 +897,18 @@ paths:
                 name:
                   $ref: "#/components/schemas/Name"
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Successful
+                type: object
+                properties:
+                  name:
+                    $ref: "#/components/schemas/Name"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -825,6 +919,7 @@ paths:
           $ref: "#/components/responses/Conflict"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /user/{userId}/photo:
     parameters:
       - name: userId
@@ -842,18 +937,30 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            example:
-              type: object
+          multipart/form-data:
             schema:
               description: Request body
               type: object
               properties:
                 photo:
-                  $ref: "#/components/schemas/Photo"
+                  description: Photo
+                  type: string
+                  format: binary
+                  minLength: 1
+                  maxLength: 1024
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Successful
+                type: object
+                properties:
+                  photoUrl:
+                    $ref: "#/components/schemas/PhotoUrl"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -862,6 +969,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /user/{userId}/message:
     parameters:
       - name: userId
@@ -879,7 +987,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: "#/components/schemas/MessageContent"
       responses:
@@ -899,6 +1007,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /user/{userId}/fmessage:
     parameters:
       - name: userId
@@ -942,6 +1051,7 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
   /session:
     post:
       tags: ["authentication"]
@@ -977,11 +1087,13 @@ paths:
           $ref: "#/components/responses/BadRequest"
         '500':
           $ref: "#/components/responses/InternalServerError"
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+
   responses:
     BadRequest:
       description: Bad Request
@@ -1038,109 +1150,95 @@ components:
               error:
                 description: Message
                 type: string
+
   schemas:
-    Group:
-      description: Group
+    User:
+      description: User
       type: object
       properties:
-        conversation:
-          description: Group conversation
-          type: integer
-          format: int64
-        founder:
-          description: Group founder
+        userId:
+          description: User id
           type: integer
           format: int64
         name:
           $ref: "#/components/schemas/Name"
-        photo:
-          $ref: "#/components/schemas/Photo"
-        timestamp:
+        photoUrl:
+          $ref: "#/components/schemas/PhotoUrl"
+
+    Group:
+      description: Group
+      type: object
+      properties:
+        conversationId:
+          description: Group conversation id
+          type: integer
+          format: int64
+        founderId:
+          description: Group founder id
+          type: integer
+          format: int64
+        name:
+          $ref: "#/components/schemas/Name"
+        photoUrl:
+          $ref: "#/components/schemas/PhotoUrl"
+        createdAt:
           description: Group timestamp
           type: string
           format: date-time
-    Emoji:
-      description: Emoji
+
+    Name:
+      description: Generic name
       type: string
-      pattern: '^.*$'
+      pattern: '^[a-zA-Z0-9_]+$'
       minLength: 1
       maxLength: 1024
-    Reaction:
-      description: Reaction
-      type: object
-      properties:
-        emoji:
-          $ref: "#/components/schemas/Emoji"
-        message:
-          description: Message id
-          type: integer
-          format: int64
-        sender:
-          description: User id
-          type: integer
-          format: int64
+
+    PhotoUrl:
+      description: Photo URL
+      type: string
+      format: url
+      minLength: 1
+      maxLength: 1024
+
+
     Message:
       description: Message
       type: object
       properties:
-        id:
+        messageId:
           description: Message id
           type: integer
           format: int64
         text:
           description: Message text
           type: string
-          pattern: '[\d\D]+'
+          pattern: '^.*$'
           minLength: 1
           maxLength: 1024
-        photo:
-          $ref: "#/components/schemas/Photo"
-        sender:
-          description: User id
+        attachmentId:
+          description: Attachment id
           type: integer
           format: int64
-        conversation:
+        senderId:
+          description: Sender id
+          type: integer
+          format: int64
+        conversationId:
           description: Conversation id
           type: integer
           format: int64
-        timestamp:
+        createdAt:
           description: Message timestamp
           type: string
           format: date-time
         isForwarded:
-          description: Message forwarded
+          description: Message is forwarded
           type: boolean
         commentTo:
-          description: Linked message (forwarded or commented message)
+          description: Commented message id
           type: integer
           format: int64
-    Status:
-      description: Status
-      type: object
-      properties:
-        user:
-          description: User id
-          type: integer
-          format: int64
-        message:
-          description: Message id
-          type: integer
-          format: int64
-        info:
-          description: Info
-          type: string
-    User:
-      description: User
-      type: object
-      properties:
-        id:
-          description: User id
-          type: integer
-          format: int64
-        name:
-          $ref: "#/components/schemas/Name"
-        photo:
-          $ref: "#/components/schemas/Photo"
+
     MessageContent:
       description: Message content
       type: object
@@ -1148,20 +1246,74 @@ components:
         text:
           description: Message text
           type: string
-          pattern: '[\d\D]+'
+          minLength: 0
+          maxLength: 1024
+          pattern: "^.*$"
+        file:
+          description: Binary file
+          type: string
+          format: binary
           minLength: 1
           maxLength: 1024
-        photo:
-          $ref: "#/components/schemas/Photo"
-    Photo:
-      description: Photo
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+
+    Attachment:
+      description: Attachment
+      type: object
+      properties:
+        attachmentId:
+          description: Attachment id
+          type: integer
+          format: int64
+        url:
+          description: Attachment URL
+          type: string
+          format: url
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+
+    MediaType:
+      description: Media type
       type: string
-      format: binary
+      enum: [image, video, audio, file]
+
+    Status:
+      description: Status
+      type: object
+      properties:
+        messageId:
+          description: Message id
+          type: integer
+          format: int64
+        userId:
+          description: User id
+          type: integer
+          format: int64
+        info:
+          description: Info
+          type: string
+          enum: [read, not_received, received]
+
+    Reaction:
+      description: Reaction
+      type: object
+      properties:
+        emojiCode:
+          $ref: "#/components/schemas/EmojiCode"
+        messageId:
+          description: Message id
+          type: integer
+          format: int64
+        senderId:
+          description: Sender id
+          type: integer
+          format: int64
+
+    EmojiCode:
+      description: Emoji code
+      type: string
+      pattern: '^.*$'
       minLength: 1
       maxLength: 1024
-    Name:
-      description: Generic name
-      type: string
-      pattern: '^[a-zA-Z0-9_]+$'
-      minLength: 1
-      maxLength: 1024
+
