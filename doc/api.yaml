@@ -43,7 +43,7 @@ paths:
             example:
               type: object
             schema:
-              description: Request body
+              description: Group name and photo URL
               type: object
               properties:
                 name:
@@ -87,11 +87,11 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
+              description: The user to add
               type: object
               properties:
                 userId:
-                  description: The user to add
+                  description: User id
                   type: integer
                   format: int64
       responses:
@@ -102,11 +102,11 @@ paths:
               example:
                 type: object
               schema:
-                description: The user id
+                description: The user added to the group
                 type: object
                 properties:
                   userId:
-                    description: The user to add
+                    description: User id
                     type: integer
                     format: int64
         '400':
@@ -177,7 +177,7 @@ paths:
             example:
               type: object
             schema:
-              description: Request body
+              description: The group name
               type: object
               properties:
                 name:
@@ -190,7 +190,7 @@ paths:
               example:
                 type: object
               schema:
-                description: Successful
+                description: The group name
                 type: object
                 properties:
                   name:
@@ -223,7 +223,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              description: Request body
+              description: The group photo
               type: object
               properties:
                 photo:
@@ -240,11 +240,11 @@ paths:
               example:
                 type: object
               schema:
-                description: Successful
+                description: The photo url
                 type: object
                 properties:
                   photoUrl:
-                    description: Photo URL
+                    description: URL
                     type: string
                     format: url
                     minLength: 1
@@ -315,11 +315,11 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
+              description: The message to forward
               type: object
               properties:
                 messageId:
-                  description: The message to forward
+                  description: Message id
                   type: integer
                   format: int64
       responses:
@@ -399,6 +399,133 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
+  /conversations:
+    get:
+      tags: ["conversations"]
+      summary: Get user conversations
+      description: Get user conversations
+      operationId: getMyConversations
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: The user conversation ids
+                type: object
+                properties:
+                  conversations:
+                    description: Conversation ids
+                    type: array
+                    minItems: 1
+                    maxItems: 1024
+                    items:
+                      type: object
+                      properties:
+                        conversationId:
+                          description: Conversation id
+                          type: integer
+                          format: int64
+                        isGroup:
+                          description: Is it a group?
+                          type: boolean
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+  /conversations/{conversationId}:
+    parameters:
+      - name: conversationId
+        in: path
+        description: Conversation id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["conversations"]
+      summary: Get conversation by id
+      description: Get conversation by id
+      operationId: getConversation
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Conversation messages
+                type: object
+                properties:
+                  messages:
+                    description: Message ids
+                    type: array
+                    minItems: 1
+                    maxItems: 1024
+                    items:
+                      description: Message id
+                      type: integer
+                      format: int64
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+  /conversations/{conversationId}/members:
+    parameters:
+      - name: conversationId
+        in: path
+        description: Conversation id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["conversations"]
+      summary: Get members of a conversation
+      description: Get members of a conversation
+      operationId: getMembers
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Users of conversation
+                type: object
+                properties:
+                  members:
+                    description: User ids
+                    type: array
+                    minItems: 1
+                    maxItems: 1024
+                    items:
+                      description: User id
+                      type: integer
+                      format: int64
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
   /reactions/{messageId}:
     parameters:
       - name: messageId
@@ -418,7 +545,7 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
+              description: Emoji Code
               type: object
               properties:
                 emojiCode:
@@ -469,11 +596,11 @@ paths:
               example:
                 type: object
               schema:
-                description: Request body
+                description: Message reactions
                 type: object
                 properties:
                   reactions:
-                    description: Reactions
+                    description: Reaction ids
                     type: array
                     minItems: 1
                     maxItems: 1024
@@ -542,133 +669,6 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /conversations:
-    get:
-      tags: ["conversations"]
-      summary: Get user conversations
-      description: Get user conversations
-      operationId: getMyConversations
-      responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                description: Successful
-                type: object
-                properties:
-                  conversations:
-                    description: Conversations
-                    type: array
-                    minItems: 1
-                    maxItems: 1024
-                    items:
-                      type: object
-                      properties:
-                        conversationId:
-                          description: Conversation id
-                          type: integer
-                          format: int64
-                        isGroup:
-                          description: Is it a group?
-                          type: boolean
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /conversations/{conversationId}:
-    parameters:
-      - name: conversationId
-        in: path
-        description: Conversation id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    get:
-      tags: ["conversations"]
-      summary: Get conversation by id
-      description: Get conversation by id
-      operationId: getConversation
-      responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                description: Successful
-                type: object
-                properties:
-                  messages:
-                    description: Messages
-                    type: array
-                    minItems: 1
-                    maxItems: 1024
-                    items:
-                      description: Message id
-                      type: integer
-                      format: int64
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /conversations/{conversationId}/members:
-    parameters:
-      - name: conversationId
-        in: path
-        description: Conversation id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    get:
-      tags: ["conversations"]
-      summary: Get members of a conversation
-      description: Get members of a conversation
-      operationId: getMembers
-      responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                description: Successful
-                type: object
-                properties:
-                  members:
-                    description: Members
-                    type: array
-                    minItems: 1
-                    maxItems: 1024
-                    items:
-                      description: User id
-                      type: integer
-                      format: int64
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
   /attachments/{messageId}:
     parameters:
       - name: messageId
@@ -710,6 +710,22 @@ paths:
         schema:
           type: integer
           format: int64
+    put:
+      tags: ["messages"]
+      summary: Update the message status to "read"
+      description: Update the message status to "read"
+      operationId: updateStatus
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
     get:
       tags: ["messages"]
       summary: Get status of a message
@@ -789,7 +805,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
-  /user:
+
+  /users:
     get:
       tags: ["users"]
       summary: Get WASAText users
@@ -803,34 +820,16 @@ paths:
               example:
                 type: object
               schema:
-                description: Successful
+                description: Users of WASAText
                 type: object
                 properties:
-                  user:
+                  users:
                     description: Users
                     type: array
-                    minItems: 0
+                    minItems: 1
                     maxItems: 1024
                     items:
-                      description: User id
-                      type: integer
-                      format: int64
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-    delete:
-      tags: ["users"]
-      summary: Delete user
-      description: Delete authenticated user
-      operationId: deleteUser
-      responses:
-        '204':
-          description: No Content
+                      $ref: "#/components/schemas/User"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -840,7 +839,7 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /user/{userId}:
+  /users/{userId}:
     parameters:
       - name: userId
         in: path
@@ -871,8 +870,24 @@ paths:
           $ref: "#/components/responses/NotFound"
         '500':
           $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: ["users"]
+      summary: Delete user
+      description: Delete user
+      operationId: deleteUser
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /user/{userId}/name:
+  /users/{userId}/name:
     parameters:
       - name: userId
         in: path
@@ -891,7 +906,7 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body
+              description: The username
               type: object
               properties:
                 name:
@@ -904,7 +919,7 @@ paths:
               example:
                 type: object
               schema:
-                description: Successful
+                description: The username
                 type: object
                 properties:
                   name:
@@ -920,7 +935,7 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /user/{userId}/photo:
+  /users/{userId}/photo:
     parameters:
       - name: userId
         in: path
@@ -939,7 +954,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              description: Request body
+              description: The user photo
               type: object
               properties:
                 photo:
@@ -956,7 +971,7 @@ paths:
               example:
                 type: object
               schema:
-                description: Successful
+                description: The photo URL
                 type: object
                 properties:
                   photoUrl:
@@ -970,7 +985,7 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /user/{userId}/message:
+  /users/{userId}/message:
     parameters:
       - name: userId
         in: path
@@ -1008,7 +1023,7 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /user/{userId}/fmessage:
+  /users/{userId}/fmessage:
     parameters:
       - name: userId
         in: path
@@ -1189,7 +1204,7 @@ components:
     Name:
       description: Generic name
       type: string
-      pattern: '^[a-zA-Z0-9_]+$'
+      pattern: '^.*$'
       minLength: 1
       maxLength: 1024
 
@@ -1316,4 +1331,3 @@ components:
       pattern: '^.*$'
       minLength: 1
       maxLength: 1024
-
