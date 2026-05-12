@@ -3,44 +3,82 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"os"
-	"time"
 
-	"github.com/gensimone/WASA-project/service/globaltime"
 )
 
-func (db *appdbimpl) GetConversation(userA int64, userB int64) (*int64, error) {
-	convsA, err := db.GetConversations(userA)
-	if err != nil || len(convsA) == 0 {
+// Returns the user ids associated with the specified conversation id.
+func (db *appdbimpl) GetMembers(conversationId int64) ([]int64, error) {
+	rows, err := db.c.Query(
+		`SELECT user_id FROM user_conversations WHERE conversation_id = ?`,
+		conversationId,
+	)
+	if err != nil {
 		return nil, err
 	}
 
-	convsB, err := db.GetConversations(userB)
-	if err != nil || len(convsB) == 0 {
-		return nil, err
-	}
+	defer rows.Close()
 
-	set := make(map[int64]struct{}, len(convsA))
-	for _, x := range convsA {
-		set[x] = struct{}{}
-	}
-
-	for _, c := range convsB {
-		if _, ok := set[c]; ok {
-			if yes, err := db.IsGroup(c); err != nil {
-				return nil, err
-			} else if !yes {
-				return &c, nil
-			}
+	var userIds []int64
+	for rows.Next() {
+		var userId int64
+		if err := rows.Scan(&userId); err != nil {
+			return nil, err
 		}
+		userIds = append(userIds, userId)
 	}
 
-	return nil, nil
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userIds, nil
 }
 
-func (db *appdbimpl) CreateConversation(
-	sender int64, receiver int64, text string, photo *os.File, isForwarded bool,
-) (*Message, error) {
+// Returns true if the specified user id is part of the specified conversation id.
+func (db *appdbimpl) IsMember(userId int64, conversationId int64) (bool, error) {
+	var dummy int64
+	err := db.c.QueryRow(
+		`SELECT 1 FROM user_conversations WHERE conversation_id = ? AND user_id = ? LIMIT 1`,
+		conversationId, userId,
+	).Scan(&dummy)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return false, nil
+	case err != nil:
+		return false, err
+	default:
+		return true, err
+	}
+}
+
+// Adds a record with the specified conversation and user id in the user_conversations table.
+func (db *appdbimpl) AddConversation(conversationId int64, userId int64) (sql.Result, error) {
+	return db.c.Exec(
+		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
+		conversationId, userId,
+	)
+}
+
+// Deletes the records associated with the specified conversation id from the conversations table.
+func (db *appdbimpl) DeleteConversation(conversationId int64) (sql.Result, error) {
+	return db.c.Exec(
+		`DELETE FROM conversations WHERE conversation_id = ?`,
+		conversationId,
+	)
+}
+
+// Deletes the record associated with the specified conversation and user id from the user_conversations table.
+func (db *appdbimpl) DeleteUserConversation(conversationId int64, userId int64) (sql.Result, error) {
+	return db.c.Exec(
+		`DELETE FROM user_conversations WHERE conversation_id = ? AND user_id = ?`,
+		conversationId, userId,
+	)
+}
+
+// Creates a new conversation between the specified senderId and receiverId.
+// A new message record is created inside the messages table with the specified values.
+func (db *appdbimpl) CreateConversation(senderId int64, receiverId int64) (*int64, error) {
 	tx, err := db.GetTransaction()
 	if err != nil {
 		return nil, err
@@ -55,135 +93,91 @@ func (db *appdbimpl) CreateConversation(
 		return nil, err
 	}
 
-	conv, err := res.LastInsertId()
+	conversationId, err := res.LastInsertId()
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, sender,
+		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
+		conversationId, senderId,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, receiver,
+		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
+		conversationId, receiverId,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	timestamp := globaltime.Now().Format(time.DateTime)
-	res, err = tx.Exec(
-		`INSERT INTO messages (text, photo, sender, conversation, timestamp, isForwarded, commentTo) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		text, photo, sender, conv, timestamp, isForwarded, nil,
+	return &conversationId, nil
+}
+
+// Returns the conversation id between userIdA and userIdB if exists, otherwise nil.
+func (db *appdbimpl) GetConversation(userIdA int64, userIdB int64) (*int64, error) {
+	conversationIdsA, err := db.GetConversations(userIdA)
+	if err != nil || len(conversationIdsA) == 0 {
+		return nil, err
+	}
+
+	conversationIdsB, err := db.GetConversations(userIdB)
+	if err != nil || len(conversationIdsB) == 0 {
+		return nil, err
+	}
+
+	set := make(map[int64]struct{}, len(conversationIdsA))
+	for _, x := range conversationIdsA {
+		set[x] = struct{}{}
+	}
+
+	for _, conversationId := range conversationIdsB {
+		_, ok := set[conversationId]
+		if !ok {
+			continue
+		}
+
+		isGroup, err := db.IsGroup(conversationId)
+		if err != nil {
+			return nil, err
+		}
+
+		if !isGroup {
+			return &conversationId, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// Returns the conversation ids associated to the specified user id.
+func (db *appdbimpl) GetConversations(userId int64) ([]int64, error) {
+	rows, err := db.c.Query(
+		`SELECT conversation_id FROM user_conversations WHERE user_id = ?`,
+		userId,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := res.LastInsertId()
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
-	// Status
-	if _, err = tx.Exec(
-		`INSERT INTO status (message, user, info) VALUES (?, ?, ?)`,
-		msg, receiver, "not received",
-	); err != nil {
-		_ = tx.Rollback()
-		return nil, err
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, err
-	}
-
-	return &Message{
-		Id:           msg,
-		Text:         text,
-		Photo:        photo,
-		Sender:       sender,
-		Conversation: conv,
-		Timestamp:    timestamp,
-		IsForwarded:  isForwarded,
-		CommentTo:    nil,
-	}, nil
-}
-
-func (db *appdbimpl) AddConversation(conv int64, user int64) (sql.Result, error) {
-	return db.c.Exec(`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, user)
-}
-
-func (db *appdbimpl) DeleteConversation(conv int64) (sql.Result, error) {
-	return db.c.Exec(`DELETE FROM conversations WHERE id = ?`, conv)
-}
-
-func (db *appdbimpl) DeleteUserConversation(conv int64, user int64) (sql.Result, error) {
-	return db.c.Exec(`DELETE FROM userConversations WHERE conversation = ? AND user = ?`, conv, user)
-}
-
-func (db *appdbimpl) IsMember(user int64, conv int64) (bool, error) {
-	var x int64
-	if err := db.c.QueryRow(
-		`SELECT conversation FROM userConversations WHERE conversation = ? AND user = ?`, conv, user,
-	).Scan(&x); errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	} else {
-		return true, err
-	}
-}
-
-func (db *appdbimpl) GetMembers(conv int64) ([]int64, error) {
-	rows, err := db.c.Query(`SELECT user FROM userConversations WHERE conversation = ?`, conv)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	var users []int64
+	var conversationIds []int64
 	for rows.Next() {
-		var user int64
-		if err := rows.Scan(&user); err != nil {
+		var conversationId int64
+		if err := rows.Scan(&conversationId); err != nil {
 			return nil, err
 		}
-		users = append(users, user)
+		conversationIds = append(conversationIds, conversationId)
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return users, nil
-}
-
-func (db *appdbimpl) GetConversations(user int64) ([]int64, error) {
-	rows, err := db.c.Query(`SELECT conversation FROM userConversations WHERE user = ?`, user)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var ids []int64
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return ids, nil
+	return conversationIds, nil
 }

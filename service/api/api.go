@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Logger   logrus.FieldLogger
 	Database database.AppDatabase
+	Uploads  string
 }
 
 type Router interface {
@@ -26,6 +27,9 @@ func New(cfg Config) (Router, error) {
 	if cfg.Database == nil {
 		return nil, errors.New("database is required")
 	}
+	if cfg.Uploads == "" {
+		return nil, errors.New("uploads is required")
+	}
 
 	router := httprouter.New()
 	router.RedirectTrailingSlash = false
@@ -35,6 +39,7 @@ func New(cfg Config) (Router, error) {
 		router:     router,
 		baseLogger: cfg.Logger,
 		db:         cfg.Database,
+		uploads:    cfg.Uploads,
 	}, nil
 }
 
@@ -42,4 +47,5 @@ type _router struct {
 	router     *httprouter.Router
 	baseLogger logrus.FieldLogger
 	db         database.AppDatabase
+	uploads    string
 }

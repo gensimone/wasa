@@ -1,54 +1,56 @@
 package api
 
-import (
-	"net/http"
-)
+import "net/http"
 
 func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/context", rt.wrap(rt.getContextReply))
 	rt.router.GET("/liveness", rt.liveness)
 
-	// groups
-	rt.router.POST("/groups", rt.validateAuthorization(rt.createGroup))
-	rt.router.GET("/groups/:groupId", rt.validateAuthorization(rt.getGroup))
-	rt.router.DELETE("/groups/:groupId", rt.validateAuthorization(rt.deleteGroup))
-	rt.router.POST("/groups/:groupId", rt.validateAuthorization(rt.addToGroup))
-	rt.router.PUT("/groups/:groupId/name", rt.validateAuthorization(rt.setGroupName))
-	rt.router.PUT("/groups/:groupId/photo", rt.validateAuthorization(rt.setGroupPhoto))
-	rt.router.POST("/groups/:groupId/message", rt.validateAuthorization(rt.sendMessageToGroup))
-	rt.router.POST("/groups/:groupId/fmessage", rt.validateAuthorization(rt.forwardMessageToGroup))
-	rt.router.DELETE("/groups/:groupId/user", rt.validateAuthorization(rt.leaveGroup))
-	rt.router.DELETE("/groups/:groupId/user/:userId", rt.validateAuthorization(rt.removeUser))
+	// Groups.
+	rt.router.POST("/groups", rt.authorize(rt.createGroup))
+	rt.router.POST("/groups/:groupId", rt.authorize(rt.addToGroup))
+	rt.router.GET("/groups/:groupId", rt.authorize(rt.getGroup))
+	rt.router.DELETE("/groups/:groupId", rt.authorize(rt.deleteGroup))
+	rt.router.PUT("/groups/:groupId/name", rt.authorize(rt.setGroupName))
+	rt.router.PUT("/groups/:groupId/photo", rt.authorize(rt.setGroupPhoto))
+	rt.router.POST("/groups/:groupId/message", rt.authorize(rt.sendMessageToGroup))
+	rt.router.POST("/groups/:groupId/fmessage", rt.authorize(rt.forwardMessageToGroup))
+	rt.router.DELETE("/groups/:groupId/user", rt.authorize(rt.leaveGroup))
+	rt.router.DELETE("/groups/:groupId/user/:userId", rt.authorize(rt.removeUser))
 
-	// conversations
-	rt.router.GET("/conversations", rt.validateAuthorization(rt.getMyConversations))
-	rt.router.GET("/conversations/:conversationId", rt.validateAuthorization(rt.getConversation))
-	rt.router.GET("/conversations/:conversationId/members", rt.validateAuthorization(rt.getMembers))
+	// Conversations.
+	rt.router.GET("/conversations", rt.authorize(rt.getMyConversations))
+	rt.router.GET("/conversations/:conversationId", rt.authorize(rt.getConversation))
+	rt.router.GET("/conversations/:conversationId/members", rt.authorize(rt.getMembers))
 
-	// reactions
-	rt.router.POST("/reactions/:messageId", rt.validateAuthorization(rt.addReaction))
-	rt.router.GET("/reactions/:messageId", rt.validateAuthorization(rt.getReactions))
-	rt.router.DELETE("/reactions/:messageId", rt.validateAuthorization(rt.deleteReaction))
+	// Reactions.
+	rt.router.POST("/reactions/:messageId", rt.authorize(rt.addReaction))
+	rt.router.DELETE("/reactions/:messageId", rt.authorize(rt.deleteReaction))
+	rt.router.GET("/reactions/:messageId", rt.authorize(rt.getReactions))
 
-	// comments
-	rt.router.DELETE("/comments/:messageId", rt.validateAuthorization(rt.deleteMessage))
-	rt.router.POST("/comments/:messageId", rt.validateAuthorization(rt.commentMessage))
+	// Comments.
+	rt.router.DELETE("/comments/:messageId", rt.authorize(rt.uncommentMessage))
+	rt.router.POST("/comments/:messageId", rt.authorize(rt.commentMessage))
 
-	// messages
-	rt.router.GET("/messages/:messageId", rt.validateAuthorization(rt.getMessage))
-	rt.router.DELETE("/messages/:messageId", rt.validateAuthorization(rt.deleteMessage))
-	rt.router.GET("/messages/:messageId/status", rt.validateAuthorization(rt.getStatus))
+	// Attachments.
+	rt.router.GET("/attachments/:messageId", rt.authorize(rt.getAttachment))
 
-	// user
-	rt.router.POST("/user/:userId/message", rt.validateAuthorization(rt.sendMessage))
-	rt.router.POST("/user/:userId/fmessage", rt.validateAuthorization(rt.forwardMessage))
-	rt.router.GET("/user/:userId", rt.validateAuthorization(rt.getUserById))
-	rt.router.PUT("/user/:userId/name", rt.validateAuthorization(rt.setMyUserName))
-	rt.router.PUT("/user/:userId/photo", rt.validateAuthorization(rt.setMyPhoto))
-	rt.router.GET("/user", rt.validateAuthorization(rt.getUsers))
-	rt.router.DELETE("/user", rt.validateAuthorization(rt.deleteUser))
+	// Messages.
+	rt.router.PUT("/messages/:messageId/status", rt.authorize(rt.updateStatus))
+	rt.router.GET("/messages/:messageId/status", rt.authorize(rt.getStatus))
+	rt.router.GET("/messages/:messageId", rt.authorize(rt.getMessage))
+	rt.router.DELETE("/messages/:messageId", rt.authorize(rt.deleteMessage))
 
-	// authentication
+	// Users.
+	rt.router.GET("/users", rt.authorize(rt.getUsers))
+	rt.router.GET("/users/:userId", rt.authorize(rt.getUserById))
+	rt.router.DELETE("/users/:userId", rt.authorize(rt.deleteUser))
+	rt.router.PUT("/users/:userId/name", rt.authorize(rt.setMyUserName))
+	rt.router.PUT("/users/:userId/photo", rt.authorize(rt.setMyPhoto))
+	rt.router.POST("/users/:userId/message", rt.authorize(rt.sendMessage))
+	rt.router.POST("/users/:userId/fmessage", rt.authorize(rt.forwardMessage))
+
+	// Authentication.
 	rt.router.POST("/session", rt.doLogin)
 
 	return rt.router

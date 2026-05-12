@@ -2,62 +2,93 @@ package database
 
 import (
 	"database/sql"
-	"os"
+	"errors"
 )
 
-func (db *appdbimpl) DoLogin(name string) (*int64, error) {
-	var id int64
+// Sets the name of the user identified by the specified user id.
+func (db *appdbimpl) SetMyUserName(userId int64, name string) (sql.Result, error) {
+	return db.c.Exec(
+		`UPDATE users SET name = ? WHERE user_id = ?`,
+		name, userId,
+	)
+}
 
-	err := db.c.QueryRow(`SELECT id FROM users WHERE name = ?`, name).Scan(&id)
-	switch err {
-	case sql.ErrNoRows:
-		if res, err := db.c.Exec(`INSERT INTO users (name, photo) VALUES (?, ?)`, name, nil); err != nil {
-			return nil, err
-		} else if id, err := res.LastInsertId(); err != nil {
-			return nil, err
-		} else {
-			return &id, nil
-		}
-	case nil:
-		return &id, nil
+// Sets the photo of the user identified by the specified user id.
+func (db *appdbimpl) SetMyPhotoUrl(userId int64, photoUrl string) (sql.Result, error) {
+	return db.c.Exec(
+		`UPDATE users SET photo_url = ? WHERE user_id = ?`,
+		photoUrl, userId,
+	)
+}
+
+// Logs in the user with the specified name if exists, otherwise the function creates
+// the user and returns its user id.
+func (db *appdbimpl) DoLogin(name string) (*int64, error) {
+	var userId int64
+	err := db.c.QueryRow(
+		`SELECT user_id FROM users WHERE name = ?`,
+		name,
+	).Scan(&userId)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return db.CreateUser(name)
+	case err == nil:
+		return &userId, nil
 	default:
 		return nil, err
 	}
 }
 
+// Creates a new user with the specified name and returns its user id.
+func (db *appdbimpl) CreateUser(name string) (*int64, error) {
+	if res, err := db.c.Exec(
+		`INSERT INTO users (name, photo_url) VALUES (?, ?)`,
+		name, nil,
+	); err != nil {
+		return nil, err
+	} else if userId, err := res.LastInsertId(); err != nil {
+		return nil, err
+	} else {
+		return &userId, nil
+	}
+}
+
+// Returns all the user ids found in the users table.
 func (db *appdbimpl) GetUserIds() ([]int64, error) {
-	rows, err := db.c.Query(`SELECT id FROM users`)
+	rows, err := db.c.Query(`SELECT user_id FROM users`)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	var ids []int64
+	var userIds []int64
 	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
+		var userId int64
+		if err := rows.Scan(&userId); err != nil {
 			return nil, err
 		}
-		ids = append(ids, id)
+		userIds = append(userIds, userId)
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return ids, nil
+	return userIds, nil
 }
 
+// Returns all the users found in the users table.
 func (db *appdbimpl) GetUsers() ([]User, error) {
-	ids, err := db.GetUserIds()
+	userIds, err := db.GetUserIds()
 	if err != nil {
 		return nil, err
 	}
 
 	var users []User
-	for _, id := range ids {
-		user, err := db.GetUserById(id)
+	for _, userId := range userIds {
+		user, err := db.GetUserById(userId)
 		if err != nil {
 			return nil, err
 		}
@@ -67,38 +98,63 @@ func (db *appdbimpl) GetUsers() ([]User, error) {
 	return users, nil
 }
 
-func (db *appdbimpl) GetUserById(id int64) (*User, error) {
-	var u User
+// Returns the user object associated with the specified user id.
+func (db *appdbimpl) GetUserById(userId int64) (*User, error) {
+	var user User
 
 	if err := db.c.QueryRow(
-		`SELECT id, name, photo FROM users WHERE id = ?`, id,
-	).Scan(&u.Id, &u.Name, &u.Photo); err != nil {
+		`SELECT user_id, name, photo_url FROM users WHERE user_id = ?`,
+		userId,
+	).Scan(
+		&user.UserId,
+		&user.Name,
+		&user.PhotoUrl,
+	); err != nil {
 		return nil, err
 	}
 
-	return &u, nil
+	return &user, nil
 }
 
+func (db *appdbimpl) IsUserById(userId int64) (bool, error) {
+	var dummy int64
+	err := db.c.QueryRow(
+		`SELECT 1 FROM users WHERE user_id = ? LIMIT 1`,
+		userId,
+	).Scan(&dummy)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return false, nil
+	case err != nil:
+		return false, err
+	default:
+		return true, err
+	}
+}
+
+// Returns the user object associated with the specified username.
 func (db *appdbimpl) GetUserByName(name string) (*User, error) {
-	var u User
+	var user User
 
 	if err := db.c.QueryRow(
-		`SELECT id, name, photo FROM users WHERE name = ?`, name,
-	).Scan(&u.Id, &u.Name, &u.Photo); err != nil {
+		`SELECT user_id, name, photo_url FROM users WHERE name = ?`,
+		name,
+	).Scan(
+		&user.UserId,
+		&user.Name,
+		&user.PhotoUrl,
+	); err != nil {
 		return nil, err
 	}
 
-	return &u, nil
+	return &user, nil
 }
 
-func (db *appdbimpl) SetMyUserName(id int64, name string) (sql.Result, error) {
-	return db.c.Exec(`UPDATE users SET name = ? WHERE id = ?`, name, id)
-}
-
-func (db *appdbimpl) SetMyPhoto(id int64, photo os.File) (sql.Result, error) {
-	return db.c.Exec(`UPDATE users SET photo = ? WHERE id = ?`, photo, id)
-}
-
-func (db *appdbimpl) DeleteUser(id int64) (sql.Result, error) {
-	return db.c.Exec(`DELETE FROM users WHERE id = ?`, id)
+// Deletes the user specified by the user id.
+func (db *appdbimpl) DeleteUser(userId int64) (sql.Result, error) {
+	return db.c.Exec(
+		`DELETE FROM users WHERE user_id = ?`,
+		userId,
+	)
 }

@@ -2,14 +2,19 @@ package database
 
 import (
 	"database/sql"
-	"os"
 	"time"
 
 	"github.com/gensimone/WASA-project/service/globaltime"
 )
 
+// Insert a message in the messages table with the specified parameters.
 func (db *appdbimpl) InsertMessage(
-	sender int64, conv int64, text string, photo *os.File, isForwarded bool, commentTo *int64,
+	senderId int64,
+	conversationId int64,
+	text string,
+	attachmentId *int64,
+	isForwarded bool,
+	commentTo *int64,
 ) (*Message, error) {
 	tx, err := db.GetTransaction()
 	if err != nil {
@@ -20,34 +25,34 @@ func (db *appdbimpl) InsertMessage(
 		_ = tx.Rollback()
 	}()
 
-	timestamp := globaltime.Now().Format(time.DateTime)
+	createdAt := globaltime.Now().Format(time.DateTime)
 	res, err := tx.Exec(
-		`INSERT INTO messages (text, photo, sender, conversation, timestamp, isForwarded, commentTo) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		text, photo, sender, conv, timestamp, isForwarded, &commentTo,
+		`INSERT INTO messages (text, attachment_id, sender_id, conversation_id, created_at, is_forwarded, comment_to) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		text, &attachmentId, senderId, conversationId, createdAt, isForwarded, &commentTo,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	msg, err := res.LastInsertId()
+	messageId, err := res.LastInsertId()
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
-	// Status
-	members, err := db.GetMembers(conv)
+	memberIds, err := db.GetMembers(conversationId)
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
-	for _, m := range members {
-		if m == sender {
+	for _, memberId := range memberIds {
+		if memberId == senderId {
 			continue
 		}
+
 		if _, err = tx.Exec(
-			`INSERT INTO status (message, user, info) VALUES (?, ?, ?)`,
-			msg, m, "not received",
+			`INSERT INTO status (message_id, user_id, info) VALUES (?, ?, ?)`,
+			messageId, memberId, "not received",
 		); err != nil {
 			_ = tx.Rollback()
 			return nil, err
@@ -59,143 +64,72 @@ func (db *appdbimpl) InsertMessage(
 	}
 
 	return &Message{
-		Id:           msg,
-		Text:         text,
-		Photo:        photo,
-		Sender:       sender,
-		Conversation: conv,
-		Timestamp:    timestamp,
-		IsForwarded:  isForwarded,
-		CommentTo:    commentTo,
+		MessageId:      messageId,
+		Text:           text,
+		AttachmentId:   attachmentId,
+		SenderId:       senderId,
+		ConversationId: conversationId,
+		CreatedAt:      createdAt,
+		IsForwarded:    isForwarded,
+		CommentTo:      commentTo,
 	}, nil
 }
 
-func (db *appdbimpl) GetMessages(conv int64) ([]int64, error) {
-	rows, err := db.c.Query(`SELECT id FROM messages WHERE conversation = ?`, conv)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var ids []int64
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return ids, nil
-}
-
-func (db *appdbimpl) GetMessage(id int64) (*Message, error) {
-	var m Message
-
-	if err := db.c.QueryRow(
-		`SELECT id, text, photo, sender, conversation, timestamp, isForwarded, commentTo FROM messages WHERE id = ?`, id,
-	).Scan(&m.Id, &m.Text, &m.Photo, &m.Sender, &m.Conversation, &m.Timestamp, &m.IsForwarded, &m.CommentTo); err != nil {
-		return nil, err
-	}
-
-	return &m, nil
-}
-
-func (db *appdbimpl) DeleteMessage(id int64) (sql.Result, error) {
-	return db.c.Exec(`DELETE FROM messages WHERE id = ?`, id)
-}
-
-func (db *appdbimpl) UpdateStatus(msg int64, user int64, info string) (sql.Result, error) {
-	return db.c.Exec(`UPDATE status SET info = ? WHERE message = ? AND user = ?`, info, msg, user)
-}
-
-func (db *appdbimpl) GetStatusOf(msg int64, user int64) (*Status, error) {
-	var s Status
-	if err := db.c.QueryRow(
-		`SELECT message, user, info FROM status WHERE message = ? AND user = ?`, msg, user,
-	).Scan(&s.Message, &s.User, &s.Info); err != nil {
-		return nil, err
-	}
-
-	return &s, nil
-}
-
-func (db *appdbimpl) GetStatus(msg int64) ([]Status, error) {
-	rows, err := db.c.Query(`SELECT message, user, info FROM status WHERE message = ?`, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var status []Status
-	for rows.Next() {
-		var s Status
-		if err := rows.Scan(&s.Message, &s.User, &s.Info); err != nil {
-			return nil, err
-		}
-		status = append(status, s)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return status, nil
-}
-
-func (db *appdbimpl) GetReactions(msg int64) ([]Reaction, error) {
-	rows, err := db.c.Query(`SELECT emoji, message, sender FROM reactions WHERE message = ?`, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var reactions []Reaction
-	for rows.Next() {
-		var r Reaction
-		if err := rows.Scan(&r.Emoji, &r.Message, &r.Sender); err != nil {
-			return nil, err
-		}
-		reactions = append(reactions, r)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return reactions, nil
-}
-
-func (db *appdbimpl) GetReaction(msg int64, sender int64) (*Reaction, error) {
-	var r Reaction
-	if err := db.c.QueryRow(
-		`SELECT emoji, message, sender FROM reactions WHERE message = ? AND sender = ?`,
-		msg, sender,
-	).Scan(&r.Emoji, &r.Message, &r.Sender); err != nil {
-		return nil, err
-	}
-
-	return &r, nil
-}
-
-func (db *appdbimpl) AddReaction(emoji string, msg int64, sender int64) (sql.Result, error) {
+// Deletes the message record from the messages table associated with the specified message id.
+func (db *appdbimpl) DeleteMessage(messageId int64) (sql.Result, error) {
 	return db.c.Exec(
-		`INSERT INTO reactions (emoji, message, sender) VALUES (?, ?, ?)`,
-		emoji, msg, sender,
+		`DELETE FROM messages WHERE message_id = ?`,
+		messageId,
 	)
 }
 
-func (db *appdbimpl) DeleteReaction(msg int64, sender int64) (sql.Result, error) {
-	return db.c.Exec(`DELETE FROM reactions WHERE message = ? AND sender = ?`, msg, sender)
+// Returns the message object associated with the specified message id.
+func (db *appdbimpl) GetMessage(messageId int64) (*Message, error) {
+	var message Message
+
+	if err := db.c.QueryRow(
+		`SELECT message_id, text, attachment_id, sender_id, conversation_id, created_at, is_forwarded, comment_to FROM messages WHERE message_id = ?`,
+		messageId,
+	).Scan(
+		&message.MessageId,
+		&message.Text,
+		&message.AttachmentId,
+		&message.SenderId,
+		&message.ConversationId,
+		&message.CreatedAt,
+		&message.IsForwarded,
+		&message.CommentTo,
+	); err != nil {
+		return nil, err
+	}
+
+	return &message, nil
 }
 
-func (db *appdbimpl) UpdateReaction(emoji string, msg int64, sender int64) (sql.Result, error) {
-	return db.c.Exec(`UPDATE reactions SET emoji = ? WHERE message = ? AND sender = ?`, emoji, msg, sender)
+// Returns the message ids associated with the specified conversation id.
+func (db *appdbimpl) GetMessageIds(conversationId int64) ([]int64, error) {
+	rows, err := db.c.Query(
+		`SELECT message_id FROM messages WHERE conversation_id = ?`,
+		conversationId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var messageIds []int64
+	for rows.Next() {
+		var messageId int64
+		if err := rows.Scan(&messageId); err != nil {
+			return nil, err
+		}
+		messageIds = append(messageIds, messageId)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return messageIds, nil
 }

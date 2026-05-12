@@ -2,58 +2,100 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
+	"github.com/gensimone/WASA-project/service/database"
 	"github.com/julienschmidt/httprouter"
 )
 
-func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user int64) {
-	convs, err := rt.db.GetConversations(user)
+// operationId: getMyConversations
+func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
+	conversationIds, err := rt.db.GetConversations(user.UserId)
 	if err != nil {
-		http.Error(w, "Internal Sever Error", http.StatusInternalServerError)
-	} else {
-		sendResponse(w, struct {
-			Convs []int64 `json:"conversations"`
-		}{Convs: convs}, http.StatusOK)
-	}
-}
-
-func (rt *_router) getConversation(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user int64) {
-	conv, err := validateParameterInt64(w, ps, "conversationId")
-	if err != nil {
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetConversations: %w", err)
 		return
 	}
 
-	if yes, err := rt.db.IsMember(user, conv); err != nil {
-		http.Error(w, "Internal Sever Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if convs, err := rt.db.GetMessages(conv); err != nil || convs == nil {
-		http.Error(w, "Internal Sever Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessages: %w", err)
-	} else {
-		sendResponse(w, struct {
-			Messages []int64 `json:"messages"`
-		}{Messages: convs}, http.StatusOK)
+	type data struct {
+		ConversationId int64 `json:"conversationId"`
+		IsGroup 	   bool  `json:"isGroup"`
 	}
+
+	var conversations []data
+	for _, conversationId := range conversationIds {
+		isGroup, err := rt.db.IsGroup(conversationId)
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("IsGroup: %w", err)
+			return
+		}
+
+		conversations = append(conversations, data{
+			ConversationId: conversationId,
+			IsGroup: isGroup,
+		})
+	}
+
+	rt.sendResponse(w, struct {
+		Conversations []data `json:"conversations"`
+	}{Conversations: conversations}, http.StatusOK)
 }
 
-func (rt *_router) getMembers(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user int64) {
-	conv, err := validateParameterInt64(w, ps, "conversationId")
+// operationId: getConversation
+func (rt *_router) getConversation(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := strconv.ParseInt(ps.ByName("conversationId"), 10, 64)
 	if err != nil {
+		rt.sendResponse(w, "Parameter conversationId must be an int64", http.StatusBadRequest)
 		return
 	}
 
-	if yes, err := rt.db.IsMember(user, conv); err != nil {
-		http.Error(w, "Internal Sever Error", http.StatusInternalServerError)
+	isMember, err := rt.db.IsMember(user.UserId, conversationId)
+	switch {
+	case err != nil:
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if members, err := rt.db.GetMembers(conv); err != nil {
-		http.Error(w, "Internal Sever Error", http.StatusInternalServerError)
-	} else {
-		sendResponse(w, struct {
-			Members []int64 `json:"members"`
-		}{Members: members}, http.StatusOK)
+	case isMember:
+		messageIds, err := rt.db.GetMessageIds(conversationId)
+		if err != nil || messageIds == nil {
+			rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetMessageIds: %w", err)
+			return
+		}
+
+		rt.sendResponse(w, struct {
+			MessageIds []int64 `json:"messageIds"`
+		}{MessageIds: messageIds}, http.StatusOK)
+	default:
+		rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
+	}
+}
+
+// operationId: getMembers
+func (rt *_router) getMembers(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := strconv.ParseInt(ps.ByName("conversationId"), 10, 64)
+	if err != nil {
+		rt.sendResponse(w, "Parameter conversationId must be an int64", http.StatusBadRequest)
+		return
+	}
+
+	isMember, err := rt.db.IsMember(user.UserId, conversationId)
+	switch {
+	case err != nil:
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsMember: %w", err)
+	case isMember:
+		userIds, err := rt.db.GetMembers(conversationId)
+		if err != nil {
+			rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetMembers: %w", err)
+			return
+		}
+
+		rt.sendResponse(w, struct {
+			UserIds []int64 `json:"userIds"`
+		}{UserIds: userIds}, http.StatusOK)
+	default:
+		rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
 	}
 }

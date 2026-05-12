@@ -3,336 +3,313 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/gensimone/WASA-project/service/database"
 	"github.com/julienschmidt/httprouter"
 )
 
+// operationId: sendMessage
 func (rt *_router) sendMessage(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	content, err := validateMessage(w, r)
+	conversationId, err := rt._getConversation(w, r, ps, user)
 	if err != nil {
 		return
 	}
 
-	rt.insertMessage(w, ps, sender, content.Text, content.Photo, false)
+	message, err := rt._insertMessage(w, r, user.UserId, *conversationId, nil)
+	if err != nil {
+		return
+	}
+
+	rt.sendResponse(w, message, http.StatusCreated)
 }
 
+// operationId: forwardMessage
 func (rt *_router) forwardMessage(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	msgId, err := validateMsgId(w, r)
+	messageId, err := rt.checkMessageId(w, r)
 	if err != nil {
 		return
 	}
 
-	m, err := rt.db.GetMessage(msgId)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(sender, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else {
-		rt.insertMessage(w, ps, sender, m.Text, m.Photo, true)
-	}
-}
-
-func (rt *_router) insertMessage(
-	w http.ResponseWriter, ps httprouter.Params, sender int64, text string, photo *os.File, isForwarded bool,
-) {
-	receiver, err := validateParameterInt64(w, ps, "userId")
-	if err != nil {
-		return
-	}
-
-	conv, err := rt.db.GetConversation(sender, receiver)
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetConversation: %w", err)
-		return
-	}
-
-	var m *database.Message
-	if conv == nil {
-		m, err = rt.db.CreateConversation(sender, receiver, text, photo, isForwarded)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("CreateConversation: %w", err)
-			return
-		}
-	} else {
-		m, err = rt.db.InsertMessage(sender, *conv, text, photo, isForwarded, nil)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("InsertMessage: %w", err)
-			return
-		}
-	}
-
-	sendResponse(w, m, http.StatusCreated)
-}
-
-func (rt *_router) commentMessage(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	content, err := validateMessage(w, r)
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(sender, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else {
-		m, err = rt.db.InsertMessage(sender, m.Conversation, content.Text, content.Photo, false, &msg)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("InsertMessage: %w", err)
-		} else {
-			sendResponse(w, m, http.StatusOK)
-		}
-	}
-}
-
-func (rt *_router) deleteMessage(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if m.Sender != user {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if _, err = rt.db.DeleteMessage(msg); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DeleteMessage: %w", err)
-	} else {
-		sendResponse(w, nil, http.StatusNoContent)
-	}
-}
-
-func (rt *_router) getMessage(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(user, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else {
-		if m.Sender != user {
-			s, err := rt.db.GetStatusOf(m.Id, user)
-			if err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				rt.baseLogger.Errorf("GetStatusOf: %w", err)
-				return
-			} else if s.Info == "not received" {
-				_, err = rt.db.UpdateStatus(msg, user, "received")
-				if err != nil {
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					rt.baseLogger.Errorf("UpdateStatus: %w", err)
-				}
-			}
-		}
-		sendResponse(w, m, http.StatusOK)
-	}
-}
-
-func (rt *_router) getStatus(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
+	message, err := rt.db.GetMessage(*messageId)
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		http.Error(w, "Not Found", http.StatusNotFound)
-
+		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
+		return
 	case err != nil:
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %v", err)
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+		return
+	}
 
-	case func() bool {
-		yes, err := rt.db.IsMember(user, m.Conversation)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("IsMember: %v", err)
-			return true
-		}
-		if !yes {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return true
-		}
-		return false
-	}():
+	conversationId, err := rt._getConversation(w, r, ps, user)
+	if err != nil {
+		return
+	}
 
-	case user != m.Sender:
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	fmessage, err := rt.db.InsertMessage(
+		user.UserId,
+		*conversationId,
+		message.Text,
+		message.AttachmentId,
+		true,
+		nil,
+	)
 
+	rt.sendResponse(w, fmessage, http.StatusCreated)
+}
+
+// operationId: commentMessage
+func (rt *_router) commentMessage(
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
+) {
+	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
+	if err != nil {
+		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
+		return
+	}
+
+	message, err := rt.db.GetMessage(messageId)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
+		return
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+		return
+	}
+
+	isMember, err := rt.db.IsMember(user.UserId, message.ConversationId)
+	switch {
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
+		rt.baseLogger.Errorf("IsMember: %w", err)
+	case isMember:
+		rt._insertMessage(w, r, user.UserId, message.ConversationId, &message.MessageId)
 	default:
-		status, err := rt.db.GetStatus(msg)
+		rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
+	}
+}
+
+// operationId: uncommentMessage
+func (rt *_router) uncommentMessage(
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
+) {
+	rt.deleteMessage(w, r, ps, user)
+}
+
+// operationId: deleteMessage
+func (rt *_router) deleteMessage(
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
+) {
+	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
+	if err != nil {
+		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
+		return
+	}
+
+	message, err := rt.db.GetMessage(messageId)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
+		return
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+		return
+	}
+
+	if message.SenderId != user.UserId {
+		rt.sendResponse(w, "Not athorized to delete message", http.StatusUnauthorized)
+		return
+	}
+
+	_, err = rt.db.DeleteMessage(messageId)
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("DeleteMessage: %w", err)
+		return
+	}
+
+	rt.sendResponse(w, nil, http.StatusNoContent)
+}
+
+// operationId: getMessage
+func (rt *_router) getMessage(
+	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
+) {
+	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
+	if err != nil {
+		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
+		return
+	}
+
+	message, err := rt.db.GetMessage(messageId)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
+		return
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
+		rt.baseLogger.Errorf("GetMessage: %w", err)
+		return
+	}
+
+	isMember, err := rt.db.IsMember(user.UserId, message.ConversationId)
+	switch {
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
+		rt.baseLogger.Errorf("IsMember: %w", err)
+		return
+	case isMember && message.SenderId != user.UserId:
+		rt._updateStatus(w, messageId, user.UserId)
+	default:
+		rt.sendResponse(w, "Not authorized to read message", http.StatusUnauthorized)
+		return
+	}
+
+	rt.sendResponse(w, message, http.StatusOK)
+}
+
+// Used internally by:
+// - sendMessage
+// - sendMessageToGroup
+// - commentMessage
+func (rt *_router) _insertMessage(
+	w http.ResponseWriter,
+	r *http.Request,
+	senderId int64,
+	conversationId int64,
+	commentTo *int64,
+) (*database.Message, error) {
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		rt.sendResponse(w, "Invalid multipart form", http.StatusBadRequest)
+		return nil, err
+	}
+
+	_, textOk := r.MultipartForm.Value["text"]
+	files, fileOk := r.MultipartForm.File["file"]
+	_, mediaTypeOk := r.MultipartForm.Value["mediaType"]
+
+	if !(textOk && fileOk && mediaTypeOk) {
+		errMsg := "Missing one or more required fields in multipart form"
+		rt.sendResponse(w, errMsg, http.StatusBadRequest)
+		return nil, errors.New(errMsg)
+	}
+
+	mediaType := r.FormValue("mediaType")
+
+	switch {
+		case len(files) == 0 && mediaType != "":
+			errMsg := "Found media type but no file was provided"
+			rt.sendResponse(w, errMsg, http.StatusBadRequest)
+			return nil, errors.New(errMsg)
+		case len(files) > 0 && mediaType == "":
+			errMsg := "Found file but no media type was provided"
+			rt.sendResponse(w, errMsg, http.StatusBadRequest)
+			return nil, errors.New(errMsg)
+		case len(files) > 0 && !database.IsValidMediaType(mediaType):
+			errMsg := fmt.Sprintf("Invalid media type: %s", mediaType)
+			rt.sendResponse(w, errMsg, http.StatusBadRequest)
+			return nil, errors.New(errMsg)
+	}
+
+	url, err := rt.uploadFile(w, r, "file")
+	if err != nil {
+		return nil, err
+	}
+
+	attachmentId, err := rt.db.AddAttachment(*url, database.MediaType(mediaType))
+	if err != nil {
+		rt.baseLogger.Error("AddAttachment: %w", err)
+
+		if err = rt.removeFile(w, *url); err != nil { // Issue Internal Server Error
+			return nil, err
+		}
+
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil, err
+	}
+
+	text := r.FormValue("text")
+	message, err := rt.db.InsertMessage(
+		senderId,
+		conversationId,
+		text,
+		attachmentId,
+		false,
+		commentTo,
+	)
+
+	if err != nil {
+		rt.baseLogger.Error("InsertMessage: %w", err)
+
+		if err = rt.removeFile(w, *url); err != nil { // Issue Internal Server Error
+			return nil, err
+		}
+
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil, err
+	}
+
+	return message, nil
+}
+
+// Used internally by:
+// - sendMessage
+// - forwardMessage
+// - commentMessage
+func (rt *_router) _getConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) (*int64, error) {
+	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)
+	if err != nil {
+		rt.sendResponse(w, "Parameter userId must be an int64", http.StatusBadRequest)
+		return nil, err
+	}
+
+	if userId == user.UserId {
+		errMsg := "Sender and receiver are the same"
+		rt.sendResponse(w, errMsg, http.StatusBadRequest)
+		return nil, errors.New(errMsg)
+	}
+
+	isValid, err := rt.db.IsUserById(userId)
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsUserById: %w", err)
+		return nil, err
+	}
+
+	if !isValid {
+		errMsg := fmt.Sprintf("User %d not found", userId)
+		rt.sendResponse(w, errMsg, http.StatusNotFound)
+		return nil, errors.New(errMsg)
+	}
+
+	conversationId, err := rt.db.GetConversation(user.UserId, userId)
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetConversation: %w", err)
+		return nil, err
+	}
+
+	if conversationId == nil {
+		conversationId, err = rt.db.CreateConversation(user.UserId, userId)
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetStatus: %v", err)
-			return
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("CreateConversation: %w", err)
+			return nil, err
 		}
-
-		sendResponse(w, struct {
-			Status []database.Status `json:"status"`
-		}{Status: status}, http.StatusOK)
 	}
+
+	return conversationId, err
 }
 
-func (rt *_router) addReaction(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	emoji, err := validateEmoji(w, r)
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(sender, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if r, err := rt.db.GetReaction(msg, sender); errors.Is(err, sql.ErrNoRows) {
-		if _, err = rt.db.AddReaction(emoji, msg, sender); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("AddReaction: %w", err)
-		} else if r, err = rt.db.GetReaction(msg, sender); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetReaction: %w", err)
-		} else {
-			sendResponse(w, *r, http.StatusCreated)
-		}
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetReaction: %w", err)
-	} else if r.Emoji == emoji {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-	} else if _, err = rt.db.UpdateReaction(emoji, msg, sender); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("UpdateReaction: %w", err)
-	} else if r, err = rt.db.GetReaction(msg, sender); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetReaction: %w", err)
-	} else {
-		sendResponse(w, *r, http.StatusCreated)
-	}
-}
-
-func (rt *_router) deleteReaction(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, sender int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(sender, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if _, err := rt.db.GetReaction(msg, sender); errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DeleteReaction: %w", err)
-	} else if _, err := rt.db.DeleteReaction(msg, sender); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DeleteReaction: %w", err)
-	} else {
-		sendResponse(w, nil, http.StatusNoContent)
-	}
-}
-
-func (rt *_router) getReactions(
-	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user int64,
-) {
-	msg, err := validateParameterInt64(w, ps, "messageId")
-	if err != nil {
-		return
-	}
-
-	m, err := rt.db.GetMessage(msg)
-	if errors.Is(err, sql.ErrNoRows) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	} else if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-	} else if yes, err := rt.db.IsMember(user, m.Conversation); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	} else if !yes {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	} else if reactions, err := rt.db.GetReactions(msg); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetReactions: %w", err)
-	} else {
-		sendResponse(w, struct {
-			Reactions []database.Reaction
-		}{Reactions: reactions}, http.StatusOK)
-	}
-}

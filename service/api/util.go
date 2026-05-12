@@ -5,12 +5,25 @@ import (
 	"net/http"
 )
 
-func sendResponse(w http.ResponseWriter, v any, s int) {
+func (rt *_router) sendResponse(w http.ResponseWriter, content any, status int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(s)
-	if v != nil {
-		if err := json.NewEncoder(w).Encode(v); err != nil {
-			http.Error(w, "Internal Sever Error", http.StatusInternalServerError)
+	w.WriteHeader(status)
+
+	if content == nil {
+		return
+	}
+
+	if s, ok := content.(string); ok {
+		content = struct {
+			Error string `json:"error"`
+		}{
+			Error: s,
 		}
+	}
+
+	err := json.NewEncoder(w).Encode(content)
+	if err != nil {
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("json.NewEncoder: %w", err)
 	}
 }

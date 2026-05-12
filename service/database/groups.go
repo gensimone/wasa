@@ -3,43 +3,61 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"os"
 	"time"
 
 	"github.com/gensimone/WASA-project/service/globaltime"
 )
 
-func (db *appdbimpl) SetGroupName(id int64, name string) (sql.Result, error) {
-	return db.c.Exec(`UPDATE groups SET name = ? WHERE id = ?`, name, id)
+// Sets the group identified by the group id with the specified group name.
+func (db *appdbimpl) SetGroupName(groupId int64, name string) (sql.Result, error) {
+	return db.c.Exec(
+		`UPDATE groups SET name = ? WHERE conversation_id = ?`,
+		name, groupId,
+	)
 }
 
-func (db *appdbimpl) SetGroupPhoto(id int64, photo os.File) (sql.Result, error) {
-	return db.c.Exec(`UPDATE groups SET photo = ? WHERE id = ?`, photo, id)
+// Sets the photo (URL) of the group identified by the specified group id.
+func (db *appdbimpl) SetGroupPhotoUrl(groupId int64, photoUrl string) (sql.Result, error) {
+	return db.c.Exec(
+		`UPDATE groups SET photo_url = ? WHERE conversation_id = ?`,
+		photoUrl, groupId,
+	)
 }
 
-func (db *appdbimpl) IsFounder(conv int64, user int64) (bool, error) {
-	var founder int64
+// Returns true if the user identified by the user id is the founder of the group
+// identified by the group id.
+func (db *appdbimpl) IsFounder(conversationId int64, userId int64) (bool, error) {
+	var founderId int64
 	err := db.c.QueryRow(
-		`SELECT founder FROM groups WHERE conversation = ?`, conv,
-	).Scan(&founder)
+		`SELECT founder_id FROM groups WHERE conversation_id = ?`,
+		conversationId,
+	).Scan(&founderId)
 
-	return err == nil && founder == user, err
+	return err == nil && founderId == userId, err
 }
 
-func (db *appdbimpl) GroupExists(founder int64, name string) (bool, error) {
-	var conv int64
-	if err := db.c.QueryRow(
-		`SELECT conversation FROM groups WHERE founder = ? AND name = ?`, founder, name,
-	).Scan(&conv); errors.Is(err, sql.ErrNoRows) {
+// Returns true if a group with the specified founder id and name exists,
+// otherwise returns false.
+func (db *appdbimpl) GroupExists(founderId int64, name string) (bool, error) {
+	var dummy int64
+	err := db.c.QueryRow(
+		`SELECT 1 FROM groups WHERE founder_id = ? AND name = ?`,
+		founderId, name,
+	).Scan(&dummy)
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
 		return false, nil
-	} else if err != nil {
+	case err != nil:
 		return false, err
-	} else {
+	default:
 		return true, nil
 	}
 }
 
-func (db *appdbimpl) CreateGroup(founder int64, name string, photo *os.File) (*Group, error) {
+// Creates a new record in the groups table with the specified parameters and returns
+// a Group struct that describes the created record.
+func (db *appdbimpl) CreateGroup(founderId int64, name string, photoUrl string) (*Group, error) {
 	tx, err := db.GetTransaction()
 	if err != nil {
 		return nil, err
@@ -50,23 +68,24 @@ func (db *appdbimpl) CreateGroup(founder int64, name string, photo *os.File) (*G
 		return nil, err
 	}
 
-	conv, err := res.LastInsertId()
+	conversationId, err := res.LastInsertId()
 	if err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO userConversations (conversation, user) VALUES (?, ?)`, conv, founder,
+		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
+		conversationId, founderId,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	timestamp := globaltime.Now().Format(time.DateTime)
+	createdAt := globaltime.Now().Format(time.DateTime)
 	_, err = tx.Exec(
-		`INSERT INTO groups (conversation, founder, name, photo, timestamp) VALUES (?, ?, ?, ?, ?)`,
-		conv, founder, name, photo, timestamp,
+		`INSERT INTO groups (conversation_id, founder_id, name, photo_url, created_at) VALUES (?, ?, ?, ?, ?)`,
+		conversationId, founderId, name, photoUrl, createdAt,
 	)
 	if err != nil {
 		return nil, err
@@ -77,27 +96,40 @@ func (db *appdbimpl) CreateGroup(founder int64, name string, photo *os.File) (*G
 	}
 
 	return &Group{
-		Conversation: conv,
-		Founder:      founder,
-		Name:         name,
-		Photo:        photo,
-		Timestamp:    timestamp,
+		ConversationId: conversationId,
+		FounderId:      founderId,
+		Name:           name,
+		PhotoUrl:       photoUrl,
+		CreatedAt:      createdAt,
 	}, nil
 }
 
-func (db *appdbimpl) GetGroupById(conv int64) (*Group, error) {
-	var g Group
+// Returns the group object associated with the specified group id.
+func (db *appdbimpl) GetGroupById(conversationId int64) (*Group, error) {
+	var group Group
 	if err := db.c.QueryRow(
-		`SELECT conversation, founder, name, photo, timestamp FROM groups WHERE conversation = ?`, conv,
-	).Scan(&g.Conversation, &g.Founder, &g.Name, &g.Photo, &g.Timestamp); err != nil {
+		`SELECT conversation_id, founder_id, name, photo_url, created_at FROM groups WHERE conversation_id = ?`,
+		conversationId,
+	).Scan(
+		&group.ConversationId,
+		&group.FounderId,
+		&group.Name,
+		&group.PhotoUrl,
+		&group.CreatedAt,
+	); err != nil {
 		return nil, err
 	}
 
-	return &g, nil
+	return &group, nil
 }
 
-func (db *appdbimpl) IsGroup(conv int64) (bool, error) {
-	rows, err := db.c.Query(`SELECT conversation FROM groups WHERE conversation = ?`, conv)
+// Returns true if the specified conversation id identify a group in the groups table,
+// otherwise returns false.
+func (db *appdbimpl) IsGroup(conversationId int64) (bool, error) {
+	rows, err := db.c.Query(
+		`SELECT conversation_id FROM groups WHERE conversation_id = ?`,
+		conversationId,
+	)
 	if err != nil {
 		return false, err
 	}
