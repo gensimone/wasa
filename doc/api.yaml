@@ -39,17 +39,19 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            example:
-              type: object
+          multipart/form-data:
             schema:
-              description: Group name and photo URL
+              description: The group data
               type: object
               properties:
                 name:
                   $ref: "#/components/schemas/Name"
-                photoUrl:
-                  $ref: "#/components/schemas/PhotoUrl"
+                photo:
+                  description: Photo
+                  type: string
+                  format: binary
+                  minLength: 1
+                  maxLength: 1014
       responses:
         '201':
           description: Created
@@ -465,7 +467,7 @@ paths:
                 description: Conversation messages
                 type: object
                 properties:
-                  messages:
+                  messageIds:
                     description: Message ids
                     type: array
                     minItems: 1
@@ -508,7 +510,7 @@ paths:
                 description: Users of conversation
                 type: object
                 properties:
-                  members:
+                  userIds:
                     description: User ids
                     type: array
                     minItems: 1
