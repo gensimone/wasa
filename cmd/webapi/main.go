@@ -97,6 +97,13 @@ func run() error {
 		return fmt.Errorf("creating AppDatabase: %w", err)
 	}
 
+	// Uploads (images, audios, etc..)
+	err = os.MkdirAll(cfg.Uploads, 0755)
+	if err != nil {
+		logger.WithError(err).Error("error creating upload directory")
+		return fmt.Errorf("creating upload directory: %w", err)
+	}
+
 	// Start (main) API server
 	logger.Info("initializing API server")
 
@@ -113,6 +120,7 @@ func run() error {
 	apirouter, err := api.New(api.Config{
 		Logger:   logger,
 		Database: db,
+		Uploads: cfg.Uploads,
 	})
 	if err != nil {
 		logger.WithError(err).Error("error creating the API server instance")
