@@ -45,7 +45,6 @@ type AppDatabase interface {
 
 	// Attachments.
 	AddAttachment(url string, mediaType MediaType) (*int64, error)
-	DeleteAttachment(attachmentId int64) (sql.Result, error)
 	GetAttachment(attachmentId int64) (*Attachment, error)
 
 	// Status.

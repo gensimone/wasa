@@ -5,58 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gensimone/WASA-project/service/database"
 	"github.com/julienschmidt/httprouter"
 )
 
-// To process the operation IDs for addReaction, removeReaction, and getReactions,
-// we first need to verify that the authenticated user has the privileges to
-// perform these operations. This function accomplishes exactly that.
-//
-// Actions performed by this function:
-// - Check message validity.
-// - Check user privileges for the message.
-func (rt *_router) _authorizeReactionOperation(
-	w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User,
-) (*database.Message, error) {
-	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
-		return nil, err
-	}
-
-	message, err := rt.db.GetMessage(messageId)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		http.Error(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
-		return nil, err
-	case err != nil:
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-		return nil, err
-	}
-
-	isMember, err := rt.db.IsMember(user.UserId, message.ConversationId)
-	switch {
-	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-		return nil, err
-	case !isMember:
-		rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
-		return nil, err
-	}
-
-	return message, nil
-}
-
 // operationId: addReaction
 func (rt *_router) addReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt._authorizeReactionOperation(w, r, ps, user)
+	message, err := rt.authorizeMessageAccess(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -106,7 +64,7 @@ func (rt *_router) addReaction(
 func (rt *_router) deleteReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt._authorizeReactionOperation(w, r, ps, user)
+	message, err := rt.authorizeMessageAccess(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -138,7 +96,7 @@ func (rt *_router) deleteReaction(
 func (rt *_router) getReactions(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt._authorizeReactionOperation(w, r, ps, user)
+	message, err := rt.authorizeMessageAccess(w, ps, user)
 	if err != nil {
 		return
 	}

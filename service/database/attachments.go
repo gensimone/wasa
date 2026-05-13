@@ -1,7 +1,5 @@
 package database
 
-import "database/sql"
-
 // Adds a new attachment with the specified url and media type and returns
 // the attachment id of the created record.
 func (db *appdbimpl) AddAttachment(url string, mediaType MediaType) (*int64, error) {
@@ -16,14 +14,6 @@ func (db *appdbimpl) AddAttachment(url string, mediaType MediaType) (*int64, err
 	} else {
 		return &attachmentId, nil
 	}
-}
-
-// Deletes the attachment identified by the specified attachment id.
-func (db *appdbimpl) DeleteAttachment(attachmentId int64) (sql.Result, error) {
-	return db.c.Exec(
-		`DELETE FROM attachments WHERE attachment_id = ?`,
-		attachmentId,
-	)
 }
 
 // Returns the attachment associated with the specified attachment id.
