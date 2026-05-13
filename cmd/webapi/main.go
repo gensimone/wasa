@@ -120,7 +120,7 @@ func run() error {
 	apirouter, err := api.New(api.Config{
 		Logger:   logger,
 		Database: db,
-		Uploads: cfg.Uploads,
+		Uploads:  cfg.Uploads,
 	})
 	if err != nil {
 		logger.WithError(err).Error("error creating the API server instance")
