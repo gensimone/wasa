@@ -19,7 +19,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps
 
 	type data struct {
 		ConversationId int64 `json:"conversationId"`
-		IsGroup 	   bool  `json:"isGroup"`
+		IsGroup        bool  `json:"isGroup"`
 	}
 
 	var conversations []data
@@ -33,7 +33,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps
 
 		conversations = append(conversations, data{
 			ConversationId: conversationId,
-			IsGroup: isGroup,
+			IsGroup:        isGroup,
 		})
 	}
 

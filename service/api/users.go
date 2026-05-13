@@ -98,18 +98,19 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		if _, err := rt.db.SetMyUserName(user.UserId, *name); err != nil {
+		_, err := rt.db.SetMyUserName(user.UserId, *name)
+		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("SetMyUserName: %w", user.UserId, err)
 			return
 		}
 
-		rt.sendResponse(w, name, http.StatusOK)
-
+		rt.sendResponse(w, struct {
+			Name string `json:"name"`
+		}{Name: *name}, http.StatusOK)
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GetUserByName: %w", user.UserId, err)
-
 	default:
 		rt.sendResponse(w, "User name already taken", http.StatusConflict)
 	}
@@ -140,7 +141,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	if _, err := rt.db.SetMyPhotoUrl(user.UserId, *photoUrl); err != nil {
 		rt.baseLogger.Errorf("SetMyPhotoUrl: %w", user.UserId, err)
 
-		if err = rt.removeFile(w, *photoUrl); err != nil { // Issue Internal Server Error
+		if err = rt.removeFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
 			return
 		}
 
@@ -148,7 +149,9 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	rt.sendResponse(w, photoUrl, http.StatusOK)
+	rt.sendResponse(w, struct {
+		PhotoUrl string `json:"photoUrl"`
+	}{PhotoUrl: *photoUrl}, http.StatusOK)
 }
 
 // operationId: doLogin

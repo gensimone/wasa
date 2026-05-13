@@ -11,4 +11,5 @@ import (
 // operationId: getAttachment
 func (rt *_router) getAttachment(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
-) {}
+) {
+}

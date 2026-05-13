@@ -13,6 +13,7 @@ func (rt *_router) sendResponse(w http.ResponseWriter, content any, status int) 
 		return
 	}
 
+	// For semplicity, string are treated as errors.
 	if s, ok := content.(string); ok {
 		content = struct {
 			Error string `json:"error"`

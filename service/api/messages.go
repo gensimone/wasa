@@ -93,7 +93,11 @@ func (rt *_router) commentMessage(
 		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
 		rt.baseLogger.Errorf("IsMember: %w", err)
 	case isMember:
-		rt._insertMessage(w, r, user.UserId, message.ConversationId, &message.MessageId)
+		comment, err := rt._insertMessage(w, r, user.UserId, message.ConversationId, &message.MessageId)
+		if err != nil {
+			return
+		}
+		rt.sendResponse(w, comment, http.StatusCreated)
 	default:
 		rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
 	}
@@ -127,6 +131,7 @@ func (rt *_router) deleteMessage(
 		return
 	}
 
+	// NOTE: We must be the sender of the message in order to delete the message.
 	if message.SenderId != user.UserId {
 		rt.sendResponse(w, "Not athorized to delete message", http.StatusUnauthorized)
 		return
@@ -169,8 +174,15 @@ func (rt *_router) getMessage(
 		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
 		rt.baseLogger.Errorf("IsMember: %w", err)
 		return
-	case isMember && message.SenderId != user.UserId:
-		rt._updateStatus(w, messageId, user.UserId)
+	case isMember:
+		// NOTE: We are authorized to read the message.
+		// If we are not the message sender we must update the message status
+		// so that the sender of that message can see that we received the message.
+		// Of course, if the message was already accessed by this user, the status
+		// of the message remains the same.
+		if message.SenderId != user.UserId {
+			rt._updateStatus(w, messageId, user.UserId)
+		}
 	default:
 		rt.sendResponse(w, "Not authorized to read message", http.StatusUnauthorized)
 		return
@@ -209,18 +221,18 @@ func (rt *_router) _insertMessage(
 	mediaType := r.FormValue("mediaType")
 
 	switch {
-		case len(files) == 0 && mediaType != "":
-			errMsg := "Found media type but no file was provided"
-			rt.sendResponse(w, errMsg, http.StatusBadRequest)
-			return nil, errors.New(errMsg)
-		case len(files) > 0 && mediaType == "":
-			errMsg := "Found file but no media type was provided"
-			rt.sendResponse(w, errMsg, http.StatusBadRequest)
-			return nil, errors.New(errMsg)
-		case len(files) > 0 && !database.IsValidMediaType(mediaType):
-			errMsg := fmt.Sprintf("Invalid media type: %s", mediaType)
-			rt.sendResponse(w, errMsg, http.StatusBadRequest)
-			return nil, errors.New(errMsg)
+	case len(files) == 0 && mediaType != "":
+		errMsg := "Found media type but no file was provided"
+		rt.sendResponse(w, errMsg, http.StatusBadRequest)
+		return nil, errors.New(errMsg)
+	case len(files) > 0 && mediaType == "":
+		errMsg := "Found file but no media type was provided"
+		rt.sendResponse(w, errMsg, http.StatusBadRequest)
+		return nil, errors.New(errMsg)
+	case len(files) > 0 && !database.IsValidMediaType(mediaType):
+		errMsg := fmt.Sprintf("Invalid media type: %s", mediaType)
+		rt.sendResponse(w, errMsg, http.StatusBadRequest)
+		return nil, errors.New(errMsg)
 	}
 
 	url, err := rt.uploadFile(w, r, "file")
@@ -232,7 +244,7 @@ func (rt *_router) _insertMessage(
 	if err != nil {
 		rt.baseLogger.Error("AddAttachment: %w", err)
 
-		if err = rt.removeFile(w, *url); err != nil { // Issue Internal Server Error
+		if err = rt.removeFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
 			return nil, err
 		}
 
@@ -253,7 +265,7 @@ func (rt *_router) _insertMessage(
 	if err != nil {
 		rt.baseLogger.Error("InsertMessage: %w", err)
 
-		if err = rt.removeFile(w, *url); err != nil { // Issue Internal Server Error
+		if err = rt.removeFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
 			return nil, err
 		}
 
@@ -312,4 +324,3 @@ func (rt *_router) _getConversation(w http.ResponseWriter, r *http.Request, ps h
 
 	return conversationId, err
 }
-

@@ -47,7 +47,9 @@ func (rt *_router) updateStatus(
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("UpdateStatus: %w", err)
+			return
 		}
+		rt.sendResponse(w, nil, http.StatusNoContent)
 	default:
 		rt.sendResponse(w, "Not authorized to read message", http.StatusUnauthorized)
 	}
@@ -74,11 +76,17 @@ func (rt *_router) getStatus(
 		return
 	}
 
+	// NOTE:
+	// We can only access the status of our messages.
 	if message.SenderId != user.UserId {
 		rt.sendResponse(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
+	// NOTE:
+	// Even though we are the authors of the message, we must be inside the message conversation
+	// to be able to read the message status. For example, if we have been kicked out of a group
+	// we should not be able to read the status of that group's messages
 	isMember, err := rt.db.IsMember(user.UserId, message.ConversationId)
 	switch {
 	case err != nil:

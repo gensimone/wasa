@@ -65,7 +65,9 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	rt.sendResponse(w, name, http.StatusOK)
+	rt.sendResponse(w, struct {
+		Name string `json:"name"`
+	}{Name: *name}, http.StatusOK)
 }
 
 // operationId: setGroupPhoto
@@ -98,7 +100,9 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	rt.sendResponse(w, photoUrl, http.StatusOK)
+	rt.sendResponse(w, struct {
+		PhotoUrl string `json:"photoUrl"`
+	}{PhotoUrl: *photoUrl}, http.StatusOK)
 }
 
 // operationId: deleteGroup
@@ -277,7 +281,7 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GroupExists: %w", err)
 	case exists:
-		rt.sendResponse(w, "Group name already used", http.StatusBadRequest)
+		rt.sendResponse(w, "Group name already used", http.StatusConflict)
 	default:
 		photoUrl, err := rt.uploadFile(w, r, "photo")
 		if err != nil {
@@ -288,7 +292,7 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 		if err != nil {
 			rt.baseLogger.Errorf("CreateGroup: %w", err)
 
-			if err = rt.removeFile(w, *photoUrl); err != nil { // Issue Internal Server Error
+			if err = rt.removeFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
 				return
 			}
 

@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"errors"
-
 )
 
 // Returns the user ids associated with the specified conversation id.

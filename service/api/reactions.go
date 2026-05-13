@@ -50,10 +50,12 @@ func (rt *_router) addReaction(
 // operationId: deleteReaction
 func (rt *_router) deleteReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
-) {}
+) {
+}
 
 // TODO: implement this
 // operationId: getReactions
 func (rt *_router) getReactions(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
-) {}
+) {
+}
