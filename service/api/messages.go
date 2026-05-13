@@ -63,6 +63,12 @@ func (rt *_router) forwardMessage(
 		nil,
 	)
 
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("InsertMessage: %w", err)
+		return
+	}
+
 	rt.sendResponse(w, fmessage, http.StatusCreated)
 }
 
@@ -181,7 +187,10 @@ func (rt *_router) getMessage(
 		// Of course, if the message was already accessed by this user, the status
 		// of the message remains the same.
 		if message.SenderId != user.UserId {
-			rt._updateStatus(w, messageId, user.UserId)
+			err = rt._updateStatus(w, messageId, user.UserId)
+			if err != nil {
+				return
+			}
 		}
 	default:
 		rt.sendResponse(w, "Not authorized to read message", http.StatusUnauthorized)
@@ -218,19 +227,21 @@ func (rt *_router) _insertMessage(
 		return nil, errors.New(errMsg)
 	}
 
-	mediaType := r.FormValue("mediaType")
+	mediaType := database.MediaType(r.FormValue("mediaType"))
+	err = database.IsValidMediaType(mediaType)
+	if err != nil {
+		rt.sendResponse(w, err.Error(), http.StatusBadRequest)
+		return nil, err
+	}
 
 	switch {
 	case len(files) == 0 && mediaType != "":
-		errMsg := "Found media type but no file was provided"
+		errMsg := "File was not provided, but mediaType was"
 		rt.sendResponse(w, errMsg, http.StatusBadRequest)
 		return nil, errors.New(errMsg)
+
 	case len(files) > 0 && mediaType == "":
-		errMsg := "Found file but no media type was provided"
-		rt.sendResponse(w, errMsg, http.StatusBadRequest)
-		return nil, errors.New(errMsg)
-	case len(files) > 0 && !database.IsValidMediaType(mediaType):
-		errMsg := fmt.Sprintf("Invalid media type: %s", mediaType)
+		errMsg := "File was provided, but mediaType was not"
 		rt.sendResponse(w, errMsg, http.StatusBadRequest)
 		return nil, errors.New(errMsg)
 	}
@@ -240,7 +251,7 @@ func (rt *_router) _insertMessage(
 		return nil, err
 	}
 
-	attachmentId, err := rt.db.AddAttachment(*url, database.MediaType(mediaType))
+	attachmentId, err := rt.db.AddAttachment(*url, mediaType)
 	if err != nil {
 		rt.baseLogger.Error("AddAttachment: %w", err)
 
@@ -280,7 +291,7 @@ func (rt *_router) _insertMessage(
 // - sendMessage
 // - forwardMessage
 // - commentMessage
-func (rt *_router) _getConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) (*int64, error) {
+func (rt *_router) _getConversation(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) (*int64, error) {
 	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)
 	if err != nil {
 		rt.sendResponse(w, "Parameter userId must be an int64", http.StatusBadRequest)

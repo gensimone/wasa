@@ -31,7 +31,7 @@ func (rt *_router) uploadFile(w http.ResponseWriter, r *http.Request, key string
 
 	file, _, err := r.FormFile(key)
 	if err != nil {
-		rt.sendResponse(w, fmt.Sprint("Missing '%s'", key), http.StatusBadRequest)
+		rt.sendResponse(w, fmt.Sprintf("Missing %s field", key), http.StatusBadRequest)
 		return nil, err
 	}
 

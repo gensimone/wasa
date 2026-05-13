@@ -32,6 +32,7 @@ func (rt *_router) updateStatus(
 		return
 	}
 
+	// NOTE: We must be the receiver of the message in order to update its status.
 	if message.SenderId == user.UserId {
 		rt.sendResponse(w, "Bad Request", http.StatusBadRequest)
 		return

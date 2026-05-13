@@ -48,7 +48,8 @@ func (db *appdbimpl) GetReaction(messageId int64, senderId int64) (*Reaction, er
 }
 
 // Adds a reaction to the message specified by the message id with the specified parameters.
-func (db *appdbimpl) AddReaction(emojiCode string, messageId int64, senderId int64) (sql.Result, error) {
+func (db *appdbimpl) AddReaction(emojiCode EmojiCode, messageId int64, senderId int64) (sql.Result, error) {
+	// FIXME: We should check the validity of emojiCode here instead of service/api/*
 	return db.c.Exec(
 		`INSERT INTO reactions (emoji_code, message_id, sender_id) VALUES (?, ?, ?)`,
 		emojiCode, messageId, senderId,
@@ -64,7 +65,8 @@ func (db *appdbimpl) DeleteReaction(messageId int64, senderId int64) (sql.Result
 }
 
 // Updates the reaction specified by the message and user id with the specified emoji code.
-func (db *appdbimpl) UpdateReaction(emojiCode string, messageId int64, senderId int64) (sql.Result, error) {
+func (db *appdbimpl) UpdateReaction(emojiCode EmojiCode, messageId int64, senderId int64) (sql.Result, error) {
+	// FIXME: We should check the validity of emojiCode here instead of service/api/*
 	return db.c.Exec(
 		`UPDATE reactions SET emojiCode = ? WHERE message_id = ? AND sender_id = ?`,
 		emojiCode, messageId, senderId,

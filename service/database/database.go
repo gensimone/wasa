@@ -56,9 +56,9 @@ type AppDatabase interface {
 	// Reactions.
 	GetReactions(int64) ([]Reaction, error)
 	GetReaction(int64, int64) (*Reaction, error)
-	AddReaction(string, int64, int64) (sql.Result, error)
+	AddReaction(EmojiCode, int64, int64) (sql.Result, error)
 	DeleteReaction(int64, int64) (sql.Result, error)
-	UpdateReaction(string, int64, int64) (sql.Result, error)
+	UpdateReaction(EmojiCode, int64, int64) (sql.Result, error)
 }
 
 type appdbimpl struct {

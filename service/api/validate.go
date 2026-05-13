@@ -93,21 +93,30 @@ func (rt *_router) checkUserId(w http.ResponseWriter, r *http.Request) (*int64, 
 	return &body.UserId, err
 }
 
-func (rt *_router) checkPhotoUrl(w http.ResponseWriter, r *http.Request) (*string, error) {
+func (rt *_router) checkEmojiCode(w http.ResponseWriter, r *http.Request) (*database.EmojiCode, error) {
 	body := struct {
-		PhotoUrl string `json:"photoUrl"`
+		EmojiCode string `json:"emojiCode"`
 	}{}
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		rt.sendResponse(
 			w,
-			"Invalid format. Field 'photoUrl' of type string is required",
+			"Invalid format. Field 'emojiCode' of type string is required",
 			http.StatusBadRequest,
 		)
+		return nil, err
 	}
 
-	return &body.PhotoUrl, err
+	emojiCode := database.EmojiCode(body.EmojiCode)
+
+	err = database.IsValidEmojiCode(emojiCode)
+	if err != nil {
+		rt.sendResponse(w, err.Error(), http.StatusBadRequest)
+		return nil, err
+	}
+
+	return &emojiCode, nil
 }
 
 func (rt *_router) checkMessageId(w http.ResponseWriter, r *http.Request) (*int64, error) {
@@ -145,7 +154,7 @@ func (rt *_router) checkName(w http.ResponseWriter, r *http.Request) (*string, e
 	if !nameRegex.MatchString(body.Name) {
 		errMsg := "Invalid name format"
 		rt.sendResponse(w, errMsg, http.StatusBadRequest)
-		return nil, fmt.Errorf(errMsg)
+		return nil, errors.New(errMsg)
 	}
 
 	return &body.Name, nil
