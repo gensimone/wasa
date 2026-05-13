@@ -1332,6 +1332,4 @@ components:
     EmojiCode:
       description: Emoji code
       type: string
-      pattern: '^.*$'
-      minLength: 1
-      maxLength: 1024
+      enum: [like, love, laugh, sad, angry, thumb]
