@@ -9,8 +9,7 @@ type AppDatabase interface {
 	// Users.
 	SetMyUserName(int64, string) (sql.Result, error)
 	SetMyPhotoUrl(int64, string) (sql.Result, error)
-	DoLogin(string) (*int64, error)
-	CreateUser(string) (*int64, error)
+	CreateUser(string, string) (*int64, error)
 	GetUserIds() ([]int64, error)
 	GetUsers() ([]User, error)
 	GetUserById(int64) (*User, error)

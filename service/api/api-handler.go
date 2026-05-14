@@ -1,12 +1,19 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+	"path/filepath"
+)
 
 func (rt *_router) Handler() http.Handler {
+	// Serve media
+	rt.router.ServeFiles(filepath.Join(rt.media, "*filepath"), http.Dir(rt.rootMedia))
+
 	rt.router.GET("/context", rt.wrap(rt.getContextReply))
 	rt.router.GET("/liveness", rt.liveness)
 
 	// Groups.
+	// TODO: Implement removePhoto (which sets the default one).
 	rt.router.POST("/groups", rt.authorize(rt.createGroup))
 	rt.router.POST("/groups/:groupId", rt.authorize(rt.addToGroup))
 	rt.router.GET("/groups/:groupId", rt.authorize(rt.getGroup))
@@ -42,6 +49,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/messages/:messageId", rt.authorize(rt.deleteMessage))
 
 	// Users.
+	// TODO: Implement removePhoto (which sets the default one).
 	rt.router.GET("/users", rt.authorize(rt.getUsers))
 	rt.router.GET("/users/:userId", rt.authorize(rt.getUserById))
 	rt.router.DELETE("/users/:userId", rt.authorize(rt.deleteUser))

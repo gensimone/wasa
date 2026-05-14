@@ -21,30 +21,11 @@ func (db *appdbimpl) SetMyPhotoUrl(userId int64, photoUrl string) (sql.Result, e
 	)
 }
 
-// Logs in the user with the specified name if exists, otherwise the function creates
-// the user and returns its user id.
-func (db *appdbimpl) DoLogin(name string) (*int64, error) {
-	var userId int64
-	err := db.c.QueryRow(
-		`SELECT user_id FROM users WHERE name = ?`,
-		name,
-	).Scan(&userId)
-
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return db.CreateUser(name)
-	case err == nil:
-		return &userId, nil
-	default:
-		return nil, err
-	}
-}
-
 // Creates a new user with the specified name and returns its user id.
-func (db *appdbimpl) CreateUser(name string) (*int64, error) {
+func (db *appdbimpl) CreateUser(name string, photoUrl string) (*int64, error) {
 	if res, err := db.c.Exec(
 		`INSERT INTO users (name, photo_url) VALUES (?, ?)`,
-		name, nil,
+		name, photoUrl,
 	); err != nil {
 		return nil, err
 	} else if userId, err := res.LastInsertId(); err != nil {

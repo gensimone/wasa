@@ -87,7 +87,7 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	photoUrl, err := rt.uploadFile(w, r, "photo")
+	photoUrl, err := rt.uploadMediaFile(w, r, "photo")
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("uploadFile: %w", user.UserId, err)
@@ -100,6 +100,8 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
+	// FIXME: Here we must delete the old photo.
+	//        Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
 	}{PhotoUrl: *photoUrl}, http.StatusOK)
@@ -283,7 +285,8 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 	case exists:
 		rt.sendResponse(w, "Group name already used", http.StatusConflict)
 	default:
-		photoUrl, err := rt.uploadFile(w, r, "photo")
+		// FIXME: User can provide a null photo and that should be admitted.
+		photoUrl, err := rt.uploadMediaFile(w, r, "photo")
 		if err != nil {
 			return
 		}
@@ -292,7 +295,7 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 		if err != nil {
 			rt.baseLogger.Errorf("CreateGroup: %w", err)
 
-			if err = rt.removeFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
+			if err = rt.removeMediaFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
 				return
 			}
 

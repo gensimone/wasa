@@ -246,7 +246,7 @@ func (rt *_router) _insertMessage(
 		return nil, errors.New(errMsg)
 	}
 
-	url, err := rt.uploadFile(w, r, "file")
+	url, err := rt.uploadMediaFile(w, r, "file")
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func (rt *_router) _insertMessage(
 	if err != nil {
 		rt.baseLogger.Error("AddAttachment: %w", err)
 
-		if err = rt.removeFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
+		if err = rt.removeMediaFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
 			return nil, err
 		}
 
@@ -276,7 +276,7 @@ func (rt *_router) _insertMessage(
 	if err != nil {
 		rt.baseLogger.Error("InsertMessage: %w", err)
 
-		if err = rt.removeFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
+		if err = rt.removeMediaFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
 			return nil, err
 		}
 

@@ -35,10 +35,10 @@ func (rt *_router) authorize(
 
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			rt.sendResponse(w, "Not Found", http.StatusNotFound)
+			rt.sendResponse(w, fmt.Sprintf("User %d not found", userId), http.StatusNotFound)
 		case err != nil:
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetUserById (user_id: %d): %w", userId, err)
+			rt.baseLogger.Errorf("GetUserById: %w", userId, err)
 		default:
 			fn(w, r, ps, *user)
 		}

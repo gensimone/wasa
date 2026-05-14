@@ -133,15 +133,18 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	photoUrl, err := rt.uploadFile(w, r, "photo")
+	photoUrl, err := rt.uploadMediaFile(w, r, "photo")
 	if err != nil {
 		return
 	}
 
+	// NOTE: After setting the new
+	// oldPhotoUrl := user.PhotoUrl
+
 	if _, err := rt.db.SetMyPhotoUrl(user.UserId, *photoUrl); err != nil {
 		rt.baseLogger.Errorf("SetMyPhotoUrl: %w", user.UserId, err)
 
-		if err = rt.removeFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
+		if err = rt.removeMediaFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
 			return
 		}
 
@@ -149,6 +152,8 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
+	// FIXME: Here we must delete the old photo.
+	//        Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
 	}{PhotoUrl: *photoUrl}, http.StatusOK)
@@ -161,11 +166,22 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 
-	userId, err := rt.db.DoLogin(*name)
-	if err != nil {
+	user, err := rt.db.GetUserByName(*name)
+	var userId *int64
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		userId, err = rt.db.CreateUser(*name, rt.defaultUserPhoto)
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetUserByName: %w", err)
+			return
+		}
+	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DoLogin: %w", err)
+		rt.baseLogger.Errorf("GetUserByName: %w", err)
 		return
+	default:
+		userId = &user.UserId
 	}
 
 	rt.sendResponse(w, struct {

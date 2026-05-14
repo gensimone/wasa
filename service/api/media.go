@@ -10,19 +10,23 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func (rt *_router) removeFile(w http.ResponseWriter, path string) error {
-	err := os.Remove(path)
-	if err == nil {
+// Remove the provided file from the filesystem.
+func (rt *_router) removeMediaFile(w http.ResponseWriter, path string) error {
+	filename := filepath.Base(path)
+	fullpath := filepath.Join(rt.rootMedia, filename)
+	// FIXME: Check that fullpath is actually a file.
+
+	err := os.Remove(fullpath)
+	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("Error deleting %s: %w", path, err)
+		rt.baseLogger.Errorf("Error deleting file %s: %w", fullpath, err)
 	}
 
 	return err
 }
 
-// Uploads the file inside the multipart/form-data of the provided request
-// inside the directory rt.uploads using uuid.NewV4 as filename.
-func (rt *_router) uploadFile(w http.ResponseWriter, r *http.Request, key string) (*string, error) {
+// Upload the provided file from the filesystem.
+func (rt *_router) uploadMediaFile(w http.ResponseWriter, r *http.Request, key string) (*string, error) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		rt.sendResponse(w, "Invalid multipart form", http.StatusBadRequest)
@@ -44,7 +48,7 @@ func (rt *_router) uploadFile(w http.ResponseWriter, r *http.Request, key string
 		return nil, err
 	}
 
-	fullpath := filepath.Join(rt.uploads, filename.String())
+	fullpath := filepath.Join(rt.rootMedia, filename.String())
 
 	dst, err := os.Create(fullpath)
 	if err != nil {
@@ -60,5 +64,6 @@ func (rt *_router) uploadFile(w http.ResponseWriter, r *http.Request, key string
 		return nil, err
 	}
 
-	return &fullpath, nil
+	url := filepath.Join(rt.media, filename.String())
+	return &url, nil
 }

@@ -12,7 +12,12 @@ import (
 type Config struct {
 	Logger   logrus.FieldLogger
 	Database database.AppDatabase
-	Uploads  string
+
+	RootMedia string
+	Media     string
+
+	DefaultUserPhoto  string
+	DefaultGroupPhoto string
 }
 
 type Router interface {
@@ -27,8 +32,17 @@ func New(cfg Config) (Router, error) {
 	if cfg.Database == nil {
 		return nil, errors.New("database is required")
 	}
-	if cfg.Uploads == "" {
-		return nil, errors.New("uploads is required")
+	if cfg.RootMedia == "" {
+		return nil, errors.New("root directory is required")
+	}
+	if cfg.Media == "" {
+		return nil, errors.New("media directory is required")
+	}
+	if cfg.DefaultUserPhoto == "" {
+		return nil, errors.New("default user photo is required")
+	}
+	if cfg.DefaultGroupPhoto == "" {
+		return nil, errors.New("default group photo is required")
 	}
 
 	router := httprouter.New()
@@ -36,10 +50,13 @@ func New(cfg Config) (Router, error) {
 	router.RedirectFixedPath = false
 
 	return &_router{
-		router:     router,
-		baseLogger: cfg.Logger,
-		db:         cfg.Database,
-		uploads:    cfg.Uploads,
+		router:            router,
+		baseLogger:        cfg.Logger,
+		db:                cfg.Database,
+		rootMedia:         cfg.RootMedia,
+		media:             cfg.Media,
+		defaultUserPhoto:  cfg.DefaultUserPhoto,
+		defaultGroupPhoto: cfg.DefaultGroupPhoto,
 	}, nil
 }
 
@@ -47,5 +64,12 @@ type _router struct {
 	router     *httprouter.Router
 	baseLogger logrus.FieldLogger
 	db         database.AppDatabase
-	uploads    string
+
+	// Various path used internally by some API handlers.
+	rootMedia string
+	media     string
+
+	// Default user and group photos.
+	defaultUserPhoto  string
+	defaultGroupPhoto string
 }
