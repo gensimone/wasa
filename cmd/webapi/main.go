@@ -28,17 +28,19 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math/rand"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+
 	"github.com/ardanlabs/conf"
 	"github.com/gensimone/WASA-project/service/api"
 	"github.com/gensimone/WASA-project/service/database"
 	"github.com/gensimone/WASA-project/service/globaltime"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
-	"math/rand"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 // main is the program entry point. The only purpose of this function is to call run() and set the exit code if there is
@@ -78,34 +80,62 @@ func run() error {
 		logger.SetLevel(logrus.InfoLevel)
 	}
 
-	logger.Infof("application initializing")
+	logger.Infof("Application initializing")
 
-	// Start Database
-	logger.Println("initializing database support")
-	dbconn, err := sql.Open("sqlite3", cfg.DB.Filename)
-	if err != nil {
-		logger.WithError(err).Error("error opening SQLite DB")
-		return fmt.Errorf("opening SQLite: %w", err)
+	// Create necessary directories for attachments, photos and db.
+	logger.Info("Creating necessary directories")
+	for _, dir := range []string{cfg.RootMedia, filepath.Dir(cfg.DB)} {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			logger.WithError(err).Errorf("Error creating directory: %s", dir)
+			return fmt.Errorf("Creating directory %s: %w", dir, err)
+		}
 	}
+
+	// Copy default photos for groups and users if necessary.
+	for _, srcPath := range []string{cfg.DefaultUserPhoto, cfg.DefaultGroupPhoto} {
+		filename := filepath.Base(srcPath)
+		dstPath := filepath.Join(cfg.RootMedia, filename)
+
+		_, err = os.Stat(dstPath)
+		switch {
+		case err == nil:
+			continue
+		case os.IsNotExist(err):
+			err = copyFileToDir(srcPath, dstPath)
+			if err == nil {
+				continue
+			}
+		}
+
+		logger.WithError(err).Errorf("Error copying file %s to %s", srcPath, dstPath)
+		return fmt.Errorf("Copying file %s to %s: %w", srcPath, dstPath, err)
+	}
+
+	defaultUserPhoto := filepath.Join(cfg.Media, filepath.Base(cfg.DefaultUserPhoto))
+	defaultGroupPhoto := filepath.Join(cfg.Media, filepath.Base(cfg.DefaultGroupPhoto))
+
+	// Start Database.
+	logger.Println("Initializing database support")
+	dbconn, err := sql.Open("sqlite3", cfg.DB)
+	if err != nil {
+		logger.WithError(err).Error("Error opening SQLite DB")
+		return fmt.Errorf("Opening SQLite: %w", err)
+	}
+
 	defer func() {
-		logger.Debug("database stopping")
+		logger.Debug("Database stopping")
 		_ = dbconn.Close()
 	}()
+
 	db, err := database.New(dbconn)
 	if err != nil {
-		logger.WithError(err).Error("error creating AppDatabase")
-		return fmt.Errorf("creating AppDatabase: %w", err)
-	}
-
-	// Uploads (images, audios, etc..)
-	err = os.MkdirAll(cfg.Uploads, 0755)
-	if err != nil {
-		logger.WithError(err).Error("error creating upload directory")
-		return fmt.Errorf("creating upload directory: %w", err)
+		logger.WithError(err).Error("Error creating AppDatabase")
+		return fmt.Errorf("Creating AppDatabase: %w", err)
 	}
 
 	// Start (main) API server
-	logger.Info("initializing API server")
+	logger.Info("Initializing API server")
 
 	// Make a channel to listen for an interrupt or terminate signal from the OS.
 	// Use a buffered channel because the signal package requires it.
@@ -118,20 +148,23 @@ func run() error {
 
 	// Create the API router
 	apirouter, err := api.New(api.Config{
-		Logger:   logger,
-		Database: db,
-		Uploads:  cfg.Uploads,
+		Logger:            logger,
+		Database:          db,
+		RootMedia:         cfg.RootMedia,
+		Media:             cfg.Media,
+		DefaultUserPhoto:  defaultUserPhoto,
+		DefaultGroupPhoto: defaultGroupPhoto,
 	})
 	if err != nil {
-		logger.WithError(err).Error("error creating the API server instance")
-		return fmt.Errorf("creating the API server instance: %w", err)
+		logger.WithError(err).Error("Error creating the API server instance")
+		return fmt.Errorf("Creating the API server instance: %w", err)
 	}
 	router := apirouter.Handler()
 
 	router, err = registerWebUI(router)
 	if err != nil {
-		logger.WithError(err).Error("error registering web UI handler")
-		return fmt.Errorf("registering web UI handler: %w", err)
+		logger.WithError(err).Error("Error registering web UI handler")
+		return fmt.Errorf("Registering web UI handler: %w", err)
 	}
 
 	// Apply CORS policy
@@ -150,22 +183,22 @@ func run() error {
 	go func() {
 		logger.Infof("API listening on %s", apiserver.Addr)
 		serverErrors <- apiserver.ListenAndServe()
-		logger.Infof("stopping API server")
+		logger.Infof("Stopping API server")
 	}()
 
 	// Waiting for shutdown signal or POSIX signals
 	select {
 	case err := <-serverErrors:
 		// Non-recoverable server error
-		return fmt.Errorf("server error: %w", err)
+		return fmt.Errorf("Server error: %w", err)
 
 	case sig := <-shutdown:
-		logger.Infof("signal %v received, start shutdown", sig)
+		logger.Infof("Signal %v received, start shutdown", sig)
 
 		// Asking API server to shut down and load shed.
 		err := apirouter.Close()
 		if err != nil {
-			logger.WithError(err).Warning("graceful shutdown of apirouter error")
+			logger.WithError(err).Warning("Graceful shutdown of apirouter error")
 		}
 
 		// Give outstanding requests a deadline for completion.
@@ -175,16 +208,16 @@ func run() error {
 		// Asking listener to shut down and load shed.
 		err = apiserver.Shutdown(ctx)
 		if err != nil {
-			logger.WithError(err).Warning("error during graceful shutdown of HTTP server")
+			logger.WithError(err).Warning("Error during graceful shutdown of HTTP server")
 			err = apiserver.Close()
 		}
 
 		// Log the status of this shutdown.
 		switch {
 		case sig == syscall.SIGSTOP:
-			return errors.New("integrity issue caused shutdown")
+			return errors.New("Integrity issue caused shutdown")
 		case err != nil:
-			return fmt.Errorf("could not stop server gracefully: %w", err)
+			return fmt.Errorf("Could not stop server gracefully: %w", err)
 		}
 	}
 

@@ -14,8 +14,9 @@ import (
 // loadConfiguration and values from flags, environment variable or configuration file will be loaded.
 type WebAPIConfiguration struct {
 	Config struct {
-		Path string `conf:"default:/conf/config.yml"`
+		Path string `conf:"default:conf/config.yml"`
 	}
+
 	Web struct {
 		APIHost         string        `conf:"default:0.0.0.0:3000"`
 		DebugHost       string        `conf:"default:0.0.0.0:4000"`
@@ -23,11 +24,18 @@ type WebAPIConfiguration struct {
 		WriteTimeout    time.Duration `conf:"default:5s"`
 		ShutdownTimeout time.Duration `conf:"default:5s"`
 	}
+
 	Debug bool
-	DB    struct {
-		Filename string `conf:"default:/tmp/mydb.db"`
-	}
-	Uploads string `conf:"default:/tmp/uploads"`
+
+	// Paths used internally to serve/save media files.
+	RootMedia string `conf:"default:/tmp/wasatext/media"`
+	Media     string `conf:"default:/media"`
+
+	// Default user and group photos.
+	DefaultUserPhoto  string `conf:"default:assets/default-user-photo.jpg"`
+	DefaultGroupPhoto string `conf:"default:assets/default-group-photo.jpg"`
+
+	DB string `conf:"default:/tmp/wasatext/db/wasatext.db"`
 }
 
 // loadConfiguration creates a WebAPIConfiguration starting from flags, environment variables and configuration file.
