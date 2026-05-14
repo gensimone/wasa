@@ -47,11 +47,7 @@ paths:
                 name:
                   $ref: "#/components/schemas/Name"
                 photo:
-                  description: Photo
-                  type: string
-                  format: binary
-                  minLength: 1
-                  maxLength: 1014
+                  $ref: "#/components/schemas/Photo"
       responses:
         '201':
           description: Created
@@ -231,11 +227,7 @@ paths:
               type: object
               properties:
                 photo:
-                  description: Photo
-                  type: string
-                  format: binary
-                  minLength: 1
-                  maxLength: 1014
+                  $ref: "#/components/schemas/Photo"
       responses:
         '200':
           description: Successful
@@ -248,11 +240,7 @@ paths:
                 type: object
                 properties:
                   photoUrl:
-                    description: URL
-                    type: string
-                    format: url
-                    minLength: 1
-                    maxLength: 1024
+                    $ref: "#/components/schemas/PhotoUrl"
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -962,11 +950,7 @@ paths:
               type: object
               properties:
                 photo:
-                  description: Photo
-                  type: string
-                  format: binary
-                  minLength: 1
-                  maxLength: 1024
+                  $ref: "#/components/schemas/Photo"
       responses:
         '200':
           description: Successful
@@ -1328,6 +1312,13 @@ components:
           description: Sender id
           type: integer
           format: int64
+
+    Photo:
+      description: Photo
+      type: string
+      format: binary
+      minLength: 1
+      maxLength: 1014
 
     EmojiCode:
       description: Emoji code
