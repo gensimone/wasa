@@ -1,8 +1,14 @@
 <script>
+    import { clearUserState } from "@/state/user"
     import logoutIcon from "@/assets/icons/logout.svg";
     import settingsIcon from "@/assets/icons/settings.svg";
-    import Footer from "@/components/Footer.vue";
+
+    import LoggedAs from "@/components/LoggedAs.vue";
+
     export default {
+        components: {
+            LoggedAs
+        },
         data() {
             return {
                 chats: [
@@ -20,77 +26,74 @@
         },
         methods: {
             logout() {
-                localStorage.clear();
+                clearUserState();
                 this.$router.replace("/");
             }
-        },
-        components: {
-            Footer
         }
     };
 </script>
 
 <template>
-    <div class="app">
-        <header class="topbar">
-            <div class="header-title"> WASAText </div>
-            <div class="actions">
-                <button class="icon-btn" @click="logout">
-                    <img :src="logoutIcon" class="icon-img" />
-                </button>
-                <button class="icon-btn" @click="$router.push('/settings')">
-                    <img :src="settingsIcon" class="icon-img" />
-                </button>
-            </div>
-        </header>
-        <main class="content">
-            <div class="chat-list">
-                <div class="chat-header">
-                    <h2> Chats </h2>
-                    <button class="matrix-button" @click="$router.push('/newChat')">
-                        <svg viewBox="0 0 24 24" class="plus-icon">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>
-                    </button>
-                </div>
-                <div
-                        v-for="chat in chats"
-                        :key="chat.id"
-                        class="chat-item"
-                        >
-                        <div class="chat-photo-preview"></div>
-                        <div class="info">
-                            <div class="chat-name"> {{ chat.name }} </div>
-                            <div class="chat-last-message"> {{ chat.lastMessage }} </div>
-                        </div>
-                </div>
-            </div>
-        </main>
-        <main class="content">
-            <div class="chat-list">
-                <div class="chat-header">
-                    <h2> Groups </h2>
-                    <button class="matrix-button" @click="$router.push('/newGroup')">
-                        <svg viewBox="0 0 24 24" class="plus-icon">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>
-                    </button>
-                </div>
-                <div
-                        v-for="group in groups"
-                        :key="group.id"
-                        class="chat-item"
-                        >
-                        <div class="chat-photo-preview"></div>
-                        <div class="info">
-                            <div class="chat-name"> {{ group.name }} </div>
-                            <div class="chat-last-message"> {{ group.lastMessage }} </div>
-                        </div>
-                </div>
-            </div>
-        </main>
-        <Footer />
-    </div>
+  <div class="app">
+    <header class="topbar">
+      <div class="header-title"> WASAText </div>
+      <div class="actions">
+        <button class="icon-btn" @click="$router.push('/settings')">
+          <img :src="settingsIcon" class="icon-img">
+        </button>
+        <button class="icon-btn" @click="logout">
+          <img :src="logoutIcon" class="icon-img">
+        </button>
+      </div>
+    </header>
+    <main class="content">
+      <div class="chat-list">
+        <div class="chat-header">
+          <h2> Chats </h2>
+          <button class="matrix-button" @click="$router.push('/newChat')">
+            <svg viewBox="0 0 24 24" class="plus-icon">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
+        <div
+          v-for="chat in chats"
+          :key="chat.id"
+          class="chat-item"
+        >
+          <div class="chat-photo-preview" />
+          <div class="info">
+            <div class="chat-name"> {{ chat.name }} </div>
+            <div class="chat-last-message"> {{ chat.lastMessage }} </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <main class="content">
+      <div class="chat-list">
+        <div class="chat-header">
+          <h2> Groups </h2>
+          <button class="matrix-button" @click="$router.push('/newGroup')">
+            <svg viewBox="0 0 24 24" class="plus-icon">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
+        <div
+          v-for="group in groups"
+          :key="group.id"
+          class="chat-item"
+        >
+          <div class="chat-photo-preview" />
+          <div class="info">
+            <div class="chat-name"> {{ group.name }} </div>
+            <div class="chat-last-message"> {{ group.lastMessage }} </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <LoggedAs />
+  </div>
 </template>
 
 <style>

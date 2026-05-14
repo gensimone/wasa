@@ -7,7 +7,7 @@
 </script>
 
 <template>
-    <div class="container-fluid">
-        <RouterView />
-    </div>
+  <div class="container-fluid">
+    <RouterView />
+  </div>
 </template>

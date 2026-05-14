@@ -1,55 +1,71 @@
 <script>
+    import { setUserId, setName, setPhotoUrl, userState } from "@/state/user"
     export default {
         data() {
             return {
-                username: null,
+                name: null,
                 error: null,
                 loading: false
             };
         },
         methods: {
-            async login() {
-                this.error = "";
-                this.loading = true;
+        async login() {
+            this.error = null;
+            this.loading = true;
+
+            try {
+                // Get the user id associated with username.
+                let response = await this.$axios.post('/session', {
+                    name: this.name
+                });
+
+                // Get the user informations (username and photo)
+                // associated with the user id.
+                let userId = response.data.userId;
+
                 try {
-                    let response = await this.$axios.post('/session', { name: this.username });
-                    let userId = response.data.id;
-                    try {
-                        response = await this.$axios.get(`/user/${userId}`, { headers: { Authorization: userId } });
-                        let data = response.data;
-                        localStorage.setItem("id", data.id);
-                        localStorage.setItem("username", data.name);
-                        localStorage.setItem("photo", data.photo);
-                        this.$router.push("/home");
-                    } catch (e) {
-                        this.error = e.response?.data || err.message;
-                    }
+                    response = await this.$axios.get(`/users/${userId}`, {
+                        headers: { Authorization: userId }
+                    });
+
+                    let data = response.data;
+                    setUserId(data.userId);
+                    setName(data.name);
+                    setPhotoUrl(data.photoUrl);
+
+                    console.log(userState.photoUrl);
+
+                    this.error = null;
+                    this.$router.push("/home");
                 } catch (e) {
-                    this.error = e.response?.data || err.message;
+                    this.error = e.response.data.error
                 }
-                this.loading = false;
+            } catch (e) {
+                this.error = e.response.data.error
             }
+            this.loading = false;
         }
-    };
+    }
+  };
 </script>
 
 <template>
-    <h1 class="title"> WASAText </h1>
-    <div class="login-container">
-        <h2> Login </h2>
-        <form @submit.prevent="login">
-            <input
-                    v-model="username"
-                    type="text"
-                    placeholder="Username"
-                    required
-                    />
-            <button type="submit" :disabled="loading">
-                {{ loading ? "Logging in..." : "Login" }}
-            </button>
-        </form>
-        <p v-if="error" class="error"> {{ error }} </p>
-    </div>
+  <h1 class="title"> WASAText </h1>
+  <div class="login-container">
+    <h2> Login </h2>
+    <form @submit.prevent="login">
+      <input
+        v-model="name"
+        type="text"
+        placeholder="Username"
+        required
+      >
+      <button type="submit" :disabled="loading">
+        {{ loading ? "Logging in..." : "Login" }}
+      </button>
+    </form>
+    <p v-if="error" class="error"> {{ error }} </p>
+  </div>
 </template>
 
 <style scoped>
