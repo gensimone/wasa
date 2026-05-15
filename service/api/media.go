@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,7 +13,6 @@ import (
 func (rt *_router) removeMediaFile(w http.ResponseWriter, path string) error {
 	filename := filepath.Base(path)
 	fullpath := filepath.Join(rt.rootMedia, filename)
-	// FIXME: Check that fullpath is actually a file.
 
 	err := os.Remove(fullpath)
 	if err != nil {
@@ -35,7 +33,7 @@ func (rt *_router) uploadMediaFile(w http.ResponseWriter, r *http.Request, key s
 
 	file, _, err := r.FormFile(key)
 	if err != nil {
-		rt.sendResponse(w, fmt.Sprintf("Missing %s field", key), http.StatusBadRequest)
+		rt.sendResponse(w, "No such file", http.StatusBadRequest)
 		return nil, err
 	}
 

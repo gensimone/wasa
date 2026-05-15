@@ -1,7 +1,5 @@
 package database
 
-import "fmt"
-
 type MediaType string
 
 const (
@@ -11,11 +9,18 @@ const (
 	File  MediaType = "file"
 )
 
-// Returns true if the provided media type is a valid MediaType, otherwise false.
-func IsValidMediaType(mediaType MediaType) error {
+type InvalidMediaTypeError struct {
+	Type MediaType
+}
+
+func (e *InvalidMediaTypeError) Error() string {
+	return "Invalid media type: " + string(e.Type)
+}
+
+func ValidateMediaType(mediaType MediaType) error {
 	switch mediaType {
 	case Image, Video, Audio, File:
-		return fmt.Errorf("Invalid media type: %s", mediaType)
+		return &InvalidMediaTypeError{mediaType}
 	default:
 		return nil
 	}

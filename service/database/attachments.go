@@ -3,7 +3,11 @@ package database
 // Adds a new attachment with the specified url and media type and returns
 // the attachment id of the created record.
 func (db *appdbimpl) AddAttachment(url string, mediaType MediaType) (*int64, error) {
-	// FIXME: We should check the validity of mediaType here instead of service/api/*
+	err := ValidateMediaType(mediaType)
+	if err != nil {
+		return nil, err
+	}
+
 	if res, err := db.c.Exec(
 		`INSERT INTO attachments (url, media_type) VALUES (?, ?)`,
 		url, mediaType,

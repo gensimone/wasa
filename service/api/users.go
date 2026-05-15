@@ -152,8 +152,8 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	// FIXME: Here we must delete the old photo.
-	//        Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
+	// NOTE: Here we must delete the old photo.
+	//       Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
 	}{PhotoUrl: *photoUrl}, http.StatusOK)

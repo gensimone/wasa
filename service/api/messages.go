@@ -228,11 +228,6 @@ func (rt *_router) _insertMessage(
 	}
 
 	mediaType := database.MediaType(r.FormValue("mediaType"))
-	err = database.IsValidMediaType(mediaType)
-	if err != nil {
-		rt.sendResponse(w, err.Error(), http.StatusBadRequest)
-		return nil, err
-	}
 
 	switch {
 	case len(files) == 0 && mediaType != "":
@@ -251,8 +246,12 @@ func (rt *_router) _insertMessage(
 		return nil, err
 	}
 
+	var emt *database.InvalidMediaTypeError
 	attachmentId, err := rt.db.AddAttachment(*url, mediaType)
-	if err != nil {
+	if errors.As(err, &emt) {
+		rt.sendResponse(w, err.Error(), http.StatusBadRequest)
+		return nil, err
+	} else if err != nil {
 		rt.baseLogger.Error("AddAttachment: %w", err)
 
 		if err = rt.removeMediaFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"

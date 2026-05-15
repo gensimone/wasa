@@ -1,7 +1,5 @@
 package database
 
-import "fmt"
-
 type EmojiCode string
 
 const (
@@ -13,11 +11,18 @@ const (
 	Thumb EmojiCode = "thumb"
 )
 
-// Returns true if the provided emoji code is a valid EmojiCode, otherwise false.
-func IsValidEmojiCode(emojiCode EmojiCode) error {
+type InvalidEmojiCodeError struct {
+	Code EmojiCode
+}
+
+func (e *InvalidEmojiCodeError) Error() string {
+	return "Invalid emoji code: " + string(e.Code)
+}
+
+func ValidateEmoji(emojiCode EmojiCode) error {
 	switch emojiCode {
 	case Like, Love, Laugh, Sad, Angry, Thumb:
-		return fmt.Errorf("Invalid emoji code: %s", emojiCode)
+		return &InvalidEmojiCodeError{Code: emojiCode}
 	default:
 		return nil
 	}

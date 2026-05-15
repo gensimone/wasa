@@ -28,7 +28,11 @@ func (rt *_router) addReaction(
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		_, err = rt.db.AddReaction(*emojiCode, message.MessageId, user.UserId)
-		if err != nil {
+		var iec *database.InvalidEmojiCodeError
+		if errors.As(err, &iec) {
+			rt.sendResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		} else if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
 			rt.baseLogger.Errorf("AddReaction: %w", err)
 			return
@@ -43,7 +47,11 @@ func (rt *_router) addReaction(
 			return
 		}
 		_, err = rt.db.UpdateReaction(*emojiCode, message.MessageId, user.UserId)
-		if err != nil {
+		var iec *database.InvalidEmojiCodeError
+		if errors.As(err, &iec) {
+			rt.sendResponse(w, err.Error(), http.StatusBadRequest)
+			return
+		} else if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
 			rt.baseLogger.Errorf("UpdateReaction: %w", err)
 			return

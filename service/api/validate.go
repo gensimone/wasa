@@ -151,12 +151,6 @@ func (rt *_router) checkEmojiCode(w http.ResponseWriter, r *http.Request) (*data
 
 	emojiCode := database.EmojiCode(body.EmojiCode)
 
-	err = database.IsValidEmojiCode(emojiCode)
-	if err != nil {
-		rt.sendResponse(w, err.Error(), http.StatusBadRequest)
-		return nil, err
-	}
-
 	return &emojiCode, nil
 }
 

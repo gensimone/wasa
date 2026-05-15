@@ -100,8 +100,8 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	// FIXME: Here we must delete the old photo.
-	//        Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
+	// NOTE: Here we must delete the old photo.
+	//       Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
 	}{PhotoUrl: *photoUrl}, http.StatusOK)
@@ -285,10 +285,24 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 	case exists:
 		rt.sendResponse(w, "Group name already used", http.StatusConflict)
 	default:
-		// FIXME: User can provide a null photo and that should be admitted.
-		photoUrl, err := rt.uploadMediaFile(w, r, "photo")
+		err := r.ParseMultipartForm(10 << 20)
 		if err != nil {
+			rt.sendResponse(w, "Invalid multipart form", http.StatusBadRequest)
 			return
+		}
+
+		// NOTE: If the client does not provide the group photo we use the default one.
+		var photoUrl *string
+		files, photoOk := r.MultipartForm.File["photo"]
+		switch {
+		case photoOk && len(files) == 0:
+		case !photoOk:
+			photoUrl = &rt.defaultGroupPhoto
+		default:
+			photoUrl, err = rt.uploadMediaFile(w, r, "photo")
+			if err != nil {
+				return
+			}
 		}
 
 		group, err := rt.db.CreateGroup(user.UserId, name, *photoUrl)
