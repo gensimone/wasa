@@ -2,5 +2,6 @@
 
 curl -X POST http://localhost:3000/comments/$2 \
   -H "Authorization: $1" \
-  -H "Content-Type: application/json" \
-  --data "{\"text\": \"$3\", \"photo\": null}"
+  -F "text=$3" \
+  -F "file=$4" \
+  -F "mediaType=$5"

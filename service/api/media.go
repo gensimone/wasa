@@ -10,13 +10,11 @@ import (
 )
 
 // Remove the provided file from the filesystem.
-func (rt *_router) removeMediaFile(w http.ResponseWriter, path string) error {
+func (rt *_router) removeMediaFile(path string) error {
 	filename := filepath.Base(path)
 	fullpath := filepath.Join(rt.rootMedia, filename)
-
 	err := os.Remove(fullpath)
 	if err != nil {
-		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("Error deleting file %s: %w", fullpath, err)
 	}
 

@@ -9,19 +9,14 @@ const (
 	File  MediaType = "file"
 )
 
-type InvalidMediaTypeError struct {
-	Type MediaType
+var validMediaTypes = map[MediaType]struct{}{
+	Image: {},
+	Video: {},
+	Audio: {},
+	File:  {},
 }
 
-func (e *InvalidMediaTypeError) Error() string {
-	return "Invalid media type: " + string(e.Type)
-}
-
-func ValidateMediaType(mediaType MediaType) error {
-	switch mediaType {
-	case Image, Video, Audio, File:
-		return &InvalidMediaTypeError{mediaType}
-	default:
-		return nil
-	}
+func IsValidMediaType(mediaType MediaType) bool {
+	_, ok := validMediaTypes[mediaType]
+	return ok
 }

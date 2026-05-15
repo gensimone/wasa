@@ -43,7 +43,7 @@ type Status struct {
 }
 
 type Reaction struct {
-	EmojiCode EmojiCode `json:"emojiCode"`
-	MessageId int64     `json:"messageId"`
-	SenderId  int64     `json:"senderId"`
+	Emoji     Emoji `json:"emoji"`
+	MessageId int64 `json:"messageId"`
+	SenderId  int64 `json:"senderId"`
 }

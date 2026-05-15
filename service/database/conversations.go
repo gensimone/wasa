@@ -1,9 +1,6 @@
 package database
 
-import (
-	"database/sql"
-	"errors"
-)
+import "database/sql"
 
 // Returns the user ids associated with the specified conversation id.
 func (db *appdbimpl) GetMembers(conversationId int64) ([]int64, error) {
@@ -35,20 +32,21 @@ func (db *appdbimpl) GetMembers(conversationId int64) ([]int64, error) {
 
 // Returns true if the specified user id is part of the specified conversation id.
 func (db *appdbimpl) IsMember(userId int64, conversationId int64) (bool, error) {
-	var dummy int64
-	err := db.c.QueryRow(
-		`SELECT 1 FROM user_conversations WHERE conversation_id = ? AND user_id = ? LIMIT 1`,
-		conversationId, userId,
-	).Scan(&dummy)
+	var exists bool
 
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return false, nil
-	case err != nil:
+	err := db.c.QueryRow(
+		`SELECT EXISTS(
+			SELECT 1 FROM user_conversations
+			WHERE conversation_id = ? AND user_id = ?
+		)`,
+		conversationId, userId,
+	).Scan(&exists)
+
+	if err != nil {
 		return false, err
-	default:
-		return true, err
 	}
+
+	return exists, nil
 }
 
 // Adds a record with the specified conversation and user id in the user_conversations table.
@@ -114,6 +112,11 @@ func (db *appdbimpl) CreateConversation(senderId int64, receiverId int64) (*int6
 		return nil, err
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	return &conversationId, nil
 }
 
@@ -165,16 +168,20 @@ func (db *appdbimpl) GetConversations(userId int64) ([]int64, error) {
 
 	defer rows.Close()
 
-	var conversationIds []int64
+	var conversationIds []int64 = []int64{}
 	for rows.Next() {
 		var conversationId int64
-		if err := rows.Scan(&conversationId); err != nil {
+
+		err = rows.Scan(&conversationId)
+		if err != nil {
 			return nil, err
 		}
+
 		conversationIds = append(conversationIds, conversationId)
 	}
 
-	if err = rows.Err(); err != nil {
+	err = rows.Err()
+	if err != nil {
 		return nil, err
 	}
 

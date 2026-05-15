@@ -54,9 +54,9 @@ type AppDatabase interface {
 	// Reactions.
 	GetReactions(int64) ([]Reaction, error)
 	GetReaction(int64, int64) (*Reaction, error)
-	AddReaction(EmojiCode, int64, int64) (sql.Result, error)
+	AddReaction(Emoji, int64, int64) (sql.Result, error)
 	DeleteReaction(int64, int64) (sql.Result, error)
-	UpdateReaction(EmojiCode, int64, int64) (sql.Result, error)
+	UpdateReaction(Emoji, int64, int64) (sql.Result, error)
 }
 
 type appdbimpl struct {
@@ -131,7 +131,7 @@ func New(db *sql.DB) (AppDatabase, error) {
             );`,
 
 			`CREATE TABLE reactions (
-				emoji_code TEXT,
+				emoji TEXT,
 				message_id INTEGER,
 				sender_id INTEGER,
 				PRIMARY KEY (message_id, sender_id),

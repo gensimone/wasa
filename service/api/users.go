@@ -89,7 +89,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	name, err := rt.checkName(w, r)
+	name, err := rt.getNameFromReq(w, r)
 	if err != nil {
 		return
 	}
@@ -138,16 +138,9 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	// NOTE: After setting the new
-	// oldPhotoUrl := user.PhotoUrl
-
 	if _, err := rt.db.SetMyPhotoUrl(user.UserId, *photoUrl); err != nil {
 		rt.baseLogger.Errorf("SetMyPhotoUrl: %w", user.UserId, err)
-
-		if err = rt.removeMediaFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
-			return
-		}
-
+		_ = rt.removeMediaFile(*photoUrl)
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -161,7 +154,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 
 // operationId: doLogin
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	name, err := rt.checkName(w, r)
+	name, err := rt.getNameFromReq(w, r)
 	if err != nil {
 		return
 	}

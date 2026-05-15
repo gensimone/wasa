@@ -14,25 +14,27 @@ import (
 func (rt *_router) addReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authorizeMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccess(w, ps, user)
 	if err != nil {
 		return
 	}
 
-	emojiCode, err := rt.checkEmojiCode(w, r)
+	emoji, err := rt.getEmojiFromReq(w, r)
 	if err != nil {
+		return
+	}
+
+	isValidEmoji := database.IsValidEmoji(*emoji)
+	if !isValidEmoji {
+		rt.sendResponse(w, "Invalid emoji", http.StatusBadRequest)
 		return
 	}
 
 	reaction, err := rt.db.GetReaction(message.MessageId, user.UserId)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		_, err = rt.db.AddReaction(*emojiCode, message.MessageId, user.UserId)
-		var iec *database.InvalidEmojiCodeError
-		if errors.As(err, &iec) {
-			rt.sendResponse(w, err.Error(), http.StatusBadRequest)
-			return
-		} else if err != nil {
+		_, err = rt.db.AddReaction(*emoji, message.MessageId, user.UserId)
+		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
 			rt.baseLogger.Errorf("AddReaction: %w", err)
 			return
@@ -42,16 +44,12 @@ func (rt *_router) addReaction(
 		rt.baseLogger.Errorf("GetReaction: %w", err)
 		return
 	default:
-		if reaction.EmojiCode == *emojiCode {
-			rt.sendResponse(w, "The same emoji code was provied", http.StatusBadRequest)
+		if reaction.Emoji == *emoji {
+			rt.sendResponse(w, "The same emoji was provied", http.StatusBadRequest)
 			return
 		}
-		_, err = rt.db.UpdateReaction(*emojiCode, message.MessageId, user.UserId)
-		var iec *database.InvalidEmojiCodeError
-		if errors.As(err, &iec) {
-			rt.sendResponse(w, err.Error(), http.StatusBadRequest)
-			return
-		} else if err != nil {
+		_, err = rt.db.UpdateReaction(*emoji, message.MessageId, user.UserId)
+		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
 			rt.baseLogger.Errorf("UpdateReaction: %w", err)
 			return
@@ -72,7 +70,7 @@ func (rt *_router) addReaction(
 func (rt *_router) deleteReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authorizeMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccess(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -104,7 +102,7 @@ func (rt *_router) deleteReaction(
 func (rt *_router) getReactions(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authorizeMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccess(w, ps, user)
 	if err != nil {
 		return
 	}

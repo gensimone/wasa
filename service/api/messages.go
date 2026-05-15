@@ -32,7 +32,7 @@ func (rt *_router) sendMessage(
 func (rt *_router) forwardMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	messageId, err := rt.checkMessageId(w, r)
+	messageId, err := rt.getMessageIdFromReq(w, r)
 	if err != nil {
 		return
 	}
@@ -76,37 +76,17 @@ func (rt *_router) forwardMessage(
 func (rt *_router) commentMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
+	message, err := rt.authMessageAccess(w, ps, user)
 	if err != nil {
-		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
 		return
 	}
 
-	message, err := rt.db.GetMessage(messageId)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
-		return
-	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
+	comment, err := rt._insertMessage(w, r, user.UserId, message.ConversationId, &message.MessageId)
+	if err != nil {
 		return
 	}
 
-	isMember, err := rt.db.IsMember(user.UserId, message.ConversationId)
-	switch {
-	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-	case isMember:
-		comment, err := rt._insertMessage(w, r, user.UserId, message.ConversationId, &message.MessageId)
-		if err != nil {
-			return
-		}
-		rt.sendResponse(w, comment, http.StatusCreated)
-	default:
-		rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
-	}
+	rt.sendResponse(w, comment, http.StatusCreated)
 }
 
 // operationId: uncommentMessage
@@ -217,52 +197,53 @@ func (rt *_router) _insertMessage(
 		return nil, err
 	}
 
-	_, textOk := r.MultipartForm.Value["text"]
-	files, fileOk := r.MultipartForm.File["file"]
-	_, mediaTypeOk := r.MultipartForm.Value["mediaType"]
+	missingText := false
+	text := r.FormValue("text")
+	if text == "" {
+		missingText = true
+	}
 
-	if !(textOk && fileOk && mediaTypeOk) {
-		errMsg := "Missing one or more required fields in multipart form"
+	missingFile := len(r.MultipartForm.File["file"]) == 0
+
+	if missingText && missingFile {
+		errMsg := "Empty message content"
 		rt.sendResponse(w, errMsg, http.StatusBadRequest)
 		return nil, errors.New(errMsg)
 	}
 
-	mediaType := database.MediaType(r.FormValue("mediaType"))
+	var attachmentId *int64 = nil
+	var url *string = nil
+	if !missingFile {
+		mediaTypeStr := r.FormValue("mediaType")
+		if mediaTypeStr == "" {
+			errMsg := "The file was provided but mediaType was not"
+			rt.sendResponse(w, errMsg, http.StatusBadRequest)
+			return nil, errors.New(errMsg)
+		}
 
-	switch {
-	case len(files) == 0 && mediaType != "":
-		errMsg := "File was not provided, but mediaType was"
-		rt.sendResponse(w, errMsg, http.StatusBadRequest)
-		return nil, errors.New(errMsg)
+		mediaType := database.MediaType(mediaTypeStr)
 
-	case len(files) > 0 && mediaType == "":
-		errMsg := "File was provided, but mediaType was not"
-		rt.sendResponse(w, errMsg, http.StatusBadRequest)
-		return nil, errors.New(errMsg)
-	}
+		isValidEmoji := database.IsValidMediaType(mediaType)
+		if !isValidEmoji {
+			errMsg := "Invalid emoji"
+			rt.sendResponse(w, errMsg, http.StatusBadRequest)
+			return nil, errors.New(errMsg)
+		}
 
-	url, err := rt.uploadMediaFile(w, r, "file")
-	if err != nil {
-		return nil, err
-	}
-
-	var emt *database.InvalidMediaTypeError
-	attachmentId, err := rt.db.AddAttachment(*url, mediaType)
-	if errors.As(err, &emt) {
-		rt.sendResponse(w, err.Error(), http.StatusBadRequest)
-		return nil, err
-	} else if err != nil {
-		rt.baseLogger.Error("AddAttachment: %w", err)
-
-		if err = rt.removeMediaFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
+		url, err = rt.uploadMediaFile(w, r, "file")
+		if err != nil {
 			return nil, err
 		}
 
-		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		return nil, err
+		attachmentId, err = rt.db.AddAttachment(*url, mediaType)
+		if err != nil {
+			rt.baseLogger.Error("AddAttachment: %w", err)
+			_ = rt.removeMediaFile(*url)
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			return nil, err
+		}
 	}
 
-	text := r.FormValue("text")
 	message, err := rt.db.InsertMessage(
 		senderId,
 		conversationId,
@@ -272,13 +253,9 @@ func (rt *_router) _insertMessage(
 		commentTo,
 	)
 
-	if err != nil {
+	if err != nil && url != nil {
 		rt.baseLogger.Error("InsertMessage: %w", err)
-
-		if err = rt.removeMediaFile(w, *url); err != nil { // NOTE: Already send "Internal Server Error"
-			return nil, err
-		}
-
+		_ = rt.removeMediaFile(*url)
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		return nil, err
 	}

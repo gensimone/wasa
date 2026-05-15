@@ -13,18 +13,12 @@ import (
 
 // operationId: getGroup
 func (rt *_router) getGroup(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	group, err := rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	isMember, err := rt.db.IsMember(user.UserId, groupId)
+	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
@@ -38,27 +32,22 @@ func (rt *_router) getGroup(w http.ResponseWriter, _ *http.Request, ps httproute
 
 // operationId: setGroupName
 func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	name, err := rt.checkName(w, r)
+	name, err := rt.getNameFromReq(w, r)
 	if err != nil {
 		return
 	}
 
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	if isFounder, err := rt.checkFounder(w, groupId, user.UserId); !isFounder || err != nil {
+	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
+	if !isFounder || err != nil {
 		return
 	}
 
-	_, err = rt.db.SetGroupName(groupId, *name)
+	_, err = rt.db.SetGroupName(group.ConversationId, *name)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("SetGroupName: %w", err)
@@ -72,18 +61,13 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 
 // operationId: setGroupPhoto
 func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	if isFounder, err := rt.checkFounder(w, groupId, user.UserId); !isFounder || err != nil {
+	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
+	if !isFounder || err != nil {
 		return
 	}
 
@@ -94,7 +78,7 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	if _, err := rt.db.SetGroupPhotoUrl(groupId, *photoUrl); err != nil {
+	if _, err := rt.db.SetGroupPhotoUrl(group.ConversationId, *photoUrl); err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("SetGroupPhotoUrl: %w", user.UserId, err)
 		return
@@ -109,22 +93,17 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 
 // operationId: deleteGroup
 func (rt *_router) deleteGroup(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	if isFounder, err := rt.checkFounder(w, groupId, user.UserId); !isFounder || err != nil {
+	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
+	if !isFounder || err != nil {
 		return
 	}
 
-	_, err = rt.db.DeleteConversation(groupId)
+	_, err = rt.db.DeleteConversation(group.ConversationId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("DeleteConversation: %w", err)
@@ -136,25 +115,19 @@ func (rt *_router) deleteGroup(w http.ResponseWriter, _ *http.Request, ps httpro
 
 // operationId: leaveGroup
 func (rt *_router) leaveGroup(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	group, err := rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	isMember, err := rt.db.IsMember(user.UserId, groupId)
+	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %w", err)
 	case isMember:
 		if group.FounderId == user.UserId {
-			_, err := rt.db.DeleteConversation(groupId)
+			_, err := rt.db.DeleteConversation(group.ConversationId)
 			if err != nil {
 				rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 				rt.baseLogger.Errorf("DeleteConversation: %w", err)
@@ -165,7 +138,7 @@ func (rt *_router) leaveGroup(w http.ResponseWriter, _ *http.Request, ps httprou
 			return
 		}
 
-		_, err := rt.db.DeleteUserConversation(groupId, user.UserId)
+		_, err := rt.db.DeleteUserConversation(group.ConversationId, user.UserId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("DeleteUserConversation: %w", err)
@@ -181,23 +154,18 @@ func (rt *_router) leaveGroup(w http.ResponseWriter, _ *http.Request, ps httprou
 
 // operationId: addToGroup
 func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.checkGroup(w, groupId)
+	userId, err := rt.getUserIdFromReq(w, r)
 	if err != nil {
 		return
 	}
 
-	userId, err := rt.checkUserId(w, r)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	if isFounder, err := rt.checkFounder(w, groupId, user.UserId); !isFounder || err != nil {
+	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
+	if !isFounder || err != nil {
 		return
 	}
 
@@ -206,15 +174,15 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	isMember, err := rt.db.IsMember(*userId, groupId)
+	isMember, err := rt.db.IsMember(*userId, group.ConversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %w", err)
 	case isMember:
-		rt.sendResponse(w, fmt.Sprintf("User %d already in group %d", userId, groupId), http.StatusBadRequest)
+		rt.sendResponse(w, fmt.Sprintf("User %d already in group %d", userId, group.ConversationId), http.StatusBadRequest)
 	default:
-		_, err = rt.db.AddConversation(groupId, *userId)
+		_, err = rt.db.AddConversation(group.ConversationId, *userId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("AddConversation: %w", err)
@@ -229,34 +197,29 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 
 // operationId: removeUser
 func (rt *_router) removeUser(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
 	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)
 	if err != nil {
 		rt.sendResponse(w, "Parameter userId must be an int64", http.StatusBadRequest)
 		return
 	}
 
-	_, err = rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	if isFounder, err := rt.checkFounder(w, groupId, user.UserId); !isFounder || err != nil {
+	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
+	if !isFounder || err != nil {
 		return
 	}
 
-	isMember, err := rt.db.IsMember(user.UserId, groupId)
+	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %w", err)
 	case isMember:
-		_, err = rt.db.DeleteUserConversation(groupId, userId)
+		_, err = rt.db.DeleteUserConversation(group.ConversationId, userId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("DeleteUserConversation: %w", err)
@@ -265,7 +228,7 @@ func (rt *_router) removeUser(w http.ResponseWriter, _ *http.Request, ps httprou
 
 		rt.sendResponse(w, nil, http.StatusNoContent)
 	default:
-		rt.sendResponse(w, fmt.Sprintf("User %d is not a member of group %d", userId, groupId), http.StatusBadRequest)
+		rt.sendResponse(w, fmt.Sprintf("User %d is not a member of group %d", userId, group.ConversationId), http.StatusBadRequest)
 	}
 }
 
@@ -293,12 +256,9 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 
 		// NOTE: If the client does not provide the group photo we use the default one.
 		var photoUrl *string
-		files, photoOk := r.MultipartForm.File["photo"]
-		switch {
-		case photoOk && len(files) == 0:
-		case !photoOk:
+		if len(r.MultipartForm.File["photo"]) == 0 {
 			photoUrl = &rt.defaultGroupPhoto
-		default:
+		} else {
 			photoUrl, err = rt.uploadMediaFile(w, r, "photo")
 			if err != nil {
 				return
@@ -308,11 +268,7 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 		group, err := rt.db.CreateGroup(user.UserId, name, *photoUrl)
 		if err != nil {
 			rt.baseLogger.Errorf("CreateGroup: %w", err)
-
-			if err = rt.removeMediaFile(w, *photoUrl); err != nil { // NOTE: Already send "Internal Server Error"
-				return
-			}
-
+			_ = rt.removeMediaFile(*photoUrl)
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -323,18 +279,12 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 
 // operationId: forwardMessageToGroup
 func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	messageId, err := rt.checkMessageId(w, r)
+	messageId, err := rt.getMessageIdFromReq(w, r)
 	if err != nil {
 		return
 	}
@@ -350,7 +300,7 @@ func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	isMember, err := rt.db.IsMember(user.UserId, groupId)
+	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
@@ -358,7 +308,7 @@ func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request,
 	case isMember:
 		fmessage, err := rt.db.InsertMessage(
 			user.UserId,
-			groupId,
+			group.ConversationId,
 			message.Text,
 			message.AttachmentId,
 			true,
@@ -375,7 +325,7 @@ func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request,
 	default:
 		rt.sendResponse(
 			w,
-			fmt.Sprintf("User %d is not a member of group %d", user.UserId, groupId),
+			fmt.Sprintf("User %d is not a member of group %d", user.UserId, group.ConversationId),
 			http.StatusUnauthorized,
 		)
 	}
@@ -383,18 +333,12 @@ func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request,
 
 // operationId: sendMessageToGroup
 func (rt *_router) sendMessageToGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.checkGroup(w, groupId)
+	group, err := rt.checkGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	isMember, err := rt.db.IsMember(user.UserId, groupId)
+	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %w", err)
@@ -404,13 +348,13 @@ func (rt *_router) sendMessageToGroup(w http.ResponseWriter, r *http.Request, ps
 	if !isMember {
 		rt.sendResponse(
 			w,
-			fmt.Sprintf("User %d is not a member of group %d", user.UserId, groupId),
+			fmt.Sprintf("User %d is not a member of group %d", user.UserId, group.ConversationId),
 			http.StatusUnauthorized,
 		)
 		return
 	}
 
-	message, err := rt._insertMessage(w, r, user.UserId, groupId, nil)
+	message, err := rt._insertMessage(w, r, user.UserId, group.ConversationId, nil)
 	if err != nil {
 		return
 	}

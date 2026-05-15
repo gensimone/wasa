@@ -1,14 +1,12 @@
 #!/bin/sh
 
 echo "Logins.."
-./doLogin Robert
-./doLogin Tom
-./doLogin Bill
+./doLogin A
+./doLogin B
+./doLogin C
 
 echo
 echo "Messages.."
 ./sendMessage 1 2 "Hi Tom!"
-./sendMessage 1 2 "What's up"
+./sendMessage 1 2 "Take a look at this:" @/home/simone/pictures/penguins/pexels-hcdigital-3347323.jpg image
 ./sendMessage 2 1 "I'm fine, thanks. How are you?"
-./sendMessage 2 1 "The World will end."
-./forwardMessage 1 3 4 # Forward the last message to Bill

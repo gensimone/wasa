@@ -5,7 +5,7 @@ import "database/sql"
 // Returns the reactions associated with the specified message id.
 func (db *appdbimpl) GetReactions(messageId int64) ([]Reaction, error) {
 	rows, err := db.c.Query(
-		`SELECT emoji_code, message_id, sender_id FROM reactions WHERE message_id = ?`,
+		`SELECT emoji, message_id, sender_id FROM reactions WHERE message_id = ?`,
 		messageId,
 	)
 	if err != nil {
@@ -17,7 +17,7 @@ func (db *appdbimpl) GetReactions(messageId int64) ([]Reaction, error) {
 	var reactions []Reaction
 	for rows.Next() {
 		var r Reaction
-		if err := rows.Scan(&r.EmojiCode, &r.MessageId, &r.SenderId); err != nil {
+		if err := rows.Scan(&r.Emoji, &r.MessageId, &r.SenderId); err != nil {
 			return nil, err
 		}
 		reactions = append(reactions, r)
@@ -34,10 +34,10 @@ func (db *appdbimpl) GetReactions(messageId int64) ([]Reaction, error) {
 func (db *appdbimpl) GetReaction(messageId int64, senderId int64) (*Reaction, error) {
 	var reaction Reaction
 	if err := db.c.QueryRow(
-		`SELECT emoji_code, message_id, sender_id FROM reactions WHERE message_id = ? AND sender_id = ?`,
+		`SELECT emoji, message_id, sender_id FROM reactions WHERE message_id = ? AND sender_id = ?`,
 		messageId, senderId,
 	).Scan(
-		&reaction.EmojiCode,
+		&reaction.Emoji,
 		&reaction.MessageId,
 		&reaction.SenderId,
 	); err != nil {
@@ -48,15 +48,10 @@ func (db *appdbimpl) GetReaction(messageId int64, senderId int64) (*Reaction, er
 }
 
 // Adds a reaction to the message specified by the message id with the specified parameters.
-func (db *appdbimpl) AddReaction(emojiCode EmojiCode, messageId int64, senderId int64) (sql.Result, error) {
-	err := ValidateEmoji(emojiCode)
-	if err != nil {
-		return nil, err
-	}
-
+func (db *appdbimpl) AddReaction(emoji Emoji, messageId int64, senderId int64) (sql.Result, error) {
 	return db.c.Exec(
-		`INSERT INTO reactions (emoji_code, message_id, sender_id) VALUES (?, ?, ?)`,
-		emojiCode, messageId, senderId,
+		`INSERT INTO reactions (emoji, message_id, sender_id) VALUES (?, ?, ?)`,
+		emoji, messageId, senderId,
 	)
 }
 
@@ -69,14 +64,9 @@ func (db *appdbimpl) DeleteReaction(messageId int64, senderId int64) (sql.Result
 }
 
 // Updates the reaction specified by the message and user id with the specified emoji code.
-func (db *appdbimpl) UpdateReaction(emojiCode EmojiCode, messageId int64, senderId int64) (sql.Result, error) {
-	err := ValidateEmoji(emojiCode)
-	if err != nil {
-		return nil, err
-	}
-
+func (db *appdbimpl) UpdateReaction(emoji Emoji, messageId int64, senderId int64) (sql.Result, error) {
 	return db.c.Exec(
-		`UPDATE reactions SET emojiCode = ? WHERE message_id = ? AND sender_id = ?`,
-		emojiCode, messageId, senderId,
+		`UPDATE reactions SET emoji = ? WHERE message_id = ? AND sender_id = ?`,
+		emoji, messageId, senderId,
 	)
 }
