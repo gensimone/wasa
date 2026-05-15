@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 
 	"github.com/gensimone/WASA-project/service/globaltime"
@@ -39,20 +38,21 @@ func (db *appdbimpl) IsFounder(conversationId int64, userId int64) (bool, error)
 // Returns true if a group with the specified founder id and name exists,
 // otherwise returns false.
 func (db *appdbimpl) GroupExists(founderId int64, name string) (bool, error) {
-	var dummy int64
-	err := db.c.QueryRow(
-		`SELECT 1 FROM groups WHERE founder_id = ? AND name = ?`,
-		founderId, name,
-	).Scan(&dummy)
+	var exists bool
 
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return false, nil
-	case err != nil:
+	err := db.c.QueryRow(
+		`SELECT EXISTS(
+			SELECT 1 FROM groups
+			WHERE founder_id = ? AND name = ?
+		)`,
+		founderId, name,
+	).Scan(&exists)
+
+	if err != nil {
 		return false, err
-	default:
-		return true, nil
 	}
+
+	return exists, nil
 }
 
 // Creates a new record in the groups table with the specified parameters and returns

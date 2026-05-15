@@ -1,9 +1,6 @@
 package database
 
-import (
-	"database/sql"
-	"errors"
-)
+import "database/sql"
 
 // Sets the name of the user identified by the specified user id.
 func (db *appdbimpl) SetMyUserName(userId int64, name string) (sql.Result, error) {
@@ -98,20 +95,21 @@ func (db *appdbimpl) GetUserById(userId int64) (*User, error) {
 }
 
 func (db *appdbimpl) IsUserById(userId int64) (bool, error) {
-	var dummy int64
-	err := db.c.QueryRow(
-		`SELECT 1 FROM users WHERE user_id = ? LIMIT 1`,
-		userId,
-	).Scan(&dummy)
+	var exists bool
 
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return false, nil
-	case err != nil:
+	err := db.c.QueryRow(
+		`SELECT EXISTS(
+			SELECT 1 FROM users
+			WHERE user_id = ?
+		)`,
+		userId,
+	).Scan(&exists)
+
+	if err != nil {
 		return false, err
-	default:
-		return true, err
 	}
+
+	return exists, nil
 }
 
 // Returns the user object associated with the specified username.

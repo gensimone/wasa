@@ -1,6 +1,5 @@
 #!/bin/sh
 
-curl -X PUT http://localhost:3000/photo/user \
+curl -X PUT http://localhost:3000/users/$1/photo \
   -H "Authorization: $1" \
-  -H "Content-Type: application/json" \
-  --data "{\"photo\": \"$2\"}"
+  -F "photo=@/home/simone/pictures/penguins/pexels-hcdigital-3347323.jpg"
