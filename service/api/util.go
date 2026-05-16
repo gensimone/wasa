@@ -25,6 +25,6 @@ func (rt *_router) sendResponse(w http.ResponseWriter, content any, status int) 
 	err := json.NewEncoder(w).Encode(content)
 	if err != nil {
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("json.NewEncoder: %w", err)
+		rt.baseLogger.Errorf("json.NewEncoder: %v", err)
 	}
 }

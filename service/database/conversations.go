@@ -5,7 +5,9 @@ import "database/sql"
 // Returns the user ids associated with the specified conversation id.
 func (db *appdbimpl) GetMembers(conversationId int64) ([]int64, error) {
 	rows, err := db.c.Query(
-		`SELECT user_id FROM user_conversations WHERE conversation_id = ?`,
+		`SELECT user_id
+		FROM user_conversations
+		WHERE conversation_id = ?`,
 		conversationId,
 	)
 	if err != nil {
@@ -31,7 +33,7 @@ func (db *appdbimpl) GetMembers(conversationId int64) ([]int64, error) {
 }
 
 // Returns true if the specified user id is part of the specified conversation id.
-func (db *appdbimpl) IsMember(userId int64, conversationId int64) (bool, error) {
+func (db *appdbimpl) IsMember(userId, conversationId int64) (bool, error) {
 	var exists bool
 
 	err := db.c.QueryRow(
@@ -39,7 +41,8 @@ func (db *appdbimpl) IsMember(userId int64, conversationId int64) (bool, error) 
 			SELECT 1 FROM user_conversations
 			WHERE conversation_id = ? AND user_id = ?
 		)`,
-		conversationId, userId,
+		conversationId,
+		userId,
 	).Scan(&exists)
 
 	if err != nil {
@@ -52,30 +55,37 @@ func (db *appdbimpl) IsMember(userId int64, conversationId int64) (bool, error) 
 // Adds a record with the specified conversation and user id in the user_conversations table.
 func (db *appdbimpl) AddConversation(conversationId int64, userId int64) (sql.Result, error) {
 	return db.c.Exec(
-		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
-		conversationId, userId,
+		`INSERT INTO user_conversations (
+			conversation_id,
+			user_id
+		) VALUES (?, ?)`,
+		conversationId,
+		userId,
 	)
 }
 
 // Deletes the records associated with the specified conversation id from the conversations table.
 func (db *appdbimpl) DeleteConversation(conversationId int64) (sql.Result, error) {
 	return db.c.Exec(
-		`DELETE FROM conversations WHERE conversation_id = ?`,
+		`DELETE FROM conversations
+		WHERE conversation_id = ?`,
 		conversationId,
 	)
 }
 
 // Deletes the record associated with the specified conversation and user id from the user_conversations table.
-func (db *appdbimpl) DeleteUserConversation(conversationId int64, userId int64) (sql.Result, error) {
+func (db *appdbimpl) DeleteUserConversation(conversationId, userId int64) (sql.Result, error) {
 	return db.c.Exec(
-		`DELETE FROM user_conversations WHERE conversation_id = ? AND user_id = ?`,
-		conversationId, userId,
+		`DELETE FROM user_conversations
+		WHERE conversation_id = ? AND user_id = ?`,
+		conversationId,
+		userId,
 	)
 }
 
 // Creates a new conversation between the specified senderId and receiverId.
 // A new message record is created inside the messages table with the specified values.
-func (db *appdbimpl) CreateConversation(senderId int64, receiverId int64) (*int64, error) {
+func (db *appdbimpl) CreateConversation(senderId, receiverId int64) (*int64, error) {
 	tx, err := db.GetTransaction()
 	if err != nil {
 		return nil, err
@@ -97,16 +107,24 @@ func (db *appdbimpl) CreateConversation(senderId int64, receiverId int64) (*int6
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
-		conversationId, senderId,
+		`INSERT INTO user_conversations (
+			conversation_id,
+			user_id
+		) VALUES (?, ?)`,
+		conversationId,
+		senderId,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO user_conversations (conversation_id, user_id) VALUES (?, ?)`,
-		conversationId, receiverId,
+		`INSERT INTO user_conversations (
+			conversation_id,
+			user_id
+		) VALUES (?, ?)`,
+		conversationId,
+		receiverId,
 	)
 	if err != nil {
 		return nil, err
@@ -121,7 +139,7 @@ func (db *appdbimpl) CreateConversation(senderId int64, receiverId int64) (*int6
 }
 
 // Returns the conversation id between userIdA and userIdB if exists, otherwise nil.
-func (db *appdbimpl) GetConversation(userIdA int64, userIdB int64) (*int64, error) {
+func (db *appdbimpl) GetConversation(userIdA, userIdB int64) (*int64, error) {
 	conversationIdsA, err := db.GetConversations(userIdA)
 	if err != nil || len(conversationIdsA) == 0 {
 		return nil, err
@@ -159,7 +177,9 @@ func (db *appdbimpl) GetConversation(userIdA int64, userIdB int64) (*int64, erro
 // Returns the conversation ids associated to the specified user id.
 func (db *appdbimpl) GetConversations(userId int64) ([]int64, error) {
 	rows, err := db.c.Query(
-		`SELECT conversation_id FROM user_conversations WHERE user_id = ?`,
+		`SELECT conversation_id
+		FROM user_conversations
+		WHERE user_id = ?`,
 		userId,
 	)
 	if err != nil {

@@ -39,12 +39,9 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/comments/:messageId", rt.authRequest(rt.uncommentMessage))
 	rt.router.POST("/comments/:messageId", rt.authRequest(rt.commentMessage))
 
-	// Attachments.
-	rt.router.GET("/attachments/:messageId", rt.authRequest(rt.getAttachment))
-
 	// Messages.
-	rt.router.PUT("/messages/:messageId/status", rt.authRequest(rt.updateStatus))
-	rt.router.GET("/messages/:messageId/status", rt.authRequest(rt.getStatus))
+	rt.router.PUT("/messages/:messageId/receipts", rt.authRequest(rt.setMessageStatusAsRead))
+	rt.router.GET("/messages/:messageId/receipts", rt.authRequest(rt.getReceipts))
 	rt.router.GET("/messages/:messageId", rt.authRequest(rt.getMessage))
 	rt.router.DELETE("/messages/:messageId", rt.authRequest(rt.deleteMessage))
 

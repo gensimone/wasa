@@ -16,7 +16,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, _ *http.Request, _ httprouter
 	userIds, err := rt.db.GetUserIds()
 	if err != nil {
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetUserIds: %w", err)
+		rt.baseLogger.Errorf("GetUserIds: %v", err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (rt *_router) getUserById(w http.ResponseWriter, _ *http.Request, ps httpro
 		rt.sendResponse(w, fmt.Sprintf("User id %d not found", userId), http.StatusNotFound)
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetUserById: %w", userId, err)
+		rt.baseLogger.Errorf("GetUserById: %v", err)
 	default:
 		rt.sendResponse(w, user, http.StatusOK)
 	}
@@ -65,7 +65,7 @@ func (rt *_router) deleteUser(w http.ResponseWriter, _ *http.Request, ps httprou
 	_, err = rt.db.DeleteUser(user.UserId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DeleteUser: %w", user.UserId, err)
+		rt.baseLogger.Errorf("DeleteUser: %v", err)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		_, err := rt.db.SetMyUserName(user.UserId, *name)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("SetMyUserName: %w", user.UserId, err)
+			rt.baseLogger.Errorf("SetMyUserName: %v", err)
 			return
 		}
 
@@ -110,7 +110,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		}{Name: *name}, http.StatusOK)
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetUserByName: %w", user.UserId, err)
+		rt.baseLogger.Errorf("GetUserByName: %v", err)
 	default:
 		rt.sendResponse(w, "User name already taken", http.StatusConflict)
 	}
@@ -138,9 +138,9 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	if _, err := rt.db.SetMyPhotoUrl(user.UserId, *photoUrl); err != nil {
-		rt.baseLogger.Errorf("SetMyPhotoUrl: %w", user.UserId, err)
-		_ = rt.removeMediaFile(*photoUrl)
+	if _, err := rt.db.SetMyPhotoUrl(user.UserId, photoUrl); err != nil {
+		rt.baseLogger.Errorf("SetMyPhotoUrl: %v", err)
+		_ = rt.removeMediaFile(photoUrl)
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -149,7 +149,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	//       Or maybe we could remove old photos (or even attachments) somewhere else (e.g. a script)
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
-	}{PhotoUrl: *photoUrl}, http.StatusOK)
+	}{PhotoUrl: photoUrl}, http.StatusOK)
 }
 
 // operationId: doLogin
@@ -166,12 +166,12 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, _ httprouter.
 		userId, err = rt.db.CreateUser(*name, rt.defaultUserPhoto)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetUserByName: %w", err)
+			rt.baseLogger.Errorf("CreateUser: %v", err)
 			return
 		}
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetUserByName: %w", err)
+		rt.baseLogger.Errorf("GetUserByName: %v", err)
 		return
 	default:
 		userId = &user.UserId

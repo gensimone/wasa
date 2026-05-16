@@ -36,12 +36,12 @@ func (rt *_router) addReaction(
 		_, err = rt.db.AddReaction(*emoji, message.MessageId, user.UserId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-			rt.baseLogger.Errorf("AddReaction: %w", err)
+			rt.baseLogger.Errorf("AddReaction: %v", err)
 			return
 		}
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetReaction: %w", err)
+		rt.baseLogger.Errorf("GetReaction: %v", err)
 		return
 	default:
 		if reaction.Emoji == *emoji {
@@ -51,7 +51,7 @@ func (rt *_router) addReaction(
 		_, err = rt.db.UpdateReaction(*emoji, message.MessageId, user.UserId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-			rt.baseLogger.Errorf("UpdateReaction: %w", err)
+			rt.baseLogger.Errorf("UpdateReaction: %v", err)
 			return
 		}
 	}
@@ -60,7 +60,7 @@ func (rt *_router) addReaction(
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetReaction: %w", err)
+		rt.baseLogger.Errorf("GetReaction: %v", err)
 	default:
 		rt.sendResponse(w, reaction, http.StatusCreated)
 	}
@@ -85,12 +85,12 @@ func (rt *_router) deleteReaction(
 		)
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetReaction: %w", err)
+		rt.baseLogger.Errorf("GetReaction: %v", err)
 	default:
 		_, err = rt.db.DeleteReaction(message.MessageId, user.UserId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-			rt.baseLogger.Errorf("DeleteReaction: %w", err)
+			rt.baseLogger.Errorf("DeleteReaction: %v", err)
 			return
 		}
 
@@ -110,7 +110,7 @@ func (rt *_router) getReactions(
 	reactions, err := rt.db.GetReactions(message.MessageId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetReactions: %w", err)
+		rt.baseLogger.Errorf("GetReactions: %v", err)
 		return
 	}
 

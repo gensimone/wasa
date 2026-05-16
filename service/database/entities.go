@@ -20,26 +20,24 @@ type UserConversation struct {
 }
 
 type Message struct {
-	MessageId      int64  `json:"messageId"`
-	Text           string `json:"text"`
-	AttachmentId   *int64 `json:"attachmentId"`
-	SenderId       int64  `json:"senderId"`
-	ConversationId int64  `json:"conversationId"`
-	CreatedAt      string `json:"createdAt"`
-	IsForwarded    bool   `json:"isForwarded"`
-	CommentTo      *int64 `json:"commentTo"`
+	MessageId      int64     `json:"messageId"`
+	Text           string    `json:"text"`
+	SenderId       int64     `json:"senderId"`
+	ConversationId int64     `json:"conversationId"`
+	CreatedAt      string    `json:"createdAt"`
+	IsForwarded    bool      `json:"isForwarded"`
+	CommentTo      *int64    `json:"commentTo"`
+	AttachmentUrl  string    `json:"attachmentUrl"`
+	MediaType      MediaType `json:"mediaType"`
 }
 
-type Attachment struct {
-	AttachmentId int64  `json:"attachmentId"`
-	Url          string `json:"url"`
-	MediaType    string `json:"mediaType"`
-}
-
-type Status struct {
-	MessageId int64 `json:"messageId"`
-	UserId    int64 `json:"userId"`
-	Info      Info  `json:"info"`
+type Receipt struct {
+	MessageId  int64   `json:"messageId"`
+	UserId     int64   `json:"userId"`
+	Status     Status  `json:"status"`
+	SentAt     string  `json:"sentAt"`
+	ReceivedAt *string `json:"receivedAt"`
+	ReadAt     *string `json:"readAt"`
 }
 
 type Reaction struct {

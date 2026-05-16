@@ -28,7 +28,7 @@ func (rt *_router) checkGroup(w http.ResponseWriter, ps httprouter.Params) (*dat
 		return nil, err
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetGroupById: %w", err)
+		rt.baseLogger.Errorf("GetGroupById: %v", err)
 		return nil, err
 	default:
 		return group, nil

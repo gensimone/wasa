@@ -45,7 +45,7 @@ func (rt *_router) forwardMessage(
 		return
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
+		rt.baseLogger.Errorf("GetMessage: %v", err)
 		return
 	}
 
@@ -55,17 +55,18 @@ func (rt *_router) forwardMessage(
 	}
 
 	fmessage, err := rt.db.InsertMessage(
+		message.Text,
 		user.UserId,
 		*conversationId,
-		message.Text,
-		message.AttachmentId,
 		true,
 		nil,
+		message.AttachmentUrl,
+		message.MediaType,
 	)
 
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("InsertMessage: %w", err)
+		rt.baseLogger.Errorf("InsertMessage: %v", err)
 		return
 	}
 
@@ -100,20 +101,8 @@ func (rt *_router) uncommentMessage(
 func (rt *_router) deleteMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
+	message, err := rt.authMessageAccess(w, ps, user)
 	if err != nil {
-		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	message, err := rt.db.GetMessage(messageId)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
-		return
-	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
 		return
 	}
 
@@ -123,10 +112,10 @@ func (rt *_router) deleteMessage(
 		return
 	}
 
-	_, err = rt.db.DeleteMessage(messageId)
+	_, err = rt.db.DeleteMessage(message.MessageId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DeleteMessage: %w", err)
+		rt.baseLogger.Errorf("DeleteMessage: %v", err)
 		return
 	}
 
@@ -137,47 +126,37 @@ func (rt *_router) deleteMessage(
 func (rt *_router) getMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
+	message, err := rt.authMessageAccess(w, ps, user)
 	if err != nil {
-		rt.sendResponse(w, "Parameter messageId must be an int64", http.StatusBadRequest)
 		return
 	}
 
-	message, err := rt.db.GetMessage(messageId)
+	// NOTE: We must be the receiver of the message in order to update its receipt.
+	if message.SenderId == user.UserId {
+		rt.sendResponse(w, message, http.StatusOK)
+		return
+	}
+
+	receipt, err := rt.db.GetReceipt(message.MessageId, user.UserId)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
-		return
+		rt.sendResponse(w, message, http.StatusOK)
 	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("GetMessage: %w", err)
-		return
-	}
-
-	isMember, err := rt.db.IsMember(user.UserId, message.ConversationId)
-	switch {
-	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)
-		rt.baseLogger.Errorf("IsMember: %w", err)
-		return
-	case isMember:
-		// NOTE: We are authorized to read the message.
-		// If we are not the message sender we must update the message status
-		// so that the sender of that message can see that we received the message.
-		// Of course, if the message was already accessed by this user, the status
-		// of the message remains the same.
-		if message.SenderId != user.UserId {
-			err = rt._updateStatus(w, messageId, user.UserId)
-			if err != nil {
-				return
-			}
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetReceipt: %v", err)
+	case receipt.Status == database.Received:
+	case receipt.Status == database.Read:
+		rt.sendResponse(w, message, http.StatusOK)
+	case receipt.Status == database.Sent:
+		_, err = rt.db.SetReceiptStatus(message.MessageId, user.UserId, database.Received)
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("SetReceiptStatus: %v", err)
+			return
 		}
-	default:
-		rt.sendResponse(w, "Not authorized to read message", http.StatusUnauthorized)
-		return
-	}
 
-	rt.sendResponse(w, message, http.StatusOK)
+		rt.sendResponse(w, message, http.StatusOK)
+	}
 }
 
 // Used internally by:
@@ -211,8 +190,9 @@ func (rt *_router) _insertMessage(
 		return nil, errors.New(errMsg)
 	}
 
-	var attachmentId *int64 = nil
-	var url *string = nil
+	attachmentUrl := ""
+	var mediaType database.MediaType = ""
+
 	if !missingFile {
 		mediaTypeStr := r.FormValue("mediaType")
 		if mediaTypeStr == "" {
@@ -221,42 +201,38 @@ func (rt *_router) _insertMessage(
 			return nil, errors.New(errMsg)
 		}
 
-		mediaType := database.MediaType(mediaTypeStr)
+		mediaType = database.MediaType(mediaTypeStr)
 
-		isValidEmoji := database.IsValidMediaType(mediaType)
-		if !isValidEmoji {
-			errMsg := "Invalid emoji"
+		if !database.IsValidMediaType(mediaType) {
+			errMsg := "Invalid media type"
 			rt.sendResponse(w, errMsg, http.StatusBadRequest)
 			return nil, errors.New(errMsg)
 		}
 
-		url, err = rt.uploadMediaFile(w, r, "file")
+		attachmentUrl, err = rt.uploadMediaFile(w, r, "file")
 		if err != nil {
-			return nil, err
-		}
-
-		attachmentId, err = rt.db.AddAttachment(*url, mediaType)
-		if err != nil {
-			rt.baseLogger.Error("AddAttachment: %w", err)
-			_ = rt.removeMediaFile(*url)
-			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			return nil, err
 		}
 	}
 
 	message, err := rt.db.InsertMessage(
+		text,
 		senderId,
 		conversationId,
-		text,
-		attachmentId,
 		false,
 		commentTo,
+		attachmentUrl,
+		mediaType,
 	)
 
-	if err != nil && url != nil {
-		rt.baseLogger.Error("InsertMessage: %w", err)
-		_ = rt.removeMediaFile(*url)
+	if err != nil {
+		rt.baseLogger.Errorf("InsertMessage: %v", err)
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+
+		if attachmentUrl != "" {
+			_ = rt.removeMediaFile(attachmentUrl)
+		}
+
 		return nil, err
 	}
 
@@ -283,7 +259,7 @@ func (rt *_router) _getConversation(w http.ResponseWriter, _ *http.Request, ps h
 	isValid, err := rt.db.IsUserById(userId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsUserById: %w", err)
+		rt.baseLogger.Errorf("IsUserById: %v", err)
 		return nil, err
 	}
 
@@ -296,7 +272,7 @@ func (rt *_router) _getConversation(w http.ResponseWriter, _ *http.Request, ps h
 	conversationId, err := rt.db.GetConversation(user.UserId, userId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetConversation: %w", err)
+		rt.baseLogger.Errorf("GetConversation: %v", err)
 		return nil, err
 	}
 
@@ -304,7 +280,7 @@ func (rt *_router) _getConversation(w http.ResponseWriter, _ *http.Request, ps h
 		conversationId, err = rt.db.CreateConversation(user.UserId, userId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("CreateConversation: %w", err)
+			rt.baseLogger.Errorf("CreateConversation: %v", err)
 			return nil, err
 		}
 	}

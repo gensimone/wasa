@@ -9,12 +9,13 @@ import (
 
 // Insert a message in the messages table with the specified parameters.
 func (db *appdbimpl) InsertMessage(
+	text string,
 	senderId int64,
 	conversationId int64,
-	text string,
-	attachmentId *int64,
 	isForwarded bool,
 	commentTo *int64,
+	attachmentUrl string,
+	mediaType MediaType,
 ) (*Message, error) {
 	tx, err := db.GetTransaction()
 	if err != nil {
@@ -27,9 +28,26 @@ func (db *appdbimpl) InsertMessage(
 
 	createdAt := globaltime.Now().Format(time.DateTime)
 	res, err := tx.Exec(
-		`INSERT INTO messages (text, attachment_id, sender_id, conversation_id, created_at, is_forwarded, comment_to) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		text, &attachmentId, senderId, conversationId, createdAt, isForwarded, &commentTo,
+		`INSERT INTO messages (
+			text,
+			sender_id,
+			conversation_id,
+			created_at,
+			is_forwarded,
+			comment_to,
+			attachment_url,
+			media_type
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		text,
+		senderId,
+		conversationId,
+		createdAt,
+		isForwarded,
+		&commentTo,
+		attachmentUrl,
+		mediaType,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -45,16 +63,25 @@ func (db *appdbimpl) InsertMessage(
 		_ = tx.Rollback()
 		return nil, err
 	}
+
 	for _, memberId := range memberIds {
 		if memberId == senderId {
 			continue
 		}
 
-		if _, err = tx.Exec(
-			`INSERT INTO status (message_id, user_id, info) VALUES (?, ?, ?)`,
-			messageId, memberId, "not received",
-		); err != nil {
-			_ = tx.Rollback()
+		_, err = tx.Exec(
+			`INSERT INTO receipts (
+				message_id,
+				user_id,
+				status,
+				sent_at
+			) VALUES (?, ?, ?, ?)`,
+			messageId,
+			memberId,
+			Sent,
+			createdAt, // send_at = created_at
+		)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -66,12 +93,13 @@ func (db *appdbimpl) InsertMessage(
 	return &Message{
 		MessageId:      messageId,
 		Text:           text,
-		AttachmentId:   attachmentId,
 		SenderId:       senderId,
 		ConversationId: conversationId,
 		CreatedAt:      createdAt,
 		IsForwarded:    isForwarded,
 		CommentTo:      commentTo,
+		AttachmentUrl:  attachmentUrl,
+		MediaType:      mediaType,
 	}, nil
 }
 
@@ -88,17 +116,29 @@ func (db *appdbimpl) GetMessage(messageId int64) (*Message, error) {
 	var message Message
 
 	if err := db.c.QueryRow(
-		`SELECT message_id, text, attachment_id, sender_id, conversation_id, created_at, is_forwarded, comment_to FROM messages WHERE message_id = ?`,
+		`SELECT
+		message_id,
+		text,
+		sender_id,
+		conversation_id,
+		created_at,
+		is_forwarded,
+		comment_to,
+		attachment_url,
+		media_type
+		FROM messages
+		WHERE message_id = ?`,
 		messageId,
 	).Scan(
 		&message.MessageId,
 		&message.Text,
-		&message.AttachmentId,
 		&message.SenderId,
 		&message.ConversationId,
 		&message.CreatedAt,
 		&message.IsForwarded,
 		&message.CommentTo,
+		&message.AttachmentUrl,
+		&message.MediaType,
 	); err != nil {
 		return nil, err
 	}

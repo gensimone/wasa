@@ -2,5 +2,5 @@
 
 curl -X POST http://localhost:3000/groups \
   -H "Authorization: $1" \
-  -H "Content-Type: application/json" \
-  --data "{\"name\": \"$2\", \"photo\": null}"
+  -F "name=$2" \
+  -F "photo=$3" \

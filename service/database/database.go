@@ -37,19 +37,15 @@ type AppDatabase interface {
 	GetConversations(int64) ([]int64, error)
 
 	// Messages.
-	InsertMessage(int64, int64, string, *int64, bool, *int64) (*Message, error)
+	InsertMessage(string, int64, int64, bool, *int64, string, MediaType) (*Message, error)
 	DeleteMessage(int64) (sql.Result, error)
 	GetMessage(int64) (*Message, error)
 	GetMessageIds(int64) ([]int64, error)
 
-	// Attachments.
-	AddAttachment(url string, mediaType MediaType) (*int64, error)
-	GetAttachment(attachmentId int64) (*Attachment, error)
-
 	// Status.
-	UpdateStatus(int64, int64, Info) (sql.Result, error)
-	GetStatusOf(int64, int64) (*Status, error)
-	GetStatus(int64) ([]Status, error)
+	SetReceiptStatus(int64, int64, Status) (sql.Result, error)
+	GetReceipt(int64, int64) (*Receipt, error)
+	GetReceipts(int64) ([]Receipt, error)
 
 	// Reactions.
 	GetReactions(int64) ([]Reaction, error)
@@ -72,18 +68,21 @@ func New(db *sql.DB) (AppDatabase, error) {
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='users';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		stmts := []string{
+			// Enables foreign key constraints.
+			`PRAGMA foreign_keys = ON;`,
+
 			`CREATE TABLE users (
                 user_id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
-                photo_url TEXT
+                photo_url TEXT NOT NULL
             );`,
 
 			`CREATE TABLE groups (
                 conversation_id INTEGER PRIMARY KEY,
-                founder_id INTEGER,
+                founder_id INTEGER NOT NULL,
 				name TEXT NOT NULL,
-                photo_url TEXT,
-				created_at TIMESTAMP NOT NULL,
+                photo_url TEXT NOT NULL,
+				created_at TIMESTAMP,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
 				FOREIGN KEY (founder_id) REFERENCES users(user_id) ON DELETE CASCADE
             );`,
@@ -93,8 +92,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 			);`,
 
 			`CREATE TABLE user_conversations (
-				conversation_id INTEGER,
-			    user_id INTEGER,
+				conversation_id INTEGER NOT NULL,
+			    user_id INTEGER NOT NULL,
 				PRIMARY KEY (conversation_id, user_id),
                 FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE
@@ -103,37 +102,34 @@ func New(db *sql.DB) (AppDatabase, error) {
 			`CREATE TABLE messages (
                 message_id INTEGER PRIMARY KEY,
                 text TEXT,
-				attachment_id INTEGER,
                 sender_id INTEGER NOT NULL,
-				conversation_id INTEGER,
-				created_at TIMESTAMP NOT NULL,
+				conversation_id INTEGER NOT NULL,
+				created_at TIMESTAMP,
 				is_forwarded BOOL DEFAULT 0,
 				comment_to INTEGER,
-				FOREIGN KEY (attachment_id) REFERENCES attachments(attachment_id),
+				attachment_url TEXT,
+				media_type TEXT,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
 				FOREIGN KEY (sender_id) REFERENCES users(user_id),
 				FOREIGN KEY (comment_to) REFERENCES messages(message_id)
             );`,
 
-			`CREATE TABLE attachments (
-				attachment_id INTEGER PRIMARY KEY,
-				url TEXT NOT NULL,
-				media_type TEXT NOT NULL CHECK (media_type IN ('image', 'video', 'audio', 'file'))
-			);`,
-
-			`CREATE TABLE status (
-				message_id INTEGER,
-				user_id INTEGER,
-                info TEXT NOT NULL CHECK (info IN ('read', 'not received', 'received')),
+			`CREATE TABLE receipts (
+				message_id INTEGER NOT NULL,
+				user_id INTEGER NOT NULL,
+                status TEXT NOT NULL CHECK (status  IN ('sent', 'received', 'read')),
+				sent_at TIMESTAMP,
+				received_at TIMESTAMP,
+				read_at TIMESTAMP,
 				PRIMARY KEY (message_id, user_id),
                 FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE
-				FOREIGN KEY (user_id) REFERENCES users(user_id)
+				FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
             );`,
 
 			`CREATE TABLE reactions (
-				emoji TEXT,
-				message_id INTEGER,
-				sender_id INTEGER,
+				emoji TEXT NOT NULL,
+				message_id INTEGER NOT NULL,
+				sender_id INTEGER NOT NULL,
 				PRIMARY KEY (message_id, sender_id),
                 FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
 				FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE
