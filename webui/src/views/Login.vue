@@ -35,8 +35,6 @@ export default {
                     setName(data.name);
                     setPhotoUrl(data.photoUrl);
 
-                    console.log(userState.photoUrl);
-
                     this.error = null;
                     this.$router.push("/home");
                 } catch (e) {

@@ -2,6 +2,8 @@
 import { setName, setPhotoUrl, userState } from "@/state/user"
 import backIcon from "@/assets/icons/back.svg"
 import saveIcon from "@/assets/icons/save.svg"
+import deleteIcon from "@/assets/icons/delete.svg"
+import uploadIcon from "@/assets/icons/upload.svg"
 import LoggedAs from "@/components/LoggedAs.vue"
 
 export default {
@@ -14,16 +16,16 @@ export default {
             avatarURL: userState.photoUrl,
             photo: null,
 
-            photoStatusMsg: null,
-            nameStatusMsg: null,
-            errName: false,
-            errPhoto: false,
+            message: null,
+            error: false,
 
             photoChanged: false,
             loading: false,
 
             backIcon,
             saveIcon,
+            deleteIcon,
+            uploadIcon,
         }
     },
     beforeUnmount() {
@@ -44,13 +46,44 @@ export default {
             this.photoChanged = true
             this.avatarURL = URL.createObjectURL(file)
         },
-        async apply() {
+
+        async setNewPhoto() {
             this.loading = true
-            this.nameStatusMsg = null
-            this.photoStatusMsg = null
+            this.message = null
+
+            try {
+                const formData = new FormData()
+                formData.append("photo", this.photo)
+
+                const userId = userState.userId
+                const res = await this.$axios.put(
+                    `/users/${userId}/photo`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: userId,
+                            "Content-Type": "multipart/form-data"
+                        }
+                    }
+                )
+                setPhotoUrl(res.data.photoUrl);
+
+                this.photoChanged = false
+                this.error = false
+                this.message = "Profile photo updated successfully!"
+            } catch (e) {
+                this.error = true
+                this.message = e.response.data.error
+            }
+
+            this.loading = false
+        },
+
+        async setNewName() {
+            this.loading = true
+            this.message = null
 
             const userId = userState.userId
-
             if (this.name !== userState.name) {
                 try {
                     await this.$axios.put(`/users/${userId}/name`,
@@ -59,39 +92,31 @@ export default {
                     )
 
                     setName(this.name);
-                    this.errName = false
-                    this.nameStatusMsg = "Success!"
+                    this.error = false
+                    this.message = "Name changed successfully!"
                 } catch (e) {
-                    this.errName = true
-                    this.nameStatusMsg = e.response.data.error
+                    this.error = true
+                    this.message = e.response.data.error
                 }
             }
 
-            if (this.photoChanged) {
-                try {
-                    const formData = new FormData()
-                    formData.append("photo", this.photo)
-
-                    const res = await this.$axios.put(
-                        `/users/${userId}/photo`,
-                        formData, {
-                        headers: {
-                            Authorization: userId,
-                            "Content-Type": "multipart/form-data"
-                        }
-                    }
-                    )
-                    setPhotoUrl(res.data.photoUrl);
-
-                    this.errPhoto = false
-                    this.photoStatusMsg = "Success!"
-                    this.photoChanged = false
-                } catch (e) {
-                    this.errPhoto = true
-                    this.photoStatusMsg = e.response.data.error
-                }
-            }
             this.loading = false
+        },
+
+        async removePhoto() {
+            try {
+                await this.$axios.put(`/users/${userId}/name`,
+                    { name: this.name },
+                    { headers: { Authorization: userId } }
+                )
+
+                setName(this.name);
+                this.error = false
+                this.message = "Name changed successfully!"
+            } catch (e) {
+                this.error = true
+                this.message = e.response.data.error
+            }
         }
     }
 }
@@ -105,84 +130,143 @@ export default {
                 <button class="icon-btn" @click="$router.back()">
                     <img :src="backIcon" class="icon-img">
                 </button>
-                <button class="icon-btn" :disabled="loading" @click="apply">
+                <button class="icon-btn" :disabled="loading" @click="setNewName">
                     <img :src="saveIcon" class="icon-img">
                 </button>
             </div>
         </header>
-        <div class="settings-page">
-            <div class="section">
-                <h2> Username </h2>
-                <input v-model="name" class="prompt" type="text" placeholder=">_">
-            </div>
-            <p v-if="nameStatusMsg" :class="errName ? 'error' : 'success'"> {{ nameStatusMsg }} </p>
-            <div class="section">
-                <h2> Photo </h2>
-                <div class="avatar-preview">
-                    <img :src="avatarURL" />
+        <form class="settings-page" @submit.prevent="setNewName">
+            <div class="settings-container">
+                <!-- PROFILE CARD -->
+                <div class="profile-card">
+                    <div class="avatar-row">
+                        <button class="icon-btn" @click="removePhoto">
+                            <img :src="deleteIcon" class="icon-img">
+                        </button>
+
+                        <!-- AVATAR -->
+                        <div class="avatar-wrapper">
+                            <label class="avatar-clickable">
+                                <img :src="avatarURL" class="avatar-big" />
+                                <input type="file" accept="image/*" @change="uploadPhoto" hidden>
+                            </label>
+                        </div>
+
+                        <!-- RIGHT BUTTON -->
+                        <button class="icon-btn" :disabled="photoChanged" @click="setNewPhoto">
+                            <img :src="uploadIcon" class="icon-img">
+                        </button>
+                    </div>
+                    <!-- USERNAME -->
+                    <div class="username-box">
+                        <h2>Username</h2>
+                        <input v-model="name" class="prompt" type="text" placeholder="Enter username" />
+                    </div>
                 </div>
-                <input type="file" accept="image/*" @change="uploadPhoto">
+                <!-- STATUS MESSAGES -->
+                <div class="status-area">
+                    <p v-if="message" :class="error ? 'error' : 'success'">
+                        {{ message }}
+                    </p>
+                </div>
             </div>
-            <p v-if="photoStatusMsg" :class="errPhoto ? 'error' : 'success'"> {{ photoStatusMsg }} </p>
-        </div>
+        </form>
         <LoggedAs />
     </div>
 </template>
 
 <style scoped>
-/* keep UI above background */
-.topbar,
-.settings-page {
+.settings-page,
+profile-card {
     position: relative;
     z-index: 1;
 }
 
-/* =========================
-   SETTINGS LAYOUT
-   ========================= */
-
 .settings-page {
-    width: min(720px, 92%);
-    margin: 40px auto;
+    min-height: calc(100vh - 70px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.profile-card {
+    width: min(520px, 92%);
+    padding: 34px;
 
     display: flex;
     flex-direction: column;
-    gap: 26px;
-}
-
-/* =========================
-   SECTION CARD
-   ========================= */
-
-.section {
-    padding: 20px;
+    align-items: center;
+    gap: 30px;
 
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 22px;
 
-    border-radius: 18px;
-    backdrop-filter: blur(18px);
+    backdrop-filter: blur(20px);
 
-    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.75);
-
-    transition: transform 0.25s ease, border 0.25s ease;
+    box-shadow: 0 25px 90px rgba(0, 0, 0, 0.75);
 }
 
-.section:hover {
-    transform: translateY(-3px);
-    border: 1px solid rgba(0, 255, 120, 0.15);
+.avatar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
-.section h2 {
-    margin: 0 0 14px 0;
-    font-size: 1.1rem;
-    font-weight: 800;
+.avatar-big {
+    width: 170px;
+    height: 170px;
+
+    border-radius: 50%;
+    object-fit: cover;
+
+    border: 2px solid rgba(0, 255, 120, 0.18);
+    box-shadow: 0 0 50px rgba(0, 255, 120, 0.08);
+
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar-big:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 70px rgba(0, 255, 120, 0.15);
+}
+
+/* clickable upload button */
+.avatar-edit {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    color: rgba(0, 255, 120, 0.7);
+    cursor: pointer;
+
+    transition: color 0.2s ease;
+}
+
+.avatar-edit:hover {
+    color: rgba(0, 255, 120, 1);
+}
+
+.username-box {
+    width: 100%;
+    text-align: center;
+}
+
+.username-box h2 {
+    margin-bottom: 14px;
+
+    font-size: 1.2rem;
     letter-spacing: 1px;
 }
-
-/* =========================
-   INPUT (cyber minimal)
-   ========================= */
 
 .prompt {
     width: 100%;
@@ -204,94 +288,52 @@ export default {
     box-shadow: 0 0 20px rgba(0, 255, 120, 0.08);
 }
 
-/* =========================
-   AVATAR
-   ========================= */
-
-.avatar-preview {
-    width: 90px;
-    height: 90px;
-    border-radius: 18px;
-
-    margin-bottom: 12px;
-    overflow: hidden;
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.02);
-
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-    position: relative;
-}
-
-/* subtle scan shine */
-.avatar-preview::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    background: linear-gradient(120deg,
-            transparent,
-            rgba(255, 255, 255, 0.12),
-            transparent);
-
-    transform: translateX(-140%);
-    animation: avatarScan 3s ease-in-out infinite;
-}
-
-@keyframes avatarScan {
-    0% {
-        transform: translateX(-140%);
-    }
-
-    60% {
-        transform: translateX(140%);
-    }
-
-    100% {
-        transform: translateX(140%);
-    }
-}
-
-.avatar-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* =========================
-   FILE INPUT
-   ========================= */
-
-input[type="file"] {
-    color: rgba(200, 200, 200, 0.8);
-    font-size: 0.9rem;
-}
-
-/* =========================
-   STATUS MESSAGES
-   ========================= */
-
 .error {
+    margin-top: 10px;
     color: rgba(255, 80, 80, 0.85);
     font-size: 0.9rem;
 }
 
 .success {
+    margin-top: 10px;
     color: rgba(0, 255, 120, 0.7);
     font-size: 0.9rem;
 }
 
-/* =========================
-   RESPONSIVE
-   ========================= */
+.status-area {
+    width: 100%;
+    max-width: 520px;
+
+    margin-top: 14px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    text-align: center;
+}
 
 @media (max-width: 600px) {
-    .settings-page {
-        margin: 20px auto;
+    .profile-card {
+        padding: 22px;
     }
 
-    .section {
-        padding: 16px;
+    .avatar-big {
+        width: 140px;
+        height: 140px;
     }
+}
+
+.avatar-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.avatar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 </style>
