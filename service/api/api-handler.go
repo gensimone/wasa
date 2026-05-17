@@ -13,13 +13,13 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/liveness", rt.liveness)
 
 	// Groups.
-	// TODO: Implement removePhoto (which sets the default one).
 	rt.router.POST("/groups", rt.authRequest(rt.createGroup))
 	rt.router.POST("/groups/:groupId", rt.authRequest(rt.addToGroup))
 	rt.router.GET("/groups/:groupId", rt.authRequest(rt.getGroup))
 	rt.router.DELETE("/groups/:groupId", rt.authRequest(rt.deleteGroup))
 	rt.router.PUT("/groups/:groupId/name", rt.authRequest(rt.setGroupName))
 	rt.router.PUT("/groups/:groupId/photo", rt.authRequest(rt.setGroupPhoto))
+	rt.router.DELETE("/groups/:groupId/photo", rt.authRequest(rt.deleteGroupPhoto))
 	rt.router.POST("/groups/:groupId/message", rt.authRequest(rt.sendMessageToGroup))
 	rt.router.POST("/groups/:groupId/fmessage", rt.authRequest(rt.forwardMessageToGroup))
 	rt.router.DELETE("/groups/:groupId/user", rt.authRequest(rt.leaveGroup))
@@ -46,14 +46,15 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/messages/:messageId", rt.authRequest(rt.deleteMessage))
 
 	// Users.
-	// TODO: Implement removePhoto (which sets the default one).
 	rt.router.GET("/users", rt.authRequest(rt.getUsers))
 	rt.router.GET("/users/:userId", rt.authRequest(rt.getUserById))
 	rt.router.DELETE("/users/:userId", rt.authRequest(rt.deleteUser))
 	rt.router.PUT("/users/:userId/name", rt.authRequest(rt.setMyUserName))
 	rt.router.PUT("/users/:userId/photo", rt.authRequest(rt.setMyPhoto))
+	rt.router.DELETE("/users/:userId/photo", rt.authRequest(rt.deleteMyPhoto))
 	rt.router.POST("/users/:userId/message", rt.authRequest(rt.sendMessage))
 	rt.router.POST("/users/:userId/fmessage", rt.authRequest(rt.forwardMessage))
+	rt.router.GET("/users/:userId/messages", rt.authRequest(rt.getConversationByUserId))
 
 	// Authentication.
 	rt.router.POST("/session", rt.doLogin)

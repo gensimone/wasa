@@ -1,6 +1,7 @@
 <script>
 import { clearUserState } from "@/state/user"
 import logoutIcon from "@/assets/icons/logout.svg";
+import plusIcon from "@/assets/icons/plus.svg";
 import settingsIcon from "@/assets/icons/settings.svg";
 import LoggedAs from "@/components/LoggedAs.vue";
 
@@ -13,7 +14,6 @@ export default {
             chats: [
                 { id: 1, name: "Neo", lastMessage: "The Matrix has you..." },
                 { id: 2, name: "Morpheus", lastMessage: "Follow the white rabbit." },
-                { id: 4, name: "Trinity", lastMessage: "Are you awake?" },
                 { id: 5, name: "Trinity", lastMessage: "Are you awake?" },
                 { id: 6, name: "Trinity", lastMessage: "Are you awake?" },
             ],
@@ -21,14 +21,18 @@ export default {
                 { id: 1, name: "Zion", lastMessage: "People of zion..." },
                 { id: 2, name: "Spleeping People", lastMessage: "Wake up now!" },
             ],
+
+            // Icons
             logoutIcon,
-            settingsIcon
+            settingsIcon,
+            plusIcon
         };
     },
     methods: {
         logout() {
-            clearUserState();
-            this.$router.replace("/");
+            clearUserState()
+            localStorage.clear()
+            this.$router.replace("/")
         }
     }
 };
@@ -51,10 +55,8 @@ export default {
             <div class="chat-list">
                 <div class="chat-header">
                     <h2> Chats </h2>
-                    <button class="matrix-button" @click="$router.push('/users')">
-                        <svg viewBox="0 0 24 24" class="plus-icon">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>
+                    <button class="icon-btn" @click="$router.push('/users')">
+                        <img :src="plusIcon" class="icon-img">
                     </button>
                 </div>
                 <div v-for="chat in chats" :key="chat.id" class="chat-item">
@@ -70,10 +72,8 @@ export default {
             <div class="chat-list">
                 <div class="chat-header">
                     <h2> Groups </h2>
-                    <button class="matrix-button" @click="$router.push('/create/group')">
-                        <svg viewBox="0 0 24 24" class="plus-icon">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>
+                    <button class="icon-btn" @click="$router.push('/create/group')">
+                        <img :src="plusIcon" class="icon-img">
                     </button>
                 </div>
                 <div v-for="group in groups" :key="group.id" class="chat-item">
@@ -90,7 +90,6 @@ export default {
 </template>
 
 <style>
-/* keep everything above background */
 .topbar,
 .content,
 .chat-list {
@@ -98,18 +97,13 @@ export default {
     z-index: 1;
 }
 
-/* =========================
-   CONTENT SECTION
-   ========================= */
 .content {
+    top: 50px;
     padding: 18px;
     display: flex;
     justify-content: center;
 }
 
-/* =========================
-   CHAT LIST CARD
-   ========================= */
 .chat-list {
     width: min(720px, 100%);
     border-radius: 22px;
@@ -137,7 +131,6 @@ export default {
     }
 }
 
-/* subtle green border shimmer */
 .chat-list::before {
     content: "";
     position: absolute;
@@ -170,9 +163,6 @@ export default {
     }
 }
 
-/* =========================
-   CHAT HEADER
-   ========================= */
 .chat-header {
     display: flex;
     justify-content: space-between;
@@ -192,81 +182,6 @@ export default {
     color: rgba(245, 245, 245, 0.9);
 }
 
-/* =========================
-   MATRIX BUTTON
-   ========================= */
-.matrix-button {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-
-    border: 1px solid rgba(0, 255, 120, 0.18);
-    background: rgba(255, 255, 255, 0.02);
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.25s ease;
-}
-
-/* matrix scan effect */
-.matrix-button::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    background: repeating-linear-gradient(to bottom,
-            rgba(0, 255, 120, 0.18),
-            rgba(0, 255, 120, 0.18) 2px,
-            transparent 2px,
-            transparent 8px);
-
-    opacity: 0;
-    transform: translateY(-120%);
-}
-
-.matrix-button:hover::before {
-    opacity: 0.55;
-    animation: matrixScan 0.75s linear infinite;
-}
-
-@keyframes matrixScan {
-    from {
-        transform: translateY(-120%);
-    }
-
-    to {
-        transform: translateY(120%);
-    }
-}
-
-.matrix-button:hover {
-    transform: rotate(-2deg) scale(1.08);
-    border: 1px solid rgba(0, 255, 120, 0.3);
-    box-shadow: 0 0 35px rgba(0, 255, 120, 0.12);
-}
-
-.matrix-button:active {
-    transform: scale(0.95);
-}
-
-.plus-icon {
-    width: 22px;
-    height: 22px;
-    stroke: rgba(0, 255, 120, 0.9);
-    stroke-width: 2.6;
-    fill: none;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 120, 0.2));
-}
-
-/* =========================
-   CHAT ITEM
-   ========================= */
 .chat-item {
     display: flex;
     align-items: center;
@@ -287,7 +202,6 @@ export default {
     animation: fadeInUp 0.35s ease both;
 }
 
-/* hover streak */
 .chat-item::before {
     content: "";
     position: absolute;
@@ -431,5 +345,4 @@ export default {
         height: 46px;
     }
 }
-
 </style>

@@ -1,5 +1,5 @@
 <script>
-import { setUserId, setName, setPhotoUrl, userState } from "@/state/user"
+import { setUserId, setName, setPhotoUrl } from "@/state/user"
 import githubIcon from "@/assets/icons/github.svg"
 export default {
     data() {
@@ -8,42 +8,42 @@ export default {
             error: null,
             loading: false,
             githubIcon
-        };
+        }
     },
     methods: {
         async login() {
-            this.error = null;
-            this.loading = true;
+            this.error = null
+            this.loading = true
 
             try {
                 // Get the user id associated with username.
                 let response = await this.$axios.post('/session', {
                     name: this.name
-                });
+                })
 
                 // Get the user informations (username and photo)
                 // associated with the user id.
-                let userId = response.data.userId;
+                const userId = response.data.userId
 
                 try {
                     response = await this.$axios.get(`/users/${userId}`, {
                         headers: { Authorization: userId }
-                    });
+                    })
 
-                    let data = response.data;
-                    setUserId(data.userId);
-                    setName(data.name);
-                    setPhotoUrl(data.photoUrl);
+                    const data = response.data
+                    setUserId(data.userId)
+                    setName(data.name)
+                    setPhotoUrl(data.photoUrl)
 
-                    this.error = null;
-                    this.$router.push("/home");
+                    this.error = null
+                    this.$router.push("/home")
                 } catch (e) {
-                    this.error = e.response.data.error
+                    this.error = e?.response?.data?.error || "Unexpected error"
                 }
             } catch (e) {
-                this.error = e.response.data.error
+                this.error = e?.response?.data?.error || "Unexpected error"
             }
-            this.loading = false;
+            this.loading = false
         }
     }
 };

@@ -16,7 +16,9 @@ func (db *appdbimpl) SetReceiptStatus(messageId, userId int64, status Status) (s
 
 	switch {
 	case receipt.Status == Read:
+		return nil, nil
 	case receipt.Status == status:
+		return nil, nil
 	case receipt.Status == Received && status != Read:
 		return nil, nil
 	}

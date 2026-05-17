@@ -1,5 +1,5 @@
 <script>
-import { setName, setPhotoUrl, userState } from "@/state/user"
+import { setName, setPhotoUrl, user } from "@/state/user"
 import backIcon from "@/assets/icons/back.svg"
 import saveIcon from "@/assets/icons/save.svg"
 import deleteIcon from "@/assets/icons/delete.svg"
@@ -10,17 +10,17 @@ export default {
     components: {
         LoggedAs
     },
+
     data() {
         return {
-            name: userState.name,
-            avatarURL: userState.photoUrl,
-            photo: null,
+            name: user.name,          // Name of the user.
+            avatarURL: user.photoUrl, // UI Avatar.
+            photo: null,              // Photo to upload.
 
             message: null,
-            error: false,
-
-            photoChanged: false,
-            loading: false,
+            error: false,        // Change status area messages color.
+            photoChanged: false, // Enable/Disable upload button.
+            loading: false,      // Enable/Disable upload button during uploading.
 
             backIcon,
             saveIcon,
@@ -28,11 +28,20 @@ export default {
             uploadIcon,
         }
     },
+
+    computed: {
+        isDefault() {
+            const filename = new URL(this.avatarURL).pathname.split("/").pop()
+            return filename == "default-user-photo.jpg"
+        }
+    },
+
     beforeUnmount() {
         if (this.avatarUrl) {
             URL.revokeObjectURL(this.avatarUrl)
         }
     },
+
     methods: {
         uploadPhoto(e) {
             const file = e.target.files[0]
@@ -44,7 +53,13 @@ export default {
 
             this.photo = file
             this.photoChanged = true
+
             this.avatarURL = URL.createObjectURL(file)
+
+            this.error = false
+            this.message = null
+
+            e.target.value = ""
         },
 
         async setNewPhoto() {
@@ -55,25 +70,24 @@ export default {
                 const formData = new FormData()
                 formData.append("photo", this.photo)
 
-                const userId = userState.userId
-                const res = await this.$axios.put(
-                    `/users/${userId}/photo`,
+                const response = await this.$axios.put(
+                    `/users/${user.userId}/photo`,
                     formData,
                     {
                         headers: {
-                            Authorization: userId,
+                            Authorization: user.userId,
                             "Content-Type": "multipart/form-data"
                         }
                     }
                 )
-                setPhotoUrl(res.data.photoUrl);
+                setPhotoUrl(response.data.photoUrl)
 
                 this.photoChanged = false
                 this.error = false
-                this.message = "Profile photo updated successfully!"
+                this.message = "Profile photo updated successfully"
             } catch (e) {
                 this.error = true
-                this.message = e.response.data.error
+                this.message = e?.response?.data?.error || "Unexpected error"
             }
 
             this.loading = false
@@ -83,40 +97,74 @@ export default {
             this.loading = true
             this.message = null
 
-            const userId = userState.userId
-            if (this.name !== userState.name) {
+            if (this.name !== user.name) {
                 try {
-                    await this.$axios.put(`/users/${userId}/name`,
+                    await this.$axios.put(`/users/${user.userId}/name`,
                         { name: this.name },
-                        { headers: { Authorization: userId } }
+                        { headers: { Authorization: user.userId } }
                     )
 
-                    setName(this.name);
+                    setName(this.name)
                     this.error = false
-                    this.message = "Name changed successfully!"
+                    this.message = "Name changed successfully"
                 } catch (e) {
                     this.error = true
-                    this.message = e.response.data.error
+                    this.message = e?.response?.data?.error || "Unexpected error"
                 }
             }
 
             this.loading = false
         },
 
-        async removePhoto() {
+        async deleteMyPhoto() {
+            this.loading = true
+
+            // Remove local uploaded photo.
+            if (this.photoChanged) {
+                if (this.avatarURL) {
+                    URL.revokeObjectURL(this.avatarURL)
+                }
+                this.photo = null
+                this.avatarURL = user.photoUrl
+                this.photoChanged = false
+                this.loading = false
+                this.message = null
+                return
+            }
+
+            // Remove remote uploaded photo.
             try {
-                await this.$axios.put(`/users/${userId}/name`,
-                    { name: this.name },
-                    { headers: { Authorization: userId } }
+                await this.$axios.delete(`/users/${user.userId}/photo`,
+                    { headers: { Authorization: user.userId } }
                 )
 
-                setName(this.name);
+                try {
+                    const response = await this.$axios.get(`/users/${user.userId}`, {
+                        headers: { Authorization: user.userId }
+                    })
+
+                    setPhotoUrl(response.data.photoUrl)
+
+                    if (this.avatarURL) {
+                        URL.revokeObjectURL(this.avatarURL)
+                    }
+
+                    this.avatarURL = user.photoUrl
+                    this.photo = null
+                } catch (e) {
+                    this.error = true
+                    this.message = e?.response?.data?.error || "Unexpected error"
+                    return
+                }
+
                 this.error = false
-                this.message = "Name changed successfully!"
+                this.message = "Photo removed successfully"
             } catch (e) {
                 this.error = true
-                this.message = e.response.data.error
+                this.message = e?.response?.data?.error || "Unexpected error"
             }
+
+            this.loading = false
         }
     }
 }
@@ -125,11 +173,13 @@ export default {
 <template>
     <div class="app">
         <header class="topbar">
-            <div class="header-title"> Settings </div>
+            <div class="header-title"> WASAText </div>
             <div class="actions">
+                <!-- BACK BUTTON -->
                 <button class="icon-btn" @click="$router.back()">
                     <img :src="backIcon" class="icon-img">
                 </button>
+                <!-- SET NEW NAME -->
                 <button class="icon-btn" :disabled="loading" @click="setNewName">
                     <img :src="saveIcon" class="icon-img">
                 </button>
@@ -140,10 +190,10 @@ export default {
                 <!-- PROFILE CARD -->
                 <div class="profile-card">
                     <div class="avatar-row">
-                        <button class="icon-btn" @click="removePhoto">
+                        <!-- LEFT BUTTON -->
+                        <button type="button" class="icon-btn" :disabled="isDefault" @click="deleteMyPhoto">
                             <img :src="deleteIcon" class="icon-img">
                         </button>
-
                         <!-- AVATAR -->
                         <div class="avatar-wrapper">
                             <label class="avatar-clickable">
@@ -151,9 +201,8 @@ export default {
                                 <input type="file" accept="image/*" @change="uploadPhoto" hidden>
                             </label>
                         </div>
-
                         <!-- RIGHT BUTTON -->
-                        <button class="icon-btn" :disabled="photoChanged" @click="setNewPhoto">
+                        <button type="button" class="icon-btn" :disabled="!photoChanged" @click="setNewPhoto">
                             <img :src="uploadIcon" class="icon-img">
                         </button>
                     </div>

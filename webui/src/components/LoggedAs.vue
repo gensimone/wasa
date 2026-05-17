@@ -1,9 +1,9 @@
 <script setup>
-import { userState } from "@/state/user"
+import { user } from "@/state/user"
 </script>
 
 <template>
     <footer class="footer">
-        Logged as {{ userState.name }}
+        Logged as {{ user.name }}
     </footer>
 </template>

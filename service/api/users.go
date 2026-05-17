@@ -138,7 +138,8 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	if _, err := rt.db.SetMyPhotoUrl(user.UserId, photoUrl); err != nil {
+	_, err = rt.db.SetMyPhotoUrl(user.UserId, photoUrl)
+	if err != nil {
 		rt.baseLogger.Errorf("SetMyPhotoUrl: %v", err)
 		_ = rt.removeMediaFile(photoUrl)
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
@@ -150,6 +151,37 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
 	}{PhotoUrl: photoUrl}, http.StatusOK)
+}
+
+func (rt *_router) deleteMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
+	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)
+	if err != nil {
+		rt.sendResponse(w, "Parameter userId must be an int64", http.StatusBadRequest)
+		return
+	}
+
+	if userId != user.UserId {
+		rt.sendResponse(
+			w,
+			"Parameter userId must be equal to the provided authentication id",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	if user.PhotoUrl == rt.defaultUserPhoto {
+		rt.sendResponse(w, "No photo to delete", http.StatusBadRequest)
+		return
+	}
+
+	_, err = rt.db.SetMyPhotoUrl(user.UserId, rt.defaultUserPhoto)
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("SetMyPhotoUrl: %v", err)
+		return
+	}
+
+	rt.sendResponse(w, nil, http.StatusNoContent)
 }
 
 // operationId: doLogin

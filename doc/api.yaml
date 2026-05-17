@@ -211,6 +211,22 @@ paths:
         schema:
           type: integer
           format: int64
+    delete:
+      tags: ["groups"]
+      operationId: deleteGroupPhoto
+      summary: Delete group photo
+      description: Delete group photo
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags: ["groups"]
       operationId: setGroupPhoto
@@ -670,7 +686,8 @@ paths:
           format: int64
     put:
       tags: ["messages"]
-      summary: Set the message status to 'read'
+      summary: Set message status to 'read'
+      description: Set message status to 'read'
       operationId: setMessageStatusAsRead
       responses:
         '204':
@@ -901,6 +918,22 @@ paths:
         schema:
           type: integer
           format: int64
+    delete:
+      tags: ["users"]
+      operationId: deleteMyPhoto
+      summary: Delete user photo
+      description: Dele user photo
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags: ["users"]
       operationId: setMyPhoto
@@ -1011,6 +1044,49 @@ paths:
                 type: object
               schema:
                 $ref: "#/components/schemas/Message"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{userId}/messages:
+    parameters:
+      - name: userId
+        in: path
+        description: User id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["conversations"]
+      summary: Get conversation by id
+      description: Get conversation by id
+      operationId: getConversationByUserId
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: Conversation messages
+                type: object
+                properties:
+                  messageIds:
+                    description: Message ids
+                    type: array
+                    minItems: 1
+                    maxItems: 1024
+                    items:
+                      description: Message id
+                      type: integer
+                      format: int64
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':

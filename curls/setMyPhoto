@@ -2,4 +2,4 @@
 
 curl -X PUT http://localhost:3000/users/$1/photo \
   -H "Authorization: $1" \
-  -F "photo=@/home/simone/pictures/penguins/pexels-hcdigital-3347323.jpg"
+  -F "photo=$2"

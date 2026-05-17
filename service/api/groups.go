@@ -78,7 +78,8 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	if _, err := rt.db.SetGroupPhotoUrl(group.ConversationId, photoUrl); err != nil {
+	_, err = rt.db.SetGroupPhotoUrl(group.ConversationId, photoUrl)
+	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("SetGroupPhotoUrl: %v", err)
 		return
@@ -89,6 +90,32 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 	rt.sendResponse(w, struct {
 		PhotoUrl string `json:"photoUrl"`
 	}{PhotoUrl: photoUrl}, http.StatusOK)
+}
+
+func (rt *_router) deleteGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
+	group, err := rt.checkGroup(w, ps)
+	if err != nil {
+		return
+	}
+
+	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
+	if !isFounder || err != nil {
+		return
+	}
+
+	if group.PhotoUrl == rt.defaultGroupPhoto {
+		rt.sendResponse(w, "No photo to delete", http.StatusBadRequest)
+		return
+	}
+
+	_, err = rt.db.SetGroupPhotoUrl(group.ConversationId, rt.defaultGroupPhoto)
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("SetGroupPhotoUrl: %v", err)
+		return
+	}
+
+	rt.sendResponse(w, nil, http.StatusNoContent)
 }
 
 // operationId: deleteGroup

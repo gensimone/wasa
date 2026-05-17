@@ -144,8 +144,7 @@ func (rt *_router) getMessage(
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GetReceipt: %v", err)
-	case receipt.Status == database.Received:
-	case receipt.Status == database.Read:
+	case receipt.Status == database.Received || receipt.Status == database.Read:
 		rt.sendResponse(w, message, http.StatusOK)
 	case receipt.Status == database.Sent:
 		_, err = rt.db.SetReceiptStatus(message.MessageId, user.UserId, database.Received)

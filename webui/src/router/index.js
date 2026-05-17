@@ -3,6 +3,7 @@ import Login from '../views/Login.vue'
 import Home from '../views/Home.vue'
 import Settings from '../views/Settings.vue'
 import Users from '../views/Users.vue'
+import Chat from '../views/Chat.vue'
 import GroupCreate from '../views/GroupCreate.vue'
 
 const router = createRouter({
@@ -12,6 +13,7 @@ const router = createRouter({
         { path: '/Home', component: Home, meta: { requiresAuth: true } },
         { path: '/settings', component: Settings, meta: { requiresAuth: true } },
         { path: '/users', component: Users, meta: { requiresAuth: true } },
+        { path: '/chat', component: Chat, meta: { requiresAuth: true } },
         { path: '/create/group', component: GroupCreate, meta: { requiresAuth: true } },
     ]
 })
