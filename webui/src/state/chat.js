@@ -14,7 +14,7 @@ export function setChatName(name) {
 }
 
 export function setChatPhotoUrl(photoUrl) {
-    chat.photoUrl = `${__API_URL__}${photoUrl}`
+    chat.photoUrl = photoUrl
     localStorage.setItem("chatPhotoUrl", chat.photoUrl);
 }
 

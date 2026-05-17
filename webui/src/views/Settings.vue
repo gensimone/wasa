@@ -14,7 +14,7 @@ export default {
     data() {
         return {
             name: user.name,          // Name of the user.
-            avatarURL: user.photoUrl, // UI Avatar.
+            avatarUrl: user.photoUrl, // UI Avatar.
             photo: null,              // Photo to upload.
 
             message: null,
@@ -31,7 +31,7 @@ export default {
 
     computed: {
         isDefault() {
-            const filename = new URL(this.avatarURL).pathname.split("/").pop()
+            const filename = new URL(this.avatarUrl).pathname.split("/").pop()
             return filename == "default-user-photo.jpg"
         }
     },
@@ -43,23 +43,23 @@ export default {
     },
 
     methods: {
-        uploadPhoto(e) {
-            const file = e.target.files[0]
+        uploadPhoto(event) {
+            const file = event.target.files[0]
             if (!file) return
 
-            if (this.avatarURL) {
-                URL.revokeObjectURL(this.avatarURL)
+            if (this.avatarUrl) {
+                URL.revokeObjectURL(this.avatarUrl)
             }
 
             this.photo = file
             this.photoChanged = true
 
-            this.avatarURL = URL.createObjectURL(file)
+            this.avatarUrl = URL.createObjectURL(file)
 
             this.error = false
             this.message = null
 
-            e.target.value = ""
+            event.target.value = ""
         },
 
         async setNewPhoto() {
@@ -121,11 +121,11 @@ export default {
 
             // Remove local uploaded photo.
             if (this.photoChanged) {
-                if (this.avatarURL) {
-                    URL.revokeObjectURL(this.avatarURL)
+                if (this.avatarUrl) {
+                    URL.revokeObjectURL(this.avatarUrl)
                 }
                 this.photo = null
-                this.avatarURL = user.photoUrl
+                this.avatarUrl = user.photoUrl
                 this.photoChanged = false
                 this.loading = false
                 this.message = null
@@ -145,11 +145,11 @@ export default {
 
                     setPhotoUrl(response.data.photoUrl)
 
-                    if (this.avatarURL) {
-                        URL.revokeObjectURL(this.avatarURL)
+                    if (this.avatarUrl) {
+                        URL.revokeObjectURL(this.avatarUrl)
                     }
 
-                    this.avatarURL = user.photoUrl
+                    this.avatarUrl = userState.photoUrl
                     this.photo = null
                 } catch (e) {
                     this.error = true
@@ -197,7 +197,7 @@ export default {
                         <!-- AVATAR -->
                         <div class="avatar-wrapper">
                             <label class="avatar-clickable">
-                                <img :src="avatarURL" class="avatar-big" />
+                                <img :src="avatarUrl" class="avatar-big" />
                                 <input type="file" accept="image/*" @change="uploadPhoto" hidden>
                             </label>
                         </div>

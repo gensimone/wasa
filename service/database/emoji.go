@@ -8,7 +8,6 @@ const (
 	Laugh Emoji = "laugh"
 	Sad   Emoji = "sad"
 	Angry Emoji = "angry"
-	Thumb Emoji = "thumb"
 )
 
 var validEmoji = map[Emoji]struct{}{
@@ -17,7 +16,6 @@ var validEmoji = map[Emoji]struct{}{
 	Laugh: {},
 	Sad:   {},
 	Angry: {},
-	Thumb: {},
 }
 
 func IsValidEmoji(emoji Emoji) bool {
