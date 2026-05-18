@@ -1120,13 +1120,7 @@ paths:
               example:
                 type: object
               schema:
-                description: Created
-                type: object
-                properties:
-                  userId:
-                    description: User id
-                    type: integer
-                    format: int64
+                $ref: "#/components/schemas/User"
         '400':
           $ref: "#/components/responses/BadRequest"
         '500':

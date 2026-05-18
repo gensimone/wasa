@@ -1,5 +1,5 @@
 <script>
-import { user } from "@/state/user"
+import { fetchUsers } from "@/services/usersService"
 import {
     setChatName,
     setChatPhotoUrl,
@@ -20,6 +20,7 @@ export default {
     data() {
         return {
             users: [],
+            error: null,
             loading: false
         }
     },
@@ -32,36 +33,13 @@ export default {
             this.$router.push("/chat")
         },
 
-        async fetchUser(userId) {
-            const response = await this.$axios.get(`/users/${userId}`, {
-                headers: { Authorization: user.userId }
-            })
-            return response.data
-        },
-
         async fetchUsers() {
             this.loading = true
-            this.users = []
 
             try {
-                const response = await this.$axios.get(`/users`, {
-                    headers: { Authorization: user.userId }
-                })
-
-                const userPromises = response.data.users
-                    .filter(id => id !== user.userId)
-                    .map(id => this.fetchUser(id))
-
-                const usersData = await Promise.all(userPromises)
-
-                this.users = usersData
-                    .map(u => ({
-                        userId: u.userId,
-                        name: u.name,
-                        photoUrl: `${__API_URL__}${u.photoUrl}`
-                    }))
+                this.users = await fetchUsers()
             } catch (e) {
-                this.users = []
+                this.error = e?.response?.data?.error || e.message || "Unexpected error"
             } finally {
                 this.loading = false
             }

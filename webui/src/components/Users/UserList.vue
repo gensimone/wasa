@@ -5,24 +5,19 @@ export default {
     components: {
         UserItem
     },
-
     props: {
         users: Array
     },
-
     emits: ["select"]
 }
 </script>
 
 <template>
     <div class="user-list">
-
         <div class="user-list-header">
             <h2>Users</h2>
         </div>
-
         <UserItem v-for="u in users" :key="u.userId" :user="u" @select="$emit('select', $event)" />
-
     </div>
 </template>
 

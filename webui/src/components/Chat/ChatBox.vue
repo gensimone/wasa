@@ -32,7 +32,6 @@ export default {
         "addAttachment",
         "removeAttachment",
         "update:text",
-        "react"
     ],
 
     data() {
@@ -43,10 +42,6 @@ export default {
     },
 
     methods: {
-        scrollToBottom() {
-            this.$refs.messageList?.scrollToBottom()
-        },
-
         openImage(url) {
             this.zoomedImage = url
             this.showImageModal = true

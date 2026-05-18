@@ -13,6 +13,11 @@ export default {
             const hh = date.getHours()
             const mm = date.getMinutes()
             return `${hh}:${mm}`
+        },
+
+        expandURL(url) {
+            if (url) return `${__API_URL__}${url}`
+            return url
         }
     }
 }
@@ -25,7 +30,7 @@ export default {
                 {{ message.text }}
             </div>
 
-            <img v-if="message.attachmentUrl" :src="message.attachmentUrl" class="message-image"
+            <img v-if="message.attachmentUrl" :src="expandURL(message.attachmentUrl)" class="message-image"
                 @click="$emit('openImage', message.attachmentUrl)" />
 
             <div class="message-meta">

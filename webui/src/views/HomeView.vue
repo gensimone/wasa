@@ -54,8 +54,6 @@ export default {
 </template>
 
 <style scoped>
-.chat-list {}
-
 .chat-list {
     width: min(720px, 100%);
     border-radius: 22px;

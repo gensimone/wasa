@@ -1,7 +1,6 @@
 <script>
 import { user } from "@/state/user"
-import { setName, setPhotoUrl } from "@/state/user"
-
+import { updateName, updatePhoto, deletePhoto } from "@/services/userService"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
 import ProfileCard from "@/components/Settings/ProfileCard.vue"
@@ -27,9 +26,10 @@ export default {
 
     computed: {
         isDefault() {
-            const filename = new URL(this.avatarUrl).pathname.split("/").pop()
-            return filename === "default-user-photo.jpg"
-        }
+            return this.avatarUrl ?
+                this.avatarUrl.split("/").pop() === "default-user-photo.jpg"
+                : true
+        },
     },
 
     beforeUnmount() {
@@ -62,28 +62,15 @@ export default {
             this.message = null
 
             try {
-                const formData = new FormData()
-                formData.append("photo", this.photo)
-
-                const response = await this.$axios.put(
-                    `/users/${user.userId}/photo`,
-                    formData,
-                    {
-                        headers: {
-                            Authorization: user.userId,
-                            "Content-Type": "multipart/form-data"
-                        }
-                    }
-                )
-
-                setPhotoUrl(response.data.photoUrl)
+                await updatePhoto(user.userId, this.photo)
 
                 this.photoChanged = false
                 this.error = false
                 this.message = "Profile photo updated successfully"
+
             } catch (e) {
                 this.error = true
-                this.message = e?.response?.data?.error || "Unexpected error"
+                this.message = e?.message || "Unexpected error"
             } finally {
                 this.loading = false
             }
@@ -96,19 +83,14 @@ export default {
             this.message = null
 
             try {
-                await this.$axios.put(
-                    `/users/${user.userId}/name`,
-                    { name: this.name },
-                    { headers: { Authorization: user.userId } }
-                )
-
-                setName(this.name)
+                await updateName(user.userId, this.name)
 
                 this.error = false
                 this.message = "Name changed successfully"
+
             } catch (e) {
                 this.error = true
-                this.message = e?.response?.data?.error || "Unexpected error"
+                this.message = e?.message || "Unexpected error"
             } finally {
                 this.loading = false
             }
@@ -116,30 +98,10 @@ export default {
 
         async deleteMyPhoto() {
             this.loading = true
-
-            if (this.photoChanged) {
-                if (this.avatarUrl) {
-                    URL.revokeObjectURL(this.avatarUrl)
-                }
-
-                this.photo = null
-                this.avatarUrl = user.photoUrl
-                this.photoChanged = false
-                this.loading = false
-                this.message = null
-                return
-            }
+            this.message = null
 
             try {
-                await this.$axios.delete(`/users/${user.userId}/photo`, {
-                    headers: { Authorization: user.userId }
-                })
-
-                const response = await this.$axios.get(`/users/${user.userId}`, {
-                    headers: { Authorization: user.userId }
-                })
-
-                setPhotoUrl(response.data.photoUrl)
+                await deletePhoto(user.userId)
 
                 if (this.avatarUrl) {
                     URL.revokeObjectURL(this.avatarUrl)
@@ -150,13 +112,14 @@ export default {
 
                 this.error = false
                 this.message = "Photo removed successfully"
+
             } catch (e) {
                 this.error = true
-                this.message = e?.response?.data?.error || "Unexpected error"
+                this.message = e?.message || "Unexpected error"
             } finally {
                 this.loading = false
             }
-        }
+        },
     }
 }
 </script>

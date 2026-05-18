@@ -15,21 +15,14 @@ export default {
             required: true
         }
     },
-    emits: ["openImage"],
-    methods: {
-        scrollToBottom() {
-            const el = this.$refs.container
-            if (el) el.scrollTop = el.scrollHeight
-        }
-    }
+    emits: ["openImage"]
 }
 </script>
 
 <template>
     <div class="messages" ref="container">
         <Message v-for="message in messages" :key="message.messageId" :message="message"
-            :isMine="Number(message.senderId) === Number(userId)" @openImage="$emit('openImage', $event)"
-             />
+            :isMine="message.senderId === userId" @openImage="$emit('openImage', $event)" />
     </div>
 </template>
 

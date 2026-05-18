@@ -192,24 +192,24 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, _ httprouter.
 	}
 
 	user, err := rt.db.GetUserByName(*name)
-	var userId *int64
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		userId, err = rt.db.CreateUser(*name, rt.defaultUserPhoto)
+		userId, err := rt.db.CreateUser(*name, rt.defaultUserPhoto)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("CreateUser: %v", err)
 			return
 		}
+		rt.sendResponse(w, database.User{
+			UserId:   *userId,
+			Name:     *name,
+			PhotoUrl: rt.defaultUserPhoto,
+		}, http.StatusCreated)
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GetUserByName: %v", err)
 		return
 	default:
-		userId = &user.UserId
+		rt.sendResponse(w, user, http.StatusCreated)
 	}
-
-	rt.sendResponse(w, struct {
-		UserId int64 `json:"userId"`
-	}{UserId: *userId}, http.StatusCreated)
 }

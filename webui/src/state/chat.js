@@ -1,12 +1,16 @@
 import { reactive } from "vue"
 
 export const chat = reactive({
-    userId: localStorage.getItem("chatUserId")
-        ? Number(localStorage.getItem("chatUserId"))
-        : null,
-    name: localStorage.getItem("chatName") || null,
-    photoUrl: localStorage.getItem("chatPhotoUrl") || null,
+    userId: null,
+    name: null,
+    photoUrl: null
 })
+
+export function loadChatMetadataFromStorage() {
+    chat.userId = Number(localStorage.getItem("chatUserId"))
+    chat.name = localStorage.getItem("chatName")
+    chat.photoUrl = localStorage.getItem("chatPhotoUrl")
+}
 
 export function setChatName(name) {
     chat.name = name;
@@ -27,4 +31,8 @@ export function clearChatState() {
     chat.userId = null;
     chat.name = null;
     chat.photoUrl = null;
+
+    localStorage.removeItem("chatUserId")
+    localStorage.removeItem("chatName")
+    localStorage.removeItem("chatPhotoUrl")
 }

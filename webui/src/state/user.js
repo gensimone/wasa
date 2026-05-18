@@ -1,12 +1,16 @@
 import { reactive } from "vue"
 
 export const user = reactive({
-    userId: localStorage.getItem("userId")
-        ? Number(localStorage.getItem("userId"))
-        : null,
-    name: localStorage.getItem("name") || null,
-    photoUrl: localStorage.getItem("photoUrl") || null,
+    userId: null,
+    name: null,
+    photoUrl: null
 })
+
+export function loadUserFromStorage() {
+    user.userId = Number(localStorage.getItem("userId"))
+    user.name = localStorage.getItem("name")
+    user.photoUrl = localStorage.getItem("photoUrl")
+}
 
 export function setName(name) {
     user.name = name;
@@ -14,7 +18,7 @@ export function setName(name) {
 }
 
 export function setPhotoUrl(photoUrl) {
-    user.photoUrl = `${__API_URL__}${photoUrl}`
+    user.photoUrl = photoUrl
     localStorage.setItem("photoUrl", user.photoUrl);
 }
 
@@ -27,4 +31,8 @@ export function clearUserState() {
     user.userId = null;
     user.name = null;
     user.photoUrl = null;
+
+    localStorage.removeItem("userId")
+    localStorage.removeItem("name")
+    localStorage.removeItem("photoUrl")
 }
