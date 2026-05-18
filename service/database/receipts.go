@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/gensimone/WASA-project/service/globaltime"
 )
@@ -23,7 +22,7 @@ func (db *appdbimpl) SetReceiptStatus(messageId, userId int64, status Status) (s
 		return nil, nil
 	}
 
-	timestamp := globaltime.Now().Format(time.DateTime)
+	timestamp := globaltime.Now()
 
 	if status == Received {
 		return db.c.Exec(

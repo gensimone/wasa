@@ -1,20 +1,18 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Home from '../views/Home.vue'
-import Settings from '../views/Settings.vue'
-import Users from '../views/Users.vue'
-import Chat from '../views/Chat.vue'
-import GroupCreate from '../views/GroupCreate.vue'
+import LoginView from '@/views/LoginView.vue'
+import HomeView from '@/views/HomeView.vue'
+import SettingsView from '@/views/SettingsView.vue'
+import UsersView from '@/views/UsersView.vue'
+import ChatView from '@/views/ChatView.vue'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: [
-        { path: '/', component: Login },
-        { path: '/Home', component: Home, meta: { requiresAuth: true } },
-        { path: '/settings', component: Settings, meta: { requiresAuth: true } },
-        { path: '/users', component: Users, meta: { requiresAuth: true } },
-        { path: '/chat', component: Chat, meta: { requiresAuth: true } },
-        { path: '/create/group', component: GroupCreate, meta: { requiresAuth: true } },
+        { path: '/', component: LoginView },
+        { path: '/home', component: HomeView, meta: { requiresAuth: true } },
+        { path: '/settings', component: SettingsView, meta: { requiresAuth: true } },
+        { path: '/users', component: UsersView, meta: { requiresAuth: true } },
+        { path: '/chat', component: ChatView, meta: { requiresAuth: true } },
     ]
 })
 

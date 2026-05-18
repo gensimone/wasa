@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/gensimone/WASA-project/service/globaltime"
 )
@@ -26,7 +25,7 @@ func (db *appdbimpl) InsertMessage(
 		_ = tx.Rollback()
 	}()
 
-	createdAt := globaltime.Now().Format(time.DateTime)
+	createdAt := globaltime.Now()
 	res, err := tx.Exec(
 		`INSERT INTO messages (
 			text,

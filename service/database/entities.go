@@ -1,5 +1,7 @@
 package database
 
+import "time"
+
 type User struct {
 	UserId   int64  `json:"userId"`
 	Name     string `json:"name"`
@@ -7,11 +9,11 @@ type User struct {
 }
 
 type Group struct {
-	ConversationId int64  `json:"conversationId"`
-	FounderId      int64  `json:"founderId"`
-	Name           string `json:"name"`
-	PhotoUrl       string `json:"photoUrl"`
-	CreatedAt      string `json:"createdAt"`
+	ConversationId int64     `json:"conversationId"`
+	FounderId      int64     `json:"founderId"`
+	Name           string    `json:"name"`
+	PhotoUrl       string    `json:"photoUrl"`
+	CreatedAt      time.Time `json:"createdAt"`
 }
 
 type UserConversation struct {
@@ -24,7 +26,7 @@ type Message struct {
 	Text           string    `json:"text"`
 	SenderId       int64     `json:"senderId"`
 	ConversationId int64     `json:"conversationId"`
-	CreatedAt      string    `json:"createdAt"`
+	CreatedAt      time.Time `json:"createdAt"`
 	IsForwarded    bool      `json:"isForwarded"`
 	CommentTo      *int64    `json:"commentTo"`
 	AttachmentUrl  string    `json:"attachmentUrl"`
@@ -32,12 +34,12 @@ type Message struct {
 }
 
 type Receipt struct {
-	MessageId  int64   `json:"messageId"`
-	UserId     int64   `json:"userId"`
-	Status     Status  `json:"status"`
-	SentAt     string  `json:"sentAt"`
-	ReceivedAt *string `json:"receivedAt"`
-	ReadAt     *string `json:"readAt"`
+	MessageId  int64      `json:"messageId"`
+	UserId     int64      `json:"userId"`
+	Status     Status     `json:"status"`
+	SentAt     time.Time  `json:"sentAt"`
+	ReceivedAt *time.Time `json:"receivedAt"`
+	ReadAt     *time.Time `json:"readAt"`
 }
 
 type Reaction struct {

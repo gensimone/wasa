@@ -96,8 +96,12 @@ func (rt *_router) getConversationByUserId(w http.ResponseWriter, _ *http.Reques
 			return
 		}
 
+		type MessageIds struct {
+			MessageIds []int64 `json:"messageIds"`
+		}
+
 		if conversationId == nil {
-			rt.sendResponse(w, "Conversation Not Found", http.StatusNotFound)
+			rt.sendResponse(w, MessageIds{MessageIds: []int64{}}, http.StatusOK)
 			return
 		}
 
@@ -108,9 +112,7 @@ func (rt *_router) getConversationByUserId(w http.ResponseWriter, _ *http.Reques
 			return
 		}
 
-		rt.sendResponse(w, struct {
-			MessageIds []int64 `json:"messageIds"`
-		}{MessageIds: messageIds}, http.StatusOK)
+		rt.sendResponse(w, MessageIds{MessageIds: messageIds}, http.StatusOK)
 	}
 }
 

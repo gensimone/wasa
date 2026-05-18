@@ -1,36 +1,24 @@
 <script>
 import { clearUserState } from "@/state/user"
-import logoutIcon from "@/assets/icons/logout.svg";
-import plusIcon from "@/assets/icons/plus.svg";
-import settingsIcon from "@/assets/icons/settings.svg";
-import LoggedAs from "@/components/LoggedAs.vue";
+import { clearChatState } from "@/state/chat"
+import Bottombar from "@/components/Shared/Bottombar.vue";
+import Topbar from "@/components/Shared/Topbar.vue";
 
 export default {
     components: {
-        LoggedAs
+        Bottombar,
+        Topbar
     },
     data() {
         return {
             chats: [
-                { id: 1, name: "Neo", lastMessage: "The Matrix has you..." },
-                { id: 2, name: "Morpheus", lastMessage: "Follow the white rabbit." },
-                { id: 5, name: "Trinity", lastMessage: "Are you awake?" },
-                { id: 6, name: "Trinity", lastMessage: "Are you awake?" },
             ],
-            groups: [
-                { id: 1, name: "Zion", lastMessage: "People of zion..." },
-                { id: 2, name: "Spleeping People", lastMessage: "Wake up now!" },
-            ],
-
-            // Icons
-            logoutIcon,
-            settingsIcon,
-            plusIcon
         };
     },
     methods: {
         logout() {
             clearUserState()
+            clearChatState()
             localStorage.clear()
             this.$router.replace("/")
         }
@@ -40,23 +28,16 @@ export default {
 
 <template>
     <div class="app">
-        <header class="topbar">
-            <div class="header-title"> WASAText </div>
-            <div class="actions">
-                <button class="icon-btn" @click="$router.push('/settings')">
-                    <img :src="settingsIcon" class="icon-img">
-                </button>
-                <button class="icon-btn" @click="logout">
-                    <img :src="logoutIcon" class="icon-img">
-                </button>
-            </div>
-        </header>
+        <Topbar :actions="[
+            { icon: '/icons/settings.svg', onClick: () => $router.push('/settings') },
+            { icon: '/icons/logout.svg', onClick: () => logout() }
+        ]" />
         <main class="content">
             <div class="chat-list">
                 <div class="chat-header">
                     <h2> Chats </h2>
                     <button class="icon-btn" @click="$router.push('/users')">
-                        <img :src="plusIcon" class="icon-img">
+                        <img src="/icons/plus.svg" class="icon-img">
                     </button>
                 </div>
                 <div v-for="chat in chats" :key="chat.id" class="chat-item">
@@ -68,41 +49,12 @@ export default {
                 </div>
             </div>
         </main>
-        <main class="content">
-            <div class="chat-list">
-                <div class="chat-header">
-                    <h2> Groups </h2>
-                    <button class="icon-btn" @click="$router.push('/create/group')">
-                        <img :src="plusIcon" class="icon-img">
-                    </button>
-                </div>
-                <div v-for="group in groups" :key="group.id" class="chat-item">
-                    <div class="chat-photo-preview" />
-                    <div class="info">
-                        <div class="chat-name"> {{ group.name }} </div>
-                        <div class="chat-last-message"> {{ group.lastMessage }} </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-        <LoggedAs />
+        <Bottombar />
     </div>
 </template>
 
-<style>
-.topbar,
-.content,
-.chat-list {
-    position: relative;
-    z-index: 1;
-}
-
-.content {
-    top: 50px;
-    padding: 18px;
-    display: flex;
-    justify-content: center;
-}
+<style scoped>
+.chat-list {}
 
 .chat-list {
     width: min(720px, 100%);

@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/gensimone/WASA-project/service/globaltime"
 )
@@ -94,7 +93,7 @@ func (db *appdbimpl) CreateGroup(founderId int64, name, photoUrl string) (*Group
 		return nil, err
 	}
 
-	createdAt := globaltime.Now().Format(time.DateTime)
+	createdAt := globaltime.Now()
 	_, err = tx.Exec(
 		`INSERT INTO groups (
 			conversation_id,
