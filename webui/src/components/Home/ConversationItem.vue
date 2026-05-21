@@ -2,7 +2,7 @@
 import { expandURL } from "@/utils/media"
 export default {
     props: {
-        user: Object
+        conversation: Object
     },
 
     emits: ["select"],
@@ -14,13 +14,16 @@ export default {
 </script>
 
 <template>
-    <div class="list-item" @click="$emit('select', user)">
+    <div class="list-item" @click="$emit('select', conversation)">
         <div class="item-photo-wrapper">
-            <img :src="expandURL(user.photoUrl)" class="item-photo" />
+            <img :src="expandURL(conversation.photoUrl)" class="item-photo" />
         </div>
         <div class="item-info">
             <div class="item-name">
-                {{ user.name }}
+                {{ conversation.name }}
+            </div>
+            <div v-if="conversation.lastMessage" class="last-message">
+                {{ conversation.lastMessage.text }}
             </div>
         </div>
     </div>

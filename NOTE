@@ -1,0 +1,20 @@
+HOME:
+    Nella home verranno listate tutte le chat precedentemente aperte con persone e gruppi.
+    Verranno listate all'interno di un componente ChatList e ciascun componente della
+    lista sara' a sua volta un componente (chiamato ChatItem).
+    I ChatItem avranno a sinistra l'avatar della chat in altro il nome della chat, che
+    nel caso della chat con utenti sara' il nome dell'utente e nel caso dei gruppi il
+    nome del gruppo. In basso invece verra' inserito l'ultimo messaggio registrato
+    all'interno della chat (se presente) e in alto a destra la data.
+
+    Cliccando un ChatItem la ChatView viene mostrata con i dati prelevati dal ChatItem.
+
+** IMPORTANTE:
+    - (Nel ChatItem)
+        Qualora il messaggio avesse una data precedente a quella "odierna" rispetto al client
+        la data del messaggio dovra' essere mostrata invece che il tempo in cui e' stato
+        mandato il messaggio
+
+    - (Nel ChatBox)
+        Dobbiamo inserire la data in alto, in maniera simile a come avviene per Whatsapp
+        e Telegram.

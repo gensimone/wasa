@@ -2,7 +2,7 @@ import api from "@/services/axios"
 import { setUserId, setName, setPhotoUrl } from "@/state/user"
 
 export async function login(rawName) {
-    const name = rawName.trim()
+    const name = rawName?.trim()
     if (!name) {
         throw new Error("Invalid name")
     }

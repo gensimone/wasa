@@ -29,6 +29,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/conversations", rt.authRequest(rt.getMyConversations))
 	rt.router.GET("/conversations/:conversationId", rt.authRequest(rt.getConversation))
 	rt.router.GET("/conversations/:conversationId/members", rt.authRequest(rt.getMembers))
+	rt.router.GET("/conversations/:conversationId/last", rt.authRequest(rt.getLastMessage))
 
 	// Reactions.
 	rt.router.POST("/reactions/:messageId", rt.authRequest(rt.addReaction))

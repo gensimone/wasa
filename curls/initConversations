@@ -21,6 +21,6 @@ echo "Send some messages"
 
 echo
 echo "Creating group"
-./createGroup 1 "HackThePlanet" @./assets/hack_the_planet.jpg # ID: 1
+./createGroup 1 "HackThePlanet" @./assets/hack_the_planet.jpg # Group ID: 2
 ./addToGroup  1 2 2 # Add Acid Burn in group.
 ./addToGroup  1 2 3 # Add Lord Nikon in group.

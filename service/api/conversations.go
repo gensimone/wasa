@@ -53,7 +53,7 @@ func (rt *_router) getConversation(w http.ResponseWriter, _ *http.Request, ps ht
 	}
 
 	messageIds, err := rt.db.GetMessageIds(*conversationId)
-	if err != nil || messageIds == nil {
+	if err != nil {
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GetMessageIds: %v", err)
 		return
@@ -106,7 +106,7 @@ func (rt *_router) getConversationByUserId(w http.ResponseWriter, _ *http.Reques
 		}
 
 		messageIds, err := rt.db.GetMessageIds(*conversationId)
-		if err != nil || messageIds == nil {
+		if err != nil {
 			rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("GetMessageIds: %v", err)
 			return
@@ -114,6 +114,35 @@ func (rt *_router) getConversationByUserId(w http.ResponseWriter, _ *http.Reques
 
 		rt.sendResponse(w, MessageIds{MessageIds: messageIds}, http.StatusOK)
 	}
+}
+
+// operationId: getLastMessage
+func (rt *_router) getLastMessage(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := rt.authConversationAccess(w, ps, user)
+	if err != nil {
+		return
+	}
+
+	messageIds, err := rt.db.GetMessageIds(*conversationId)
+	if err != nil {
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessageIds: %v", err)
+		return
+	}
+
+	var message *database.Message
+	if len(messageIds) == 0 {
+		message = nil
+	} else {
+		message, err = rt.db.GetMessage(messageIds[len(messageIds)-1])
+		if err != nil {
+			rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetMessage: %v", err)
+			return
+		}
+	}
+
+	rt.sendResponse(w, message, http.StatusOK)
 }
 
 // operationId: getMembers

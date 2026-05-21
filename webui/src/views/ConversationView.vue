@@ -1,30 +1,32 @@
 <script>
 import { user } from "@/state/user.js"
-import { chat } from "@/state/chat.js"
-import ChatService from "@/services/chatService"
+import { conversation } from "@/state/conversation.js"
+import ConversationService from "@/services/conversationService"
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
-import ChatBox from "@/components/Chat/ChatBox.vue"
+import ConversationBox from "@/components/Conversation/ConversationBox.vue"
 
 export default {
     components: {
         Topbar,
         Bottombar,
-        ChatBox
+        ConversationBox
     },
 
     data() {
         return {
-            service: null,
-            userId: user.userId,
-            messages: [],
-            sending: false,
-            sendError: null,
-            chatName: chat.name,
-            avatarUrl: chat.photoUrl,
-            text: null,
-            attachment: null,
-            attachmentUrl: null
+            service: null,                       // Service for polling/send messages.
+            userId: user.userId,                 // The user ID of the logged user.
+            messages: [],                        // Messages
+
+            conversationName: conversation.name, // Group or user name.
+            avatarUrl: conversation.photoUrl,    // Group or user photo.
+
+            text: null,                          // Text for the InputBox.
+            attachment: null,                    // Attachment for the InputBox.
+            attachmentUrl: null,                 // Attachment URL for the InputBox.
+            sending: false,                      // Enable/Disable the InputBox.
+            sendError: null,                     // Error message in SendError.
         }
     },
 
@@ -73,15 +75,11 @@ export default {
 
             this.attachmentUrl = null
             this.attachment = null
-        },
-
-        expandURL(url) {
-            return `${__API_URL__}${url}`
         }
     },
 
     async mounted() {
-        this.service = new ChatService()
+        this.service = new ConversationService()
 
         this.messages = await this.service.fetchMessages()
 
@@ -103,10 +101,11 @@ export default {
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
         <div class="content">
-            <ChatBox ref="chatBox" :chatName="chatName" :avatarUrl="expandURL(avatarUrl)" :messages="messages" :userId="userId"
-                :text="text" :attachment="attachment" :attachmentUrl="attachmentUrl" @update:text="text = $event"
-                @send="sendMessage" @addAttachment="addAttachment" @removeAttachment="removeAttachment"
-                :sending="sending" :sendError="sendError" />
+            <ConversationBox ref="conversationBox" :conversationName="conversationName" :avatarUrl="avatarUrl"
+                :messages="messages" :userId="userId" :text="text" :attachment="attachment"
+                :attachmentUrl="attachmentUrl" @update:text="text = $event" @send="sendMessage"
+                @addAttachment="addAttachment" @removeAttachment="removeAttachment" :sending="sending"
+                :sendError="sendError" />
         </div>
         <Bottombar />
     </div>

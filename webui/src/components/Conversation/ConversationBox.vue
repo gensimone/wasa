@@ -1,19 +1,20 @@
 <script>
-import MessageList from "@/components/Chat/MessageList.vue"
-import ChatInput from "@/components/Chat/ChatInput.vue"
+import { expandURL } from "@/utils/media"
 import ImageModal from "@/components/Shared/ImageModal.vue"
-import SendError from "@/components/Chat/SendError.vue"
+import MessageList from "@/components/Conversation/MessageList.vue"
+import ConversationInput from "@/components/Conversation/ConversationInput.vue"
+import SendError from "@/components/Conversation/SendError.vue"
 
 export default {
     components: {
         MessageList,
-        ChatInput,
+        ConversationInput,
         ImageModal,
         SendError
     },
 
     props: {
-        chatName: { type: String, required: true },
+        conversationName: { type: String, required: true },
         avatarUrl: { type: String, required: true },
 
         messages: { type: Array, required: true },
@@ -42,6 +43,8 @@ export default {
     },
 
     methods: {
+        expandURL,
+
         openImage(url) {
             this.zoomedImage = url
             this.showImageModal = true
@@ -56,19 +59,19 @@ export default {
 </script>
 
 <template>
-    <div class="chat-container">
-        <div class="chat-box">
+    <div class="conversation-container">
+        <div class="conversation-box">
 
-            <div class="chat-header">
-                <img class="avatar" :src="avatarUrl" @click="openImage(avatarUrl)" />
-                <div class="chat-name">
-                    {{ chatName }}
+            <div class="conversation-header">
+                <img class="avatar" :src="expandURL(avatarUrl)" @click="openImage(avatarUrl)" />
+                <div class="conversation-name">
+                    {{ conversationName }}
                 </div>
             </div>
 
             <MessageList ref="messageList" :messages="messages" :userId="userId" @openImage="openImage" />
 
-            <ChatInput :text="text" :sending="sending" :attachment="attachment" :attachmentUrl="attachmentUrl"
+            <ConversationInput :text="text" :sending="sending" :attachment="attachment" :attachmentUrl="attachmentUrl"
                 @update:text="$emit('update:text', $event)" @send="$emit('send')"
                 @addAttachment="$emit('addAttachment', $event)" @removeAttachment="$emit('removeAttachment')" />
 
@@ -80,7 +83,7 @@ export default {
 </template>
 
 <style scoped>
-.chat-container {
+.conversation-container {
     display: flex;
     width: 100%;
     justify-content: center;
@@ -88,7 +91,7 @@ export default {
     box-sizing: border-box;
 }
 
-.chat-box {
+.conversation-box {
     width: min(720px, 100%);
     height: 95%;
     display: flex;
@@ -102,7 +105,7 @@ export default {
     box-shadow: 0 25px 90px rgba(0, 0, 0, 0.7);
 }
 
-.chat-header {
+.conversation-header {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -114,7 +117,7 @@ export default {
     backdrop-filter: blur(10px);
 }
 
-.chat-header .avatar {
+.conversation-header .avatar {
     position: absolute;
     left: 16px;
 
@@ -126,7 +129,7 @@ export default {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.chat-header .chat-name {
+.conversation-header .conversation-name {
     font-size: 1rem;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.9);

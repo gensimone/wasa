@@ -1,5 +1,5 @@
 <script>
-import { user } from "@/state/user"
+import { user, setName, setPhotoUrl } from "@/state/user"
 import { updateName, updatePhoto, deletePhoto } from "@/services/userService"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
@@ -33,27 +33,28 @@ export default {
     },
 
     beforeUnmount() {
-        if (this.avatarUrl) {
-            URL.revokeObjectURL(this.avatarUrl)
-        }
+        this.revokeAvatarUrl()
     },
 
     methods: {
+        revokeAvatarUrl() {
+            if (this.avatarUrl) {
+                URL.revokeObjectURL(this.avatarUrl)
+            }
+        },
 
         uploadPhoto(event) {
             const file = event.target.files[0]
             if (!file) return
 
-            if (this.avatarUrl) {
-                URL.revokeObjectURL(this.avatarUrl)
-            }
-
-            this.photo = file
-            this.photoChanged = true
+            this.revokeAvatarUrl()
             this.avatarUrl = URL.createObjectURL(file)
+
+            this.photoChanged = true
 
             this.error = false
             this.message = null
+
             event.target.value = ""
         },
 
@@ -62,15 +63,21 @@ export default {
             this.message = null
 
             try {
-                await updatePhoto(user.userId, this.photo)
+                const newPhotoUrl = await updatePhoto(this.photo)
+                setPhotoUrl(newPhotoUrl)
+
+                this.revokeAvatarUrl()
+                this.avatarUrl = user.photoUrl
 
                 this.photoChanged = false
+
                 this.error = false
                 this.message = "Profile photo updated successfully"
 
             } catch (e) {
                 this.error = true
                 this.message = e?.message || "Unexpected error"
+
             } finally {
                 this.loading = false
             }
@@ -83,7 +90,8 @@ export default {
             this.message = null
 
             try {
-                await updateName(user.userId, this.name)
+                const newName = await updateName(this.name)
+                setName(newName)
 
                 this.error = false
                 this.message = "Name changed successfully"
@@ -91,6 +99,7 @@ export default {
             } catch (e) {
                 this.error = true
                 this.message = e?.message || "Unexpected error"
+
             } finally {
                 this.loading = false
             }
@@ -101,14 +110,11 @@ export default {
             this.message = null
 
             try {
-                await deletePhoto(user.userId)
+                const defaultPhotoUrl = await deletePhoto()
+                setPhotoUrl(defaultPhotoUrl)
 
-                if (this.avatarUrl) {
-                    URL.revokeObjectURL(this.avatarUrl)
-                }
-
+                this.revokeAvatarUrl()
                 this.avatarUrl = user.photoUrl
-                this.photo = null
 
                 this.error = false
                 this.message = "Photo removed successfully"
@@ -116,6 +122,7 @@ export default {
             } catch (e) {
                 this.error = true
                 this.message = e?.message || "Unexpected error"
+
             } finally {
                 this.loading = false
             }

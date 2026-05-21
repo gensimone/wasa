@@ -1,24 +1,23 @@
 import api from "@/services/axios"
-import { setName, setPhotoUrl } from "@/state/user"
+import { user } from "@/state/user"
 
-export async function updateName(userId, name) {
-    const cleanName = name?.trim()
+export async function updateName(rawName) {
+    const name = rawName?.trim()
 
-    if (!cleanName) {
+    if (!name) {
         throw new Error("Invalid name")
     }
 
     await api.put(
-        `/users/${userId}/name`,
-        { name: cleanName },
-        { headers: { Authorization: userId } }
+        `/users/${user.userId}/name`,
+        { name: name },
+        { headers: { Authorization: user.userId } }
     )
 
-    setName(cleanName)
-    return cleanName
+    return name
 }
 
-export async function updatePhoto(userId, file) {
+export async function updatePhoto(file) {
     if (!file) {
         throw new Error("No file provided")
     }
@@ -27,29 +26,28 @@ export async function updatePhoto(userId, file) {
     formData.append("photo", file)
 
     const { data } = await api.put(
-        `/users/${userId}/photo`,
+        `/users/${user.userId}/photo`,
         formData,
         {
             headers: {
-                Authorization: userId,
+                Authorization: user.userId,
                 "Content-Type": "multipart/form-data"
             }
         }
     )
 
-    setPhotoUrl(`${__API_URL__}${data.photoUrl}`)
     return data.photoUrl
 }
 
-export async function deletePhoto(userId) {
-    await api.delete(`/users/${userId}/photo`, {
-        headers: { Authorization: userId }
+export async function deletePhoto() {
+    // FIXME: Do this in one single request.
+    await api.delete(`/users/${user.userId}/photo`, {
+        headers: { Authorization: user.userId }
     })
 
-    const { data } = await api.get(`/users/${userId}`, {
-        headers: { Authorization: userId }
+    const { data } = await api.get(`/users/${user.userId}`, {
+        headers: { Authorization: user.userId }
     })
 
-    setPhotoUrl(`${__API_URL__}${data.photoUrl}`)
     return data.photoUrl
 }

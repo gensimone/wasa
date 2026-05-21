@@ -489,6 +489,38 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
+  /conversations/{conversationId}/last:
+    parameters:
+      - name: conversationId
+        in: path
+        description: Conversation id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["conversations"]
+      summary: Get last message of conversation
+      description: Get last message of conversation
+      operationId: getLastMessage
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                $ref: "#/components/schemas/Message"
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
   /conversations/{conversationId}/members:
     parameters:
       - name: conversationId
@@ -922,7 +954,7 @@ paths:
       tags: ["users"]
       operationId: deleteMyPhoto
       summary: Delete user photo
-      description: Dele user photo
+      description: Delete user photo
       responses:
         '204':
           description: No Content

@@ -1,5 +1,5 @@
 <script>
-import Message from "@/components/Chat/Message.vue"
+import Message from "@/components/Conversation/Message.vue"
 
 export default {
     components: {

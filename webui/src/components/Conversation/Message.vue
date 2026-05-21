@@ -1,4 +1,5 @@
 <script>
+import { expandURL } from "@/utils/media"
 export default {
     props: {
         message: Object,
@@ -8,16 +9,13 @@ export default {
     emits: ["openImage"],
 
     methods: {
+        expandURL,
+
         getTime(sentAt) {
             const date = new Date(sentAt)
             const hh = date.getHours()
             const mm = date.getMinutes()
             return `${hh}:${mm}`
-        },
-
-        expandURL(url) {
-            if (url) return `${__API_URL__}${url}`
-            return url
         }
     }
 }

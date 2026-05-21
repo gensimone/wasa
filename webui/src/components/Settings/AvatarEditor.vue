@@ -1,11 +1,17 @@
 <script>
+import { expandURL } from '@/utils/media';
 export default {
+    methods: {
+        expandURL
+    },
+
     props: {
         avatarUrl: String,
         isDefault: Boolean,
         photoChanged: Boolean,
         loading: Boolean
     },
+
     emits: ["upload", "remove", "save"]
 }
 </script>
@@ -17,7 +23,7 @@ export default {
         </button>
 
         <label class="avatar-wrapper">
-            <img :src="avatarUrl" class="avatar-big" />
+            <img :src="expandURL(avatarUrl)" class="avatar-big" />
             <input type="file" accept="image/*" hidden @change="$emit('upload', $event)" />
         </label>
 

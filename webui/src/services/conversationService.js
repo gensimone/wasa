@@ -1,8 +1,8 @@
 import api from "@/services/axios"
 import { user } from "@/state/user"
-import { chat } from "@/state/chat"
+import { conversation } from "@/state/conversation"
 
-class ChatService {
+class ConversationService {
     constructor() {
         this.poller = null
         this.lock = false
@@ -16,9 +16,18 @@ class ChatService {
     }
 
     async fetchMessages() {
-        const res = await api.get(`/users/${chat.userId}/messages`, {
+        const endpoint = conversation?.isGroup ?
+            `/conversations/${conversation.id}` :
+            `/users/${conversation.id}/messages`
+
+        const res = await api.get(endpoint, {
             headers: { Authorization: user.userId }
         })
+
+        const messageIds = res.data.messageIds
+        if (!messageIds) {
+            return []
+        }
 
         const messages = await Promise.all(
             res.data.messageIds.map(id => this.fetchMessage(id))
@@ -40,8 +49,13 @@ class ChatService {
             formData.append("mediaType", "image")
         }
 
+        const endpoint = conversation?.isGroup ?
+            `/groups/${conversation.id}/message` :
+            `/users/${conversation.id}/message`
+
+
         return await api.post(
-            `/users/${chat.userId}/message`,
+            endpoint,
             formData,
             {
                 headers: {
@@ -79,4 +93,4 @@ class ChatService {
     }
 }
 
-export default ChatService
+export default ConversationService

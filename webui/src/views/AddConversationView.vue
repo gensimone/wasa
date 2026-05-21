@@ -1,10 +1,11 @@
 <script>
 import { fetchUsers } from "@/services/usersService"
 import {
-    setChatName,
-    setChatPhotoUrl,
-    setChatUserId
-} from "@/state/chat"
+    setConversationName,
+    setConversationPhotoUrl,
+    setConversationId,
+    setConversationIsGroup
+} from "@/state/conversation"
 
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
@@ -26,11 +27,12 @@ export default {
     },
 
     methods: {
-        chatUser(user) {
-            setChatName(user.name)
-            setChatPhotoUrl(user.photoUrl)
-            setChatUserId(user.userId)
-            this.$router.push("/chat")
+        startConversation(user) {
+            setConversationName(user.name)
+            setConversationPhotoUrl(user.photoUrl)
+            setConversationId(user.userId)
+            setConversationIsGroup(false)
+            this.$router.push("/conversation")
         },
 
         async fetchUsers() {
@@ -43,6 +45,10 @@ export default {
             } finally {
                 this.loading = false
             }
+        },
+
+        createGroup() {
+            // TODO: implement this.
         }
     },
 
@@ -58,7 +64,17 @@ export default {
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
         <div class="content">
-            <UserList :users="users" :loading="loading" @select="chatUser" />
+            <div class="items-list">
+                <div class="list-item" @click="createGroup">
+                    <img src="/icons/plus.svg" class="icon-img" />
+                    <div class="item-info">
+                        <div class="item-name">
+                            Create a new group
+                        </div>
+                    </div>
+                </div>
+                <UserList :users="users" :loading="loading" @select="startConversation" />
+            </div>
         </div>
         <Bottombar />
     </div>
