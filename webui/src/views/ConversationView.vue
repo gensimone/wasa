@@ -1,7 +1,8 @@
 <script>
-import { user } from "@/state/user.js"
-import { conversation } from "@/state/conversation.js"
-import ConversationService from "@/services/conversationService"
+import { getConversationMessages, sendMessage } from "@/utils/conversations"
+import { conversation } from "@/state/conversation"
+import { Poller } from "@/services/poller"
+
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import ConversationBox from "@/components/Conversation/ConversationBox.vue"
@@ -15,18 +16,14 @@ export default {
 
     data() {
         return {
-            service: null,                       // Service for polling/send messages.
-            userId: user.userId,                 // The user ID of the logged user.
-            messages: [],                        // Messages
+            poller: null,
+            messages: [],
 
-            conversationName: conversation.name, // Group or user name.
-            avatarUrl: conversation.photoUrl,    // Group or user photo.
-
-            text: null,                          // Text for the InputBox.
-            attachment: null,                    // Attachment for the InputBox.
-            attachmentUrl: null,                 // Attachment URL for the InputBox.
-            sending: false,                      // Enable/Disable the InputBox.
-            sendError: null,                     // Error message in SendError.
+            text: null,
+            attachment: null,
+            attachmentUrl: null,
+            sending: false,
+            sendError: null,
         }
     },
 
@@ -36,12 +33,12 @@ export default {
             this.sendError = null
 
             try {
-                const response = await this.service.sendMessage(
+                const message = await sendMessage(
                     this.text,
                     this.attachment
                 )
 
-                this.messages.push(response.data)
+                this.messages.push(message)
 
                 this.text = null
                 if (this.attachment)
@@ -75,21 +72,24 @@ export default {
 
             this.attachmentUrl = null
             this.attachment = null
+        },
+
+        infoGroup() {
+            this.$router.push('/group/info')
         }
     },
 
     async mounted() {
-        this.service = new ConversationService()
-
-        this.messages = await this.service.fetchMessages()
-
-        this.service.startPolling(({ messages }) => {
-            this.messages = messages
+        this.messages = await getConversationMessages(conversation.id)
+        this.poller = new Poller(async () => {
+            this.messages = await getConversationMessages(conversation.id)
         })
+
+        this.poller.startPolling()
     },
 
     beforeUnmount() {
-        this.service?.stopPolling()
+        this.poller?.stopPolling()
     }
 }
 </script>
@@ -101,9 +101,8 @@ export default {
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
         <div class="content">
-            <ConversationBox ref="conversationBox" :conversationName="conversationName" :avatarUrl="avatarUrl"
-                :messages="messages" :userId="userId" :text="text" :attachment="attachment"
-                :attachmentUrl="attachmentUrl" @update:text="text = $event" @send="sendMessage"
+            <ConversationBox ref="conversationBox" :messages="messages" :text="text" :attachment="attachment"
+                :attachmentUrl="attachmentUrl" @infoGroup="infoGroup" @update:text="text = $event" @send="sendMessage"
                 @addAttachment="addAttachment" @removeAttachment="removeAttachment" :sending="sending"
                 :sendError="sendError" />
         </div>

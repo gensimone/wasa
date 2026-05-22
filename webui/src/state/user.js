@@ -1,12 +1,14 @@
 import { reactive } from "vue"
 
+export const defaultUserPhoto = "/media/default-user-photo.jpg"
+
 export const user = reactive({
     userId: null,
     name: null,
     photoUrl: null
 })
 
-export function loadUserFromStorage() {
+export function loadUserState() {
     user.userId = Number(localStorage.getItem("userId"))
     user.name = localStorage.getItem("name")
     user.photoUrl = localStorage.getItem("photoUrl")

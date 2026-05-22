@@ -1,6 +1,18 @@
 <script>
-import { user, setName, setPhotoUrl } from "@/state/user"
-import { updateName, updatePhoto, deletePhoto } from "@/services/userService"
+import {
+    conversation,
+    setConversationName,
+    setConversationPhotoUrl,
+    setConversationId,
+    setConversationIsGroup
+} from "@/state/conversation"
+
+import {
+    setGroupFounderId,
+    setGroupCreatedAt
+} from "@/state/group"
+
+import { createGroup } from "@/services/groups"
 import { expandUrl } from "@/utils/media"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
@@ -16,11 +28,15 @@ export default {
     data() {
         return {
             name: null,
-            photoUrl: expandUrl("/media/default-group-photo.jpg"),
+
+            oldPhotoUrl: null,
+            photoUrl: expandUrl(conversation.defaultGroupPhoto),
             photo: null,
+            photoChanged: false,
+
             message: null,
             error: false,
-            loading: false
+            loading: false,
         }
     },
 
@@ -42,9 +58,11 @@ export default {
             if (!file) return
 
             this.revokePhotoUrl()
+            this.oldPhotoUrl = expandUrl(conversation.defaultGroupPhoto)
             this.photoUrl = URL.createObjectURL(file)
 
             this.photo = file
+            this.photoChanged = true
 
             this.error = false
             this.message = null
@@ -52,15 +70,49 @@ export default {
             event.target.value = ""
         },
 
-        deletePhoto() {
+        revertPhoto() {
             this.revokePhotoUrl()
-            this.photoUrl = expandUrl("/media/default-group-photo.jpg")
+            this.photoUrl = this.oldPhotoUrl
+            this.photo = null
+            this.photoChanged = false
+
+            this.error = false
+            this.message = null
         },
 
-        createGroup() {
-            console.log("Creating group with:")
-            console.log(this.name)
-            console.log(this.photoUrl)
+        deletePhoto() {
+            this.revokePhotoUrl()
+            this.oldPhotoUrl = this.photoUrl
+            this.photoUrl = expandUrl(conversation.defaultGroupPhoto)
+            this.photo = null
+            this.photoChanged = true
+
+            this.error = false
+            this.message = null
+        },
+
+        async submit() {
+            this.loading = true
+
+            try {
+                const group = await createGroup(this.name, this.photo)
+
+                setConversationName(group.name)
+                setConversationPhotoUrl(group.photoUrl)
+                setConversationId(group.conversationId)
+                setConversationIsGroup(true)
+                setGroupFounderId(group.founderid)
+                setGroupCreatedAt(group.createdAt)
+
+                this.$router.push("/conversation")
+
+            } catch (e) {
+                console.log(e)
+                this.error = true
+                this.message = e?.response?.data?.error || "Unexpected error"
+            }
+
+            this.loading = false
         }
     }
 }
@@ -68,15 +120,22 @@ export default {
 
 <template>
     <div class="app">
+        <!-- TOPBAR -->
         <Topbar :actions="[
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
-        <form class="settings-page" @submit.prevent="updateName">
-            <InfoSettingCard :photoUrl="photoUrl" :uploadButton="false" :text="name" title="Group name"
-                :loading="loading" :message="message" :error="error" @deletePhoto="deletePhoto"
-                @uploadPhoto="uploadPhoto" @keyPress="name = $event" @updateText="createGroup" />
-        </form>
+
+        <!-- INFO SETTING CARD -->
+        <div class="settings-page">
+            <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" submitButtonText="Create group"
+                :text="name" title="Group name" :loading="loading" :message="message" :error="error"
+                @revertPhoto="revertPhoto" @deletePhoto="deletePhoto" @uploadPhoto="uploadPhoto"
+                @keyPress="name = $event" @submit="submit" />
+        </div>
+
+        <!-- BOTTOMBAR -->
         <Bottombar />
+
     </div>
 </template>
 

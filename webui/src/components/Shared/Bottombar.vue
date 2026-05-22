@@ -25,16 +25,12 @@ export default {
     bottom: 0;
     left: 0;
     width: 100%;
-
     padding: 5px;
     text-align: center;
     font-size: 12px;
-
     color: rgba(255, 255, 255, 0.6);
     text-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
-
     z-index: 9999;
-
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.06);

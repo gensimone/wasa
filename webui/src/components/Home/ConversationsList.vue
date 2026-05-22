@@ -7,8 +7,8 @@ export default {
     },
 
     props: {
-        conversations: Array,
-        loading: Boolean // FIXME: Implement loading screen.
+        conversations: { type: Array, required: true },
+        loading: { type: Boolean, required: true }
     },
 
     emits: ["select"]
@@ -18,8 +18,8 @@ export default {
 <template>
     <div class="items-list">
         <div class="items-list-header">
-            <h2>Conversations</h2>
-            <button class="icon-btn" @click="$router.push('/add')">
+            <h2> Conversations </h2>
+            <button class="icon-btn" @click="$router.push('/conversation/add')">
                 <img src="/icons/plus.svg" class="icon-img">
             </button>
         </div>

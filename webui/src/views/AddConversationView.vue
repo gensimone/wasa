@@ -32,6 +32,7 @@ export default {
             setConversationPhotoUrl(user.photoUrl)
             setConversationId(user.userId)
             setConversationIsGroup(false)
+
             this.$router.push("/conversation")
         },
 
@@ -41,7 +42,7 @@ export default {
             try {
                 this.users = await fetchUsers()
             } catch (e) {
-                this.error = e?.response?.data?.error || e.message || "Unexpected error"
+                this.error = e?.response?.data?.error || "Unexpected error"
             } finally {
                 this.loading = false
             }
@@ -61,7 +62,7 @@ export default {
         ]" />
         <div class="content">
             <div class="items-list">
-                <div class="list-item" @click="$router.push('/create-group')">
+                <div class="list-item" @click="$router.push('/group/create')">
                     <img src="/icons/plus.svg" class="icon-img" />
                     <div class="item-info">
                         <div class="item-name">

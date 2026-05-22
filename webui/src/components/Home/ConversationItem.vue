@@ -2,7 +2,7 @@
 import { expandUrl } from "@/utils/media"
 export default {
     props: {
-        conversation: Object
+        conversation: { type: Object, required: true }
     },
 
     emits: ["select"],

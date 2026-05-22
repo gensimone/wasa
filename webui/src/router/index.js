@@ -5,6 +5,7 @@ import SettingsView from '@/views/SettingsView.vue'
 import AddConversationView from '@/views/AddConversationView.vue'
 import ConversationView from '@/views/ConversationView.vue'
 import CreateGroupView from '@/views/CreateGroupView.vue'
+import InfoGroupView from '@/views/InfoGroupView.vue'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -12,9 +13,11 @@ const router = createRouter({
         { path: '/', component: LoginView },
         { path: '/home', component: HomeView, meta: { requiresAuth: true } },
         { path: '/settings', component: SettingsView, meta: { requiresAuth: true } },
-        { path: '/add', component: AddConversationView, meta: { requiresAuth: true } },
+        { path: '/conversation/add', component: AddConversationView, meta: { requiresAuth: true } },
         { path: '/conversation', component: ConversationView, meta: { requiresAuth: true } },
-        { path: '/create-group', component: CreateGroupView, meta: { requiresAuth: true } },
+        { path: '/group/create', component: CreateGroupView, meta: { requiresAuth: true } },
+        { path: '/group/info', component: InfoGroupView, meta: { requiresAuth: true } },
+        { path: '/:pathMatch(.*)*', redirect: '/' }
     ]
 })
 

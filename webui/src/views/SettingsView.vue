@@ -1,6 +1,6 @@
 <script>
 import { user, setName, setPhotoUrl } from "@/state/user"
-import { updateName, updatePhoto, deletePhoto } from "@/services/userService"
+import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users"
 import { expandUrl } from "@/utils/media"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
@@ -71,7 +71,7 @@ export default {
         deletePhoto() {
             this.revokePhotoUrl()
             this.oldPhotoUrl = this.photoUrl
-            this.photoUrl = expandUrl("/media/default-user-photo.jpg")
+            this.photoUrl = expandUrl(user.defaultUserPhoto)
             this.photo = null
             this.photoChanged = true
 
@@ -79,14 +79,22 @@ export default {
             this.message = null
         },
 
-        async save() {
+        async submit() {
+            this.name = this.name.trim()
+            if (this.name === "") {
+                this.error = true
+                this.message = "Provide a name"
+                return
+            }
+
             this.loading = true
 
             let profileChanged = false
 
+            this.name = this.name?.trim()
             if (this.name !== user.name) {
                 try {
-                    const name = await updateName(this.name)
+                    const name = await setMyUserName(this.name)
                     setName(name)
 
                     this.error = false
@@ -102,14 +110,10 @@ export default {
 
             if (this.photo !== null) {
                 try {
-                    const photoUrl = await updatePhoto(this.photo)
+                    const photoUrl = await setMyPhoto(this.photo)
                     setPhotoUrl(photoUrl)
-
                     this.revokePhotoUrl()
-                    this.photoUrl = expandUrl(user.photoUrl)
-
                     this.photoChanged = false
-
                     this.error = false
                     profileChanged = true
 
@@ -121,9 +125,8 @@ export default {
                 }
             } else if (this.photoChanged) {
                 try {
-                    const defaultPhotoUrl = await deletePhoto()
-                    setPhotoUrl(defaultPhotoUrl)
-
+                    await deleteMyPhoto()
+                    setPhotoUrl(user.defaultUserPhoto)
                     this.photoChanged = false
                     this.error = false
                     profileChanged = true
@@ -142,6 +145,10 @@ export default {
             }
 
             this.loading = false
+        },
+
+        handleKeyPress(name) {
+            this.name = name === "" ? user.name : name
         }
     }
 }
@@ -157,8 +164,9 @@ export default {
         <!-- INFO SETTING CARD -->
         <div class="settings-page">
             <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="name" title="Username"
-                :loading="loading" :message="message" :error="error" @revertPhoto="revertPhoto"
-                @deletePhoto="deletePhoto" @uploadPhoto="uploadPhoto" @keyPress="name = $event" @save="save" />
+                submitButtonText="Update" :loading="loading" :message="message" :error="error"
+                @revertPhoto="revertPhoto" @deletePhoto="deletePhoto" @uploadPhoto="uploadPhoto"
+                @keyPress="handleKeyPress" @submit="submit" />
         </div>
 
         <!-- BOTTOMBAR -->

@@ -1,5 +1,4 @@
 <script>
-import { clearUserState } from "@/state/user"
 import {
     setConversationName,
     setConversationPhotoUrl,
@@ -7,7 +6,16 @@ import {
     setConversationIsGroup,
     clearConversationState
 } from "@/state/conversation"
-import ConversationsService from "@/services/conversationsService"
+
+import {
+    setGroupFounderId,
+    setGroupCreatedAt,
+    clearGroupState
+} from "@/state/group"
+
+import { clearUserState } from "@/state/user"
+import { Poller } from "@/services/poller"
+import { getConversations } from "@/utils/conversations"
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import ConversationsList from "@/components/Home/ConversationsList.vue"
@@ -22,6 +30,7 @@ export default {
     data() {
         return {
             conversations: [],
+            poller: null,
             error: null,
             loading: false
         }
@@ -33,29 +42,33 @@ export default {
             setConversationPhotoUrl(conversation.photoUrl)
             setConversationId(conversation.id)
             setConversationIsGroup(conversation.isGroup)
+            setGroupFounderId(conversation.founderId)
+            setGroupCreatedAt(conversation.createdAt)
+
             this.$router.push("/conversation")
         },
 
         logout() {
             clearUserState()
             clearConversationState()
+            clearGroupState()
             localStorage.clear()
+
             this.$router.replace("/")
         }
     },
 
     async mounted() {
-        this.service = new ConversationsService()
-
-        this.conversations = await this.service.fetchConversations()
-
-        this.service.startPolling(({ conversations }) => {
-            this.conversations = conversations
+        this.conversations = await getConversations()
+        this.poller = new Poller(async () => {
+            this.conversations = await getConversations()
         })
+
+        this.poller.startPolling()
     },
 
     beforeUnmount() {
-        this.service?.stopPolling()
+        this.poller?.stopPolling()
     }
 }
 </script>

@@ -1,20 +1,22 @@
 <script>
+import { user } from "@/state/user.js"
 import Message from "@/components/Conversation/Message.vue"
 
 export default {
+    data() {
+        return {
+            userId: user.userId
+        }
+    },
+
     components: {
         Message
     },
+
     props: {
-        messages: {
-            type: Array,
-            required: true
-        },
-        userId: {
-            type: Number,
-            required: true
-        }
+        messages: { type: Array, required: true }
     },
+
     emits: ["openImage"]
 }
 </script>

@@ -1,17 +1,17 @@
 import { reactive } from "vue"
 
 export const conversation = reactive({
-    id: null,        // User or Conversation ID
-    name: null,      // User or Group name
-    photoUrl: null,  // User or Group photo URL
-    isGroup: null    // Is it a group?
+    id: null,
+    name: null,
+    photoUrl: null,
+    isGroup: null
 })
 
-export function loadConversationMetadataFromStorage() {
+export function loadConversationState() {
     conversation.id = Number(localStorage.getItem("conversationId"))
     conversation.name = localStorage.getItem("conversationName")
     conversation.photoUrl = localStorage.getItem("conversationPhotoUrl")
-    conversation.isGroup = localStorage.getItem("conversationIsGroup")
+    conversation.isGroup = localStorage.getItem("conversationIsGroup") === "true"
 }
 
 export function setConversationName(name) {
@@ -21,12 +21,12 @@ export function setConversationName(name) {
 
 export function setConversationPhotoUrl(photoUrl) {
     conversation.photoUrl = photoUrl
-    localStorage.setItem("conversationPhotoUrl", conversation.photoUrl);
+    localStorage.setItem("conversationPhotoUrl", photoUrl);
 }
 
 export function setConversationId(id) {
     conversation.id = Number(id);
-    localStorage.setItem("conversationid", id);
+    localStorage.setItem("conversationId", id);
 }
 
 export function setConversationIsGroup(isGroup) {
