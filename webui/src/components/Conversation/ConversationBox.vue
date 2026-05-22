@@ -1,16 +1,16 @@
 <script>
-import { expandURL } from "@/utils/media"
+import { expandUrl } from "@/utils/media"
 import ImageModal from "@/components/Shared/ImageModal.vue"
 import MessageList from "@/components/Conversation/MessageList.vue"
 import ConversationInput from "@/components/Conversation/ConversationInput.vue"
-import SendError from "@/components/Conversation/SendError.vue"
+import StatusMessage from "@/components/Shared/StatusMessage.vue"
 
 export default {
     components: {
         MessageList,
         ConversationInput,
         ImageModal,
-        SendError
+        StatusMessage
     },
 
     props: {
@@ -43,7 +43,7 @@ export default {
     },
 
     methods: {
-        expandURL,
+        expandUrl,
 
         openImage(url) {
             this.zoomedImage = url
@@ -63,7 +63,7 @@ export default {
         <div class="conversation-box">
 
             <div class="conversation-header">
-                <img class="avatar" :src="expandURL(avatarUrl)" @click="openImage(avatarUrl)" />
+                <img class="avatar" :src="expandUrl(avatarUrl)" @click="openImage(avatarUrl)" />
                 <div class="conversation-name">
                     {{ conversationName }}
                 </div>
@@ -75,7 +75,7 @@ export default {
                 @update:text="$emit('update:text', $event)" @send="$emit('send')"
                 @addAttachment="$emit('addAttachment', $event)" @removeAttachment="$emit('removeAttachment')" />
 
-            <SendError :error="sendError" />
+            <StatusMessage :error="true" :message="sendError" />
 
         </div>
         <ImageModal :visible="showImageModal" :imageUrl="zoomedImage" @close="closeImage" />

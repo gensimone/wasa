@@ -15,19 +15,15 @@ export default {
             Web Application And Software Architecture <br />
             Project
         </h3>
-
         <div class="login-container">
             <h2>Login</h2>
-
             <form @submit.prevent="$emit('submit')">
-                <input :value="name" @input="$emit('update:name', $event.target.value)" type="text"
+                <input class="prompt" :value="name" @input="$emit('update:name', $event.target.value)" type="text"
                     placeholder="Username" required />
-
                 <button type="submit" :disabled="loading">
                     {{ loading ? "Logging in..." : "Login" }}
                 </button>
             </form>
-
             <p v-if="error" class="error">
                 {{ error }}
             </p>
@@ -79,25 +75,6 @@ export default {
     font-weight: 800;
     letter-spacing: 1px;
     color: rgba(245, 245, 245, 0.9);
-}
-
-input {
-    width: 100%;
-    padding: 14px 14px;
-    margin-bottom: 14px;
-
-    border-radius: 14px;
-    background: rgba(0, 0, 0, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-
-    color: rgba(245, 245, 245, 0.92);
-    outline: none;
-    transition: all 0.25s ease;
-}
-
-input:focus {
-    border: 1px solid rgba(0, 255, 120, 0.25);
-    box-shadow: 0 0 20px rgba(0, 255, 120, 0.08);
 }
 
 button {

@@ -1,5 +1,5 @@
 <script>
-import { expandURL } from "@/utils/media"
+import { expandUrl } from "@/utils/media"
 export default {
     props: {
         message: Object,
@@ -9,7 +9,7 @@ export default {
     emits: ["openImage"],
 
     methods: {
-        expandURL,
+        expandUrl,
 
         getTime(sentAt) {
             const date = new Date(sentAt)
@@ -28,7 +28,7 @@ export default {
                 {{ message.text }}
             </div>
 
-            <img v-if="message.attachmentUrl" :src="expandURL(message.attachmentUrl)" class="message-image"
+            <img v-if="message.attachmentUrl" :src="expandUrl(message.attachmentUrl)" class="message-image"
                 @click="$emit('openImage', message.attachmentUrl)" />
 
             <div class="message-meta">

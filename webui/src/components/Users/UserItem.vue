@@ -1,5 +1,5 @@
 <script>
-import { expandURL } from "@/utils/media"
+import { expandUrl } from "@/utils/media"
 export default {
     props: {
         user: Object
@@ -8,7 +8,7 @@ export default {
     emits: ["select"],
 
     methods: {
-        expandURL
+        expandUrl
     }
 }
 </script>
@@ -16,7 +16,7 @@ export default {
 <template>
     <div class="list-item" @click="$emit('select', user)">
         <div class="item-photo-wrapper">
-            <img :src="expandURL(user.photoUrl)" class="item-photo" />
+            <img :src="expandUrl(user.photoUrl)" class="item-photo" />
         </div>
         <div class="item-info">
             <div class="item-name">

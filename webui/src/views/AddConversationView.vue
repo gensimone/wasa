@@ -45,10 +45,6 @@ export default {
             } finally {
                 this.loading = false
             }
-        },
-
-        createGroup() {
-            // TODO: implement this.
         }
     },
 
@@ -65,7 +61,7 @@ export default {
         ]" />
         <div class="content">
             <div class="items-list">
-                <div class="list-item" @click="createGroup">
+                <div class="list-item" @click="$router.push('/create-group')">
                     <img src="/icons/plus.svg" class="icon-img" />
                     <div class="item-info">
                         <div class="item-name">
