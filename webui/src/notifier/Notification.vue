@@ -1,9 +1,14 @@
 <script>
 export default {
     props: {
-        error: { type: Boolean, required: true },
+        type: {
+            type: String,
+            required: true,
+            validator: (v) =>
+                ["success", "error", "warning", "info"].includes(v)
+        },
         message: { type: String, required: true },
-        duration: { type: Number, default: 5000 },
+        duration: { type: Number, default: 5000 }
     },
 
     data() {
@@ -12,16 +17,16 @@ export default {
             startTime: 0,
             remaining: this.duration,
             timeoutId: null,
-            frameId: null,
-        };
+            frameId: null
+        }
     },
 
     mounted() {
-        this.startTimer();
+        this.startTimer()
     },
 
     beforeUnmount() {
-        this.clearTimers();
+        this.clearTimers()
     },
 
     emits: ["close"],
@@ -42,24 +47,18 @@ export default {
             const elapsed = Date.now() - this.startTime
             const timeLeft = this.remaining - elapsed
 
-            this.progress = Math.max(
-                (timeLeft / this.duration) * 100,
-                0
-            )
+            this.progress = Math.max((timeLeft / this.duration) * 100, 0)
 
             if (timeLeft <= 0) {
                 this.close()
                 return
             }
 
-            this.frameId = requestAnimationFrame(
-                this.updateProgress
-            )
+            this.frameId = requestAnimationFrame(this.updateProgress)
         },
 
         pauseTimer() {
             this.clearTimers()
-
             const elapsed = Date.now() - this.startTime
             this.remaining -= elapsed
         },
@@ -78,17 +77,17 @@ export default {
         clearTimers() {
             clearTimeout(this.timeoutId)
             cancelAnimationFrame(this.frameId)
-        },
-    },
+        }
+    }
 }
 </script>
 
 <template>
-    <div class="notification" :class="{ error: error, info: !error }" @mouseenter="pauseTimer" @mouseleave="resumeTimer"
-        @click="close">
+    <div class="notification" :class="type" @mouseenter="pauseTimer" @mouseleave="resumeTimer" @click="close">
         <div class="notification-message">
             {{ message }}
         </div>
+
         <div class="progress" :style="{ width: progress + '%' }" />
     </div>
 </template>
@@ -104,13 +103,16 @@ export default {
     overflow: hidden;
     color: white;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-    transform-origin: right center;
     z-index: 999999;
 }
 
-.notification.info {
-    background: #222;
+.notification.success {
+    background: #16251a;
     border-left: 5px solid #4ade80;
+}
+
+.notification.success .progress {
+    background: #4ade80;
 }
 
 .notification.error {
@@ -118,20 +120,33 @@ export default {
     border-left: 5px solid #ef4444;
 }
 
+.notification.error .progress {
+    background: #ef4444;
+}
+
+.notification.warning {
+    background: #2a241a;
+    border-left: 5px solid #f59e0b;
+}
+
+.notification.warning .progress {
+    background: #f59e0b;
+}
+
+.notification.info {
+    background: #1b1f2a;
+    border-left: 5px solid #60a5fa;
+}
+
+.notification.info .progress {
+    background: #60a5fa;
+}
+
 .progress {
     position: absolute;
-    pointer-events: none;
     bottom: 0;
     left: 0;
     height: 4px;
     transition: width 0.1s linear;
-}
-
-.notification.info .progress {
-    background: #4ade80;
-}
-
-.notification.error .progress {
-    background: #ef4444;
 }
 </style>

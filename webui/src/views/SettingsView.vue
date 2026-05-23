@@ -76,7 +76,7 @@ export default {
                 if (e.message === "EMPTY_NAME")
                     this.$notifier.error("Invalid user name")
                 else if (e.message === "NO_CHANGE")
-                    this.$notifier.error("Nothing to do..")
+                    this.$notifier.warning("Nothing to do..")
                 else {
                     handleError(e)
                 }

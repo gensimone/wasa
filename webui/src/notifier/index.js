@@ -2,33 +2,35 @@ import { createApp } from "vue"
 import NotificationContainer from "./NotificationContainer.vue"
 
 let appInstance = null
+let notifier = null
 
 export default {
     install(app) {
         appInstance = app
-        let notifier = null
 
-        app.config.globalProperties.$notifier = {
-            success(message, duration = 5000) {
-                notifier?.({
-                    message,
-                    error: false,
-                    duration
-                })
+        const api = {
+            success(message, duration = 3000) {
+                notifier?.({ message, type: "success", duration })
             },
 
-            error(message, duration = 5000) {
-                notifier?.({
-                    message,
-                    error: true,
-                    duration
-                })
+            error(message, duration = 10000) {
+                notifier?.({ message, type: "error", duration })
+            },
+
+            warning(message, duration = 7500) {
+                notifier?.({ message, type: "warning", duration })
+            },
+
+            info(message, duration = 3000) {
+                notifier?.({ message, type: "info", duration })
             },
 
             show(options) {
-                addToast?.(options)
+                notifier?.(options)
             }
         }
+
+        app.config.globalProperties.$notifier = api
 
         const container = document.createElement("div")
         document.body.appendChild(container)
@@ -41,5 +43,5 @@ export default {
 }
 
 export function getNotifier() {
-    return appInstance.config.globalProperties.$notifier
+    return appInstance?.config?.globalProperties?.$notifier
 }

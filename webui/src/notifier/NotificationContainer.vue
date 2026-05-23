@@ -1,5 +1,5 @@
 <script>
-import Notification from "./Notification.vue";
+import Notification from "./Notification.vue"
 
 export default {
     components: { Notification },
@@ -7,35 +7,39 @@ export default {
     data() {
         return {
             notifications: []
-        };
+        }
     },
 
     methods: {
         add(notification) {
-            const id = Date.now() + Math.random();
+            const id = Date.now() + Math.random()
 
             this.notifications.push({
                 id,
                 message: notification.message,
-                error: notification.error || false,
+                type: notification.type || "info",
                 duration: notification.duration || 5000
-            });
+            })
         },
 
         remove(id) {
-            this.notifications = this.notifications.filter(
-                n => n.id !== id
-            );
+            this.notifications = this.notifications.filter(n => n.id !== id)
         }
     }
-};
+}
 </script>
 
 <template>
-    <TransitionGroup name="toast" tag="div" class="toast-container">
-        <Notification v-for="n in notifications" :key="n.id" :message="n.message" :error="n.error"
-            :duration="n.duration" @close="remove(n.id)" />
-    </TransitionGroup>
+  <TransitionGroup name="toast" tag="div" class="toast-container">
+    <Notification
+      v-for="n in notifications"
+      :key="n.id"
+      :message="n.message"
+      :type="n.type"
+      :duration="n.duration"
+      @close="remove(n.id)"
+    />
+  </TransitionGroup>
 </template>
 
 <style scoped>
