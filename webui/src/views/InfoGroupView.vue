@@ -32,6 +32,7 @@ export default {
         async removeUser(member) {
             try {
                 await removeUser(conversation.id, member.userId)
+                this.members = this.members.filter(m => m.userId !== member.userId)
                 this.$notifier.success(`User ${member.name} removed`)
 
             } catch (e) {

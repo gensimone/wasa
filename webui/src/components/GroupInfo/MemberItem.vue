@@ -8,57 +8,63 @@ export default {
         member: { type: Object, required: true }
     },
 
+    emits: ["removeUser", "selectUser"],
+
     computed: {
-        memberIsFounder() {
+        isFounder() {
             return this.member.userId === group.founderId
         },
 
-        isFounder() {
+        currentUserIsFounder() {
             return user.userId === group.founderId
         }
     },
 
-    emits: [
-        "removeUser",
-        "selectUser"
-    ],
-
     methods: {
-        expandUrl
+        expandUrl,
+
+        onSelect() {
+            if (this.member.userId !== user.userId)
+                this.$emit("selectUser", this.member)
+        },
+
+        onRemove(event) {
+            event.stopPropagation()
+            this.$emit("removeUser", this.member)
+        }
     }
 }
 </script>
 
 <template>
-    <div class="list-item" @click="$emit('selectUser', member)">
+    <div class="list-item" @click="onSelect">
+
         <div class="item-photo-wrapper">
             <img :src="expandUrl(member.photoUrl)" class="item-photo" />
         </div>
+
         <div class="item-info">
             <div class="item-name">
                 {{ member.name }}
             </div>
         </div>
-        <div v-if="memberIsFounder" class="is-founder">
+
+        <div class="item-badge" v-if="isFounder">
             Founder
         </div>
-        <div v-else-if="isFounder" class="remove-button">
-            <button class="icon-btn" @click="$emit('removeUser', member)">
-                <img src="/icons/remove2.svg" class="icon-img" />
+
+        <div class="item-actions" v-if="currentUserIsFounder && !isFounder">
+            <button class="icon-btn" @click="onRemove">
+                <img src="/icons/minus.svg" class="icon-img" />
             </button>
         </div>
+
     </div>
 </template>
 
 <style scoped>
-.remove-button {
-    position: absolute;
-    right: 20px;
-}
-
-.is-founder {
-    opacity: 50%;
-    position: absolute;
-    right: 20px;
+.icon-btn:hover {
+    background: rgba(255, 0, 0, 0.08);
+    border-color: rgba(255, 0, 0, 0.2);
 }
 </style>

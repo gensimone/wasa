@@ -12,11 +12,21 @@ export default {
 
     methods: {
         add(notification) {
+            const newMessage = notification.message?.trim()
+            if (!newMessage) throw new Error("Empty notification message")
+
+            const lastNotification = this.notifications.at(-1)
+
+            if (
+                lastNotification?.message === newMessage &&
+                lastNotification?.type === notification.type
+            ) return
+
             const id = Date.now() + Math.random()
 
             this.notifications.push({
                 id,
-                message: notification.message,
+                message: newMessage,
                 type: notification.type || "info",
                 duration: notification.duration || 5000
             })
@@ -30,16 +40,10 @@ export default {
 </script>
 
 <template>
-  <TransitionGroup name="toast" tag="div" class="toast-container">
-    <Notification
-      v-for="n in notifications"
-      :key="n.id"
-      :message="n.message"
-      :type="n.type"
-      :duration="n.duration"
-      @close="remove(n.id)"
-    />
-  </TransitionGroup>
+    <TransitionGroup name="toast" tag="div" class="toast-container">
+        <Notification v-for="n in notifications" :key="n.id" :message="n.message" :type="n.type" :duration="n.duration"
+            @close="remove(n.id)" />
+    </TransitionGroup>
 </template>
 
 <style scoped>
@@ -55,12 +59,7 @@ export default {
 
 .toast-enter-active,
 .toast-leave-active {
-    transition: all 0.25s cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-.toast-leave-active {
-    position: absolute;
-    width: 320px;
+    transition: all 0.50s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 .toast-move {
