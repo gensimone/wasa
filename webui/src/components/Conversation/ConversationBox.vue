@@ -4,25 +4,20 @@ import { expandUrl } from "@/utils/media"
 import ImageModal from "@/components/Shared/ImageModal.vue"
 import MessageList from "@/components/Conversation/MessageList.vue"
 import ConversationInput from "@/components/Conversation/ConversationInput.vue"
-import StatusMessage from "@/components/Shared/StatusMessage.vue"
 
 export default {
     components: {
         MessageList,
         ConversationInput,
-        ImageModal,
-        StatusMessage
+        ImageModal
     },
 
     props: {
         messages: { type: Array, required: true },
-
         text: { type: String, default: "" },
         attachment: { type: File, default: null },
         attachmentUrl: { type: String, default: null },
-
-        sending: { type: Boolean, default: false },
-        sendError: { type: String, default: null }
+        sending: { type: Boolean, default: false }
     },
 
     emits: [
@@ -35,11 +30,23 @@ export default {
 
     data() {
         return {
+            conversation,
+
             zoomedImage: null,
             showImageModal: false,
             conversationName: conversation.name,
-            photoUrl: conversation.photoUrl,
+            photoUrl: expandUrl(conversation.photoUrl),
             isGroup: conversation.isGroup
+        }
+    },
+
+    watch: {
+        "conversation.photoUrl"(newPhotoUrl, _) {
+            this.photoUrl = expandUrl(newPhotoUrl)
+        },
+
+        "conversation.name"(newName, _) {
+            this.conversationName = newName
         }
     },
 
@@ -64,36 +71,22 @@ export default {
         <div class="conversation-box">
 
             <div class="conversation-header">
-
-                <!-- CONVERSATION PHOTO-->
-                <img class="photo" :src="expandUrl(photoUrl)" @click="openImage(photoUrl)" />
-
-                <!-- CONVERSATION NAME-->
+                <img class="photo" :src="photoUrl" @click="openImage(photoUrl)" />
                 <div class="conversation-name">
                     {{ conversationName }}
                 </div>
-
-
-                <!-- GROUP INFO BUTTON -->
                 <div class="info-button">
                     <button v-if="isGroup" class="info-btn" @click="$emit('infoGroup')">
                         <img src="/icons/info.svg" class="icon-img">
                     </button>
                 </div>
-
             </div>
 
-            <!-- MESSAGE LIST -->
             <MessageList ref="messageList" :messages="messages" @openImage="openImage" />
 
-            <!-- CONVERSATION INPUT -->
             <ConversationInput :text="text" :sending="sending" :attachment="attachment" :attachmentUrl="attachmentUrl"
                 @update:text="$emit('update:text', $event)" @send="$emit('send')"
                 @addAttachment="$emit('addAttachment', $event)" @removeAttachment="$emit('removeAttachment')" />
-
-            <!-- STATUS MESSAGE -->
-            <StatusMessage :error="true" :message="sendError" />
-
         </div>
         <ImageModal :visible="showImageModal" :imageUrl="zoomedImage" @close="closeImage" />
     </div>

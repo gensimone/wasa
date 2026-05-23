@@ -1,24 +1,18 @@
 <script>
 export default {
     props: {
-        text: {
-            type: String,
-            default: ""
-        },
-        attachment: {
-            type: File,
-            default: null
-        },
-        attachmentUrl: {
-            type: String,
-            default: null
-        },
-        sending: {
-            type: Boolean,
-            default: true
-        }
+        text: { type: String, default: "" },
+        attachment: { type: File, default: null },
+        attachmentUrl: { type: String, default: null },
+        sending: { type: Boolean, required: true }
     },
-    emits: ["update:text", "send", "addAttachment", "removeAttachment"],
+
+    emits: [
+        "update:text",
+        "send",
+        "addAttachment",
+        "removeAttachment"
+    ],
 }
 </script>
 

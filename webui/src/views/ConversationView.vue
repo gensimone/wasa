@@ -1,8 +1,7 @@
 <script>
+import { conversation, startPollingConversation } from "@/state/conversation"
 import { getConversationMessages, sendMessage } from "@/utils/conversations"
-import { conversation } from "@/state/conversation"
 import { Poller } from "@/services/poller"
-
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import ConversationBox from "@/components/Conversation/ConversationBox.vue"
@@ -23,15 +22,13 @@ export default {
             text: null,
             attachment: null,
             attachmentUrl: null,
-            sending: false,
-            sendError: null,
+            sending: false
         }
     },
 
     methods: {
         async sendMessage() {
             this.sending = true
-            this.sendError = null
 
             try {
                 const message = await sendMessage(
@@ -82,6 +79,7 @@ export default {
     },
 
     async mounted() {
+        startPollingConversation()
         this.poller = new Poller(async () => {
             this.messages = await getConversationMessages()
         })
@@ -90,6 +88,7 @@ export default {
     },
 
     beforeUnmount() {
+        conversation.poller?.stopPolling()
         this.poller?.stopPolling()
     }
 }
@@ -104,8 +103,7 @@ export default {
         <div class="content">
             <ConversationBox ref="conversationBox" :messages="messages" :text="text" :attachment="attachment"
                 :attachmentUrl="attachmentUrl" @infoGroup="infoGroup" @update:text="text = $event" @send="sendMessage"
-                @addAttachment="addAttachment" @removeAttachment="removeAttachment" :sending="sending"
-                :sendError="sendError" />
+                @addAttachment="addAttachment" @removeAttachment="removeAttachment" :sending="sending" />
         </div>
         <Bottombar />
     </div>

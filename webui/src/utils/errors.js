@@ -6,7 +6,6 @@ export function handleError(e, poller = null) {
 
     if (e.response) {
         notifier.error(e.response.data.error)
-        logger()
 
     } else if (e.request) {
         notifier.error("Network error")

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gensimone/WASA-project/service/database"
 	"github.com/julienschmidt/httprouter"
@@ -176,7 +177,7 @@ func (rt *_router) _insertMessage(
 	}
 
 	missingText := false
-	text := r.FormValue("text")
+	text := strings.TrimSpace(r.FormValue("text"))
 	if text == "" {
 		missingText = true
 	}

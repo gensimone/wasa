@@ -2,7 +2,7 @@ import { reactive } from "vue"
 import { getUserById } from "@/services/users"
 import { Poller } from "@/services/poller"
 
-export const defaultUserPhoto = "/media/default-user-photo.jpg"
+export const defaultUserPhotoUrl = "/media/default-user-photo.jpg"
 
 export const user = reactive({
     userId: null,

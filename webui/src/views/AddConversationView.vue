@@ -10,6 +10,7 @@ import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import UserList from "@/components/Users/UserList.vue"
 import { getUsers } from "@/services/users";
+import { user } from "@/state/user";
 import { Poller } from "@/services/poller";
 
 export default {
@@ -41,7 +42,8 @@ export default {
 
     async mounted() {
         this.poller = new Poller(async () => {
-            this.users = await getUsers()
+            const users = await getUsers()
+            this.users = users.filter(u => u.userId != user.userId)
         })
 
         this.poller.startPolling()

@@ -1,5 +1,5 @@
 <script>
-import { user, setName, setPhotoUrl } from "@/state/user"
+import { user, setName, setPhotoUrl, defaultUserPhotoUrl } from "@/state/user"
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users"
 import { expandUrl } from "@/utils/media"
 import Bottombar from "@/components/Shared/Bottombar.vue"
@@ -16,9 +16,9 @@ export default {
 
     data() {
         return {
-            name: user.name,
             user,
 
+            name: user.name,
             oldPhotoUrl: null,
             photoUrl: expandUrl(user.photoUrl),
             photo: null,
@@ -29,6 +29,10 @@ export default {
 
     watch: {
         "user.photoUrl"(newPhotoUrl, _) {
+            this.revokePhotoUrl()
+            this.photo = null
+            this.oldPhotoUrl = null
+            this.photoChanged = false
             this.photoUrl = expandUrl(newPhotoUrl)
         },
 
@@ -74,13 +78,12 @@ export default {
         deletePhoto() {
             this.revokePhotoUrl()
             this.oldPhotoUrl = this.photoUrl
-            this.photoUrl = expandUrl(user.defaultUserPhoto)
+            this.photoUrl = expandUrl(defaultUserPhotoUrl)
             this.photo = null
             this.photoChanged = true
         },
 
         async submit() {
-            console.log("submit called")
             this.name = this.name.trim()
             if (!this.name) {
                 this.$notifier.error("Provide a name")
@@ -122,7 +125,7 @@ export default {
             } else if (this.photoChanged) {
                 try {
                     await deleteMyPhoto()
-                    setPhotoUrl(user.defaultUserPhoto)
+                    setPhotoUrl(defaultUserPhotoUrl)
                     this.photoChanged = false
                     profileChanged = true
 

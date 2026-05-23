@@ -33,14 +33,14 @@ export async function getMyConversations() {
     return response.data.conversations
 }
 
-export async function sendMessageToConversation(conversationId, text, photo) {
+export async function sendMessageToConversation(conversationId, text, attachment, mediaType = "image") {
     const formData = new FormData()
 
     formData.append("text", text)
 
-    if (photo) {
-        formData.append("file", photo)
-        formData.append("mediaType", "image")
+    if (attachment) {
+        formData.append("file", attachment)
+        formData.append("mediaType", mediaType)
     }
 
     const response = await api.post(`/conversations/${conversationId}/message`,

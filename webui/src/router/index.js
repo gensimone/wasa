@@ -36,6 +36,7 @@ router.beforeEach((to, _, next) => {
         next("/");
     } else {
         if (to.path !== "/") startPollingUser()
+        else user.poller?.stopPolling()
         next();
     }
 });

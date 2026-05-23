@@ -48,14 +48,15 @@ export async function deleteMyPhoto() {
     )
 }
 
-export async function sendMessage(userId, text, photo) {
+export async function sendMessage(userId, text, attachment, mediaType = "image") {
     const formData = new FormData()
 
-    formData.append("text", text)
+    if (text)
+        formData.append("text", text)
 
-    if (photo) {
-        formData.append("file", photo)
-        formData.append("mediaType", "image")
+    if (attachment) {
+        formData.append("file", attachment)
+        formData.append("mediaType", mediaType)
     }
 
     const response = await api.post(`/users/${userId}/message`,
