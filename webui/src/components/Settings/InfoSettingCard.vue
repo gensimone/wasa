@@ -1,24 +1,16 @@
 <script>
 import PhotoEditor from "@/components/Settings/PhotoEditor.vue"
-import StatusMessage from "@/components/Shared/StatusMessage.vue"
 
 export default {
-    components: {
-        PhotoEditor,
-        StatusMessage
-    },
+    components: { PhotoEditor },
 
     props: {
-        photoUrl: String,
-        photoChanged: Boolean,
-        submitButtonText: String,
-
-        title: String,
-        text: String,
-
-        loading: Boolean,
-        message: String,
-        error: Boolean
+        photoUrl: { type: String, required: true },
+        photoChanged: { type: Boolean, required: true },
+        submitButtonText: { type: String, required: true },
+        title: { type: String, required: true },
+        text: { type: String, required: true },
+        loading: { type: Boolean, required: true }
     },
 
     emits: [
@@ -34,28 +26,20 @@ export default {
 <template>
     <div class="item-setting-card">
         <form @submit.prevent="$emit('submit')">
-
-            <!-- PHOTO EDITOR-->
             <PhotoEditor :photoUrl="photoUrl" :photoChanged="photoChanged" :loading="loading"
                 @uploadPhoto="$emit('uploadPhoto', $event)" @revertPhoto="$emit('revertPhoto')"
                 @deletePhoto="$emit('deletePhoto')" />
 
-            <!-- INPUT BOX -->
             <div class="text-editor-box">
                 <h2> {{ title }} </h2>
                 <div class="input-bar">
-                    <input class="prompt" :placeholder="text" @input="$emit('keyPress', $event.target.value)"
-                        />
+                    <input class="prompt" :placeholder="text" @input="$emit('keyPress', $event.target.value)" />
                 </div>
             </div>
 
-            <!-- SAVE BUTTON -->
             <button class="submit-button" :disabled="loading">
                 {{ submitButtonText }}
             </button>
-
-            <!-- STATUS MESSAGE -->
-            <StatusMessage :message="message" :error="error" />
         </form>
     </div>
 </template>

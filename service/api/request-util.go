@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
 
 	"github.com/gensimone/WASA-project/service/database"
 )
@@ -62,6 +63,8 @@ func (rt *_router) getMessageIdFromReq(w http.ResponseWriter, r *http.Request) (
 
 	return &body.MessageId, err
 }
+
+var nameRegex = regexp.MustCompile(`.+`)
 
 func (rt *_router) getNameFromReq(w http.ResponseWriter, r *http.Request) (*string, error) {
 	body := struct {

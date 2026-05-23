@@ -6,6 +6,7 @@ import { Poller } from "@/services/poller"
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import ConversationBox from "@/components/Conversation/ConversationBox.vue"
+import { handleError } from "@/utils/errors"
 
 export default {
     components: {
@@ -45,7 +46,8 @@ export default {
                     this.removeAttachment()
 
             } catch (e) {
-                this.sendError = e?.response?.data?.error || "Unexpected error"
+                handleError(e)
+
             } finally {
                 this.sending = false
             }
@@ -80,9 +82,8 @@ export default {
     },
 
     async mounted() {
-        this.messages = await getConversationMessages(conversation.id)
         this.poller = new Poller(async () => {
-            this.messages = await getConversationMessages(conversation.id)
+            this.messages = await getConversationMessages()
         })
 
         this.poller.startPolling()

@@ -3,7 +3,6 @@ package api
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,7 +30,7 @@ func (rt *_router) authRequest(
 
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			rt.sendResponse(w, fmt.Sprintf("User %d not found", userId), http.StatusNotFound)
+			rt.sendResponse(w, "User not found", http.StatusNotFound)
 		case err != nil:
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("GetUserById: %v", userId, err)
@@ -41,7 +40,7 @@ func (rt *_router) authRequest(
 	}
 }
 
-func (rt *_router) authConversationAccess(
+func (rt *_router) authConversationAccessParam(
 	w http.ResponseWriter, ps httprouter.Params, user database.User,
 ) (*int64, error) {
 	conversationId, err := strconv.ParseInt(ps.ByName("conversationId"), 10, 64)
@@ -50,13 +49,19 @@ func (rt *_router) authConversationAccess(
 		return nil, err
 	}
 
+	return rt.authConversationAccess(w, user, conversationId)
+}
+
+func (rt *_router) authConversationAccess(
+	w http.ResponseWriter, user database.User, conversationId int64,
+) (*int64, error) {
 	isMember, err := rt.db.IsMember(user.UserId, conversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %v", err)
 	case !isMember:
-		errMsg := fmt.Sprintf("Unauthorized to access conversation %d", conversationId)
+		errMsg := "Unauthorized to access conversation."
 		rt.sendResponse(w, errMsg, http.StatusUnauthorized)
 		err = errors.New(errMsg)
 	}
@@ -64,7 +69,7 @@ func (rt *_router) authConversationAccess(
 	return &conversationId, err
 }
 
-func (rt *_router) authMessageAccess(
+func (rt *_router) authMessageAccessParam(
 	w http.ResponseWriter, ps httprouter.Params, user database.User,
 ) (*database.Message, error) {
 	messageId, err := strconv.ParseInt(ps.ByName("messageId"), 10, 64)
@@ -76,7 +81,7 @@ func (rt *_router) authMessageAccess(
 	message, err := rt.db.GetMessage(messageId)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
+		rt.sendResponse(w, "Message not found", http.StatusNotFound)
 		return nil, err
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
@@ -91,7 +96,7 @@ func (rt *_router) authMessageAccess(
 		rt.baseLogger.Errorf("IsMember: %v", err)
 		return message, err
 	case !isMember:
-		errMsg := fmt.Sprintf("Unauthorized to access message %d", messageId)
+		errMsg := "Unauthorized to access message"
 		rt.sendResponse(w, errMsg, http.StatusUnauthorized)
 		return message, errors.New(errMsg)
 	default:

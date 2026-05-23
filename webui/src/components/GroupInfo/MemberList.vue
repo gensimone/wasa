@@ -10,7 +10,10 @@ export default {
         members: { type: Array, required: true }
     },
 
-    emits: ["select"]
+    emits: [
+        "removeUser", // Remove user from group (founder only).
+        "addToGroup"  // Add user to group      (any member).
+    ],
 }
 </script>
 
@@ -22,6 +25,6 @@ export default {
                 <img src="/icons/plus.svg" class="icon-img">
             </button>
         </div>
-        <MemberItem v-for="m in members" :key="m.userId" :member="m" @select="$emit('select', $event)" />
+        <MemberItem v-for="m in members" :key="m.userId" :member="m" @removeUser="$emit('removeUser', $event)" />
     </div>
 </template>

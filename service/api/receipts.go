@@ -13,7 +13,7 @@ import (
 func (rt *_router) setMessageStatusAsRead(
 	w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -53,7 +53,7 @@ func (rt *_router) setMessageStatusAsRead(
 func (rt *_router) getReceipts(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}

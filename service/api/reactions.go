@@ -14,7 +14,7 @@ import (
 func (rt *_router) addReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -70,7 +70,7 @@ func (rt *_router) addReaction(
 func (rt *_router) deleteReaction(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -102,7 +102,7 @@ func (rt *_router) deleteReaction(
 func (rt *_router) getReactions(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}

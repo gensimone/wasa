@@ -1,9 +1,10 @@
 <script>
-import { doLogin } from "@/services/session"
 import { setName, setPhotoUrl, setUserId } from "@/state/user"
-import Topbar from "@/components/Shared/Topbar.vue";
-import Bottombar from "@/components/Shared/Bottombar.vue";
+import Topbar from "@/components/Shared/Topbar.vue"
+import Bottombar from "@/components/Shared/Bottombar.vue"
 import LoginBox from "@/components/Login/LoginBox.vue"
+import { doLogin } from "@/services/session"
+import { handleError } from "@/utils/errors"
 
 export default {
     components: {
@@ -15,7 +16,6 @@ export default {
     data() {
         return {
             name: null,
-            error: null,
             loading: false
         }
     },
@@ -23,7 +23,6 @@ export default {
     methods: {
         async doLogin() {
             this.loading = true
-            this.error = null
 
             try {
                 const user = await doLogin(this.name)
@@ -35,7 +34,7 @@ export default {
                 this.$router.push("/home")
 
             } catch (e) {
-                this.error = e?.response?.data?.error || "Unexpected error"
+                handleError(e)
 
             } finally {
                 this.loading = false
@@ -51,7 +50,7 @@ export default {
             { icon: '/icons/github.svg', link: 'https://github.com/gensimone' }
         ]" />
 
-        <LoginBox :name="name" :loading="loading" :error="error" @update:name="name = $event" @submit="doLogin" />
+        <LoginBox :name="name" :loading="loading" @update:name="name = $event" @submit="doLogin" />
 
         <Bottombar text="Made by Simone Gentili" />
     </div>

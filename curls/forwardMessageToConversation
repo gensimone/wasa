@@ -1,6 +1,6 @@
 #!/bin/sh
 
-curl -X POST http://localhost:3000/groups/$2/fmessage \
+curl -X POST http://localhost:3000/conversations/$2/fmessage \
   -H "Authorization: $1" \
   -H "Content-Type: application/json" \
   --data "{\"messageId\": $3}"

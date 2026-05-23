@@ -2,8 +2,7 @@
 export default {
     props: {
         name: String,
-        loading: Boolean,
-        error: String
+        loading: Boolean
     },
     emits: ["update:name", "submit"]
 }
@@ -11,12 +10,10 @@ export default {
 
 <template>
     <div class="login-page">
-
         <h3 class="subtitle">
             Web Application And Software Architecture <br />
             Project
         </h3>
-
         <div class="login-container">
             <h2>Login</h2>
             <form @submit.prevent="$emit('submit')">
@@ -26,11 +23,7 @@ export default {
                     {{ loading ? "Logging in..." : "Login" }}
                 </button>
             </form>
-            <p v-if="error" class="error">
-                {{ error }}
-            </p>
         </div>
-
     </div>
 </template>
 
@@ -78,13 +71,6 @@ export default {
     font-weight: 800;
     letter-spacing: 1px;
     color: rgba(245, 245, 245, 0.9);
-}
-
-.error {
-    margin-top: 12px;
-    font-size: 0.9rem;
-    color: rgba(255, 80, 80, 0.85);
-    text-shadow: 0 0 10px rgba(255, 0, 0, 0.08);
 }
 
 @media (max-width: 500px) {

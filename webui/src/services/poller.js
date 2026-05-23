@@ -1,33 +1,52 @@
+import { handleError } from "@/utils/errors";
+
 export class Poller {
-    constructor(callback, interval = 3000) {
+    constructor(
+        callback,
+        interval = 3000,
+        maxInterval = 10000,
+        factor = 1.5
+    ) {
         this.callback = callback
-        this.interval = interval
-        this.poller = null
-        this.lock = false
-        this.error = null
+        this.running = false
+
+        this.timer = null
+        this.baseInterval = interval
+        this.currentInterval = interval
+        this.maxInterval = maxInterval
+        this.factor = factor
+    }
+
+    async loop() {
+        if (!this.running) return
+
+        try {
+            await this.callback()
+            this.currentInterval = this.baseInterval
+
+        } catch (e) {
+            handleError(e)
+
+            this.currentInterval = Math.min(
+                this.currentInterval * this.factor,
+                this.maxInterval
+            )
+        }
+
+        this.timer = setTimeout(() => this.loop(), this.currentInterval)
     }
 
     startPolling() {
         this.stopPolling()
-
-        this.poller = setInterval(async () => {
-            if (this.lock) return
-            this.lock = true
-
-            try {
-                this.callback()
-            } catch (e) {
-                this.error = e
-            } finally {
-                this.lock = false
-            }
-        }, this.interval)
+        this.running = true
+        this.loop()
     }
 
     stopPolling() {
-        if (this.poller) {
-            clearInterval(this.poller)
-            this.poller = null
+        this.running = false
+        if (this.timer) {
+            clearTimeout(this.timer)
+            this.timer = null
         }
     }
 }

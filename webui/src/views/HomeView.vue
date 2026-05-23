@@ -59,7 +59,6 @@ export default {
     },
 
     async mounted() {
-        this.conversations = await getConversations()
         this.poller = new Poller(async () => {
             this.conversations = await getConversations()
         })

@@ -47,7 +47,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps
 
 // operationId: getConversation
 func (rt *_router) getConversation(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	conversationId, err := rt.authConversationAccess(w, ps, user)
+	conversationId, err := rt.authConversationAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -118,7 +118,7 @@ func (rt *_router) getConversationByUserId(w http.ResponseWriter, _ *http.Reques
 
 // operationId: getLastMessage
 func (rt *_router) getLastMessage(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	conversationId, err := rt.authConversationAccess(w, ps, user)
+	conversationId, err := rt.authConversationAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -145,9 +145,9 @@ func (rt *_router) getLastMessage(w http.ResponseWriter, _ *http.Request, ps htt
 	rt.sendResponse(w, message, http.StatusOK)
 }
 
-// operationId: getMembers
-func (rt *_router) getMembers(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	conversationId, err := rt.authConversationAccess(w, ps, user)
+// operationId: getMemberIds
+func (rt *_router) getMemberIds(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := rt.authConversationAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -162,4 +162,59 @@ func (rt *_router) getMembers(w http.ResponseWriter, _ *http.Request, ps httprou
 	rt.sendResponse(w, struct {
 		UserIds []int64 `json:"userIds"`
 	}{UserIds: userIds}, http.StatusOK)
+}
+
+// operationId: sendMessageToConversation
+func (rt *_router) sendMessageToConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := rt.authConversationAccessParam(w, ps, user)
+	if err != nil {
+		return
+	}
+
+	message, err := rt._insertMessage(w, r, user.UserId, *conversationId, nil)
+	if err != nil {
+		return
+	}
+
+	rt.sendResponse(w, message, http.StatusCreated)
+}
+
+// operationId: forwardMessageToConversation
+func (rt *_router) forwardMessageToConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := rt.authConversationAccessParam(w, ps, user)
+	if err != nil {
+		return
+	}
+
+	messageId, err := rt.getMessageIdFromReq(w, r)
+	if err != nil {
+		return
+	}
+
+	message, err := rt.db.GetMessage(*messageId)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessage: %v", err)
+	default:
+		fmessage, err := rt.db.InsertMessage(
+			message.Text,
+			user.UserId,
+			*conversationId,
+			true,
+			nil,
+			message.AttachmentUrl,
+			message.MediaType,
+		)
+
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("InsertMessage: %v", err)
+			return
+		}
+
+		rt.sendResponse(w, fmessage, http.StatusCreated)
+	}
 }

@@ -20,15 +20,15 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.PUT("/groups/:groupId/name", rt.authRequest(rt.setGroupName))
 	rt.router.PUT("/groups/:groupId/photo", rt.authRequest(rt.setGroupPhoto))
 	rt.router.DELETE("/groups/:groupId/photo", rt.authRequest(rt.deleteGroupPhoto))
-	rt.router.POST("/groups/:groupId/message", rt.authRequest(rt.sendMessageToGroup))
-	rt.router.POST("/groups/:groupId/fmessage", rt.authRequest(rt.forwardMessageToGroup))
 	rt.router.DELETE("/groups/:groupId/user", rt.authRequest(rt.leaveGroup))
 	rt.router.DELETE("/groups/:groupId/user/:userId", rt.authRequest(rt.removeUser))
 
 	// Conversations.
 	rt.router.GET("/conversations", rt.authRequest(rt.getMyConversations))
 	rt.router.GET("/conversations/:conversationId", rt.authRequest(rt.getConversation))
-	rt.router.GET("/conversations/:conversationId/members", rt.authRequest(rt.getMembers))
+	rt.router.GET("/conversations/:conversationId/members", rt.authRequest(rt.getMemberIds))
+	rt.router.POST("/conversations/:conversationId/message", rt.authRequest(rt.sendMessageToConversation))
+	rt.router.POST("/conversations/:conversationId/fmessage", rt.authRequest(rt.forwardMessageToConversation))
 	rt.router.GET("/conversations/:conversationId/last", rt.authRequest(rt.getLastMessage))
 
 	// Reactions.

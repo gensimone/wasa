@@ -7,8 +7,7 @@ export default {
     },
 
     props: {
-        users: { type: Array, required: true },
-        loading: { type: Boolean, required: true }
+        users: { type: Array, required: true }
     },
 
     emits: ["select"]

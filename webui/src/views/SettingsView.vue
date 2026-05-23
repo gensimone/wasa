@@ -5,6 +5,7 @@ import { expandUrl } from "@/utils/media"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
 import InfoSettingCard from "@/components/Settings/InfoSettingCard.vue"
+import { handleError } from "@/utils/errors"
 
 export default {
     components: {
@@ -16,15 +17,23 @@ export default {
     data() {
         return {
             name: user.name,
+            user,
 
             oldPhotoUrl: null,
             photoUrl: expandUrl(user.photoUrl),
             photo: null,
             photoChanged: false,
-
-            message: null,
-            error: false,
             loading: false,
+        }
+    },
+
+    watch: {
+        "user.photoUrl"(newPhotoUrl, _) {
+            this.photoUrl = expandUrl(newPhotoUrl)
+        },
+
+        "user.name"(newName, _) {
+            this.name = newName
         }
     },
 
@@ -52,9 +61,6 @@ export default {
             this.photo = file
             this.photoChanged = true
 
-            this.error = false
-            this.message = null
-
             event.target.value = ""
         },
 
@@ -63,9 +69,6 @@ export default {
             this.photoUrl = this.oldPhotoUrl
             this.photo = null
             this.photoChanged = false
-
-            this.error = false
-            this.message = null
         },
 
         deletePhoto() {
@@ -74,21 +77,17 @@ export default {
             this.photoUrl = expandUrl(user.defaultUserPhoto)
             this.photo = null
             this.photoChanged = true
-
-            this.error = false
-            this.message = null
         },
 
         async submit() {
+            console.log("submit called")
             this.name = this.name.trim()
-            if (this.name === "") {
-                this.error = true
-                this.message = "Provide a name"
+            if (!this.name) {
+                this.$notifier.error("Provide a name")
                 return
             }
 
             this.loading = true
-
             let profileChanged = false
 
             this.name = this.name?.trim()
@@ -97,13 +96,11 @@ export default {
                     const name = await setMyUserName(this.name)
                     setName(name)
 
-                    this.error = false
                     profileChanged = true
 
                 } catch (e) {
+                    handleError(e)
                     this.loading = false
-                    this.error = true
-                    this.message = e?.response?.data?.error || "Unexpected error"
                     return
                 }
             }
@@ -114,34 +111,32 @@ export default {
                     setPhotoUrl(photoUrl)
                     this.revokePhotoUrl()
                     this.photoChanged = false
-                    this.error = false
                     profileChanged = true
 
                 } catch (e) {
+                    handleError(e)
                     this.loading = false
-                    this.error = true
-                    this.message = e?.response?.data?.error || "Unexpected error"
                     return
                 }
+
             } else if (this.photoChanged) {
                 try {
                     await deleteMyPhoto()
                     setPhotoUrl(user.defaultUserPhoto)
                     this.photoChanged = false
-                    this.error = false
                     profileChanged = true
 
                 } catch (e) {
+                    handleError(e)
                     this.loading = false
-                    this.error = true
-                    this.message = e?.response?.data?.error || "Unexpected error"
                     return
                 }
             }
 
             if (profileChanged) {
-                this.error = false
-                this.message = "Profile updated successfully"
+                this.$notifier.success("Profile updated successfully")
+            } else {
+                this.$notifier.error("Nothing to do..")
             }
 
             this.loading = false
@@ -156,22 +151,15 @@ export default {
 
 <template>
     <div class="app">
-        <!-- TOPBAR -->
         <Topbar :actions="[
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
-
-        <!-- INFO SETTING CARD -->
         <div class="settings-page">
             <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="name" title="Username"
-                submitButtonText="Update" :loading="loading" :message="message" :error="error"
-                @revertPhoto="revertPhoto" @deletePhoto="deletePhoto" @uploadPhoto="uploadPhoto"
-                @keyPress="handleKeyPress" @submit="submit" />
+                submitButtonText="Update" :loading="loading" @revertPhoto="revertPhoto" @deletePhoto="deletePhoto"
+                @uploadPhoto="uploadPhoto" @keyPress="handleKeyPress" @submit="submit" />
         </div>
-
-        <!-- BOTTOMBAR -->
         <Bottombar />
-
     </div>
 </template>
 

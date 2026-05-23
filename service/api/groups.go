@@ -13,7 +13,7 @@ import (
 
 // operationId: getGroup
 func (rt *_router) getGroup(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -37,7 +37,7 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -61,7 +61,7 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 
 // operationId: setGroupPhoto
 func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -93,7 +93,7 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 }
 
 func (rt *_router) deleteGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -120,7 +120,7 @@ func (rt *_router) deleteGroupPhoto(w http.ResponseWriter, r *http.Request, ps h
 
 // operationId: deleteGroup
 func (rt *_router) deleteGroup(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -142,7 +142,7 @@ func (rt *_router) deleteGroup(w http.ResponseWriter, _ *http.Request, ps httpro
 
 // operationId: leaveGroup
 func (rt *_router) leaveGroup(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -181,30 +181,25 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
 
-	isFounder, err := rt.authUserAsFounder(w, group.ConversationId, user.UserId)
-	if !isFounder || err != nil {
+	conversationId, err := rt.authConversationAccess(w, user, group.ConversationId)
+	if err != nil {
 		return
 	}
 
-	if *userId == user.UserId {
-		rt.sendResponse(w, "Cannot add founder to his own group", http.StatusBadRequest)
-		return
-	}
-
-	isMember, err := rt.db.IsMember(*userId, group.ConversationId)
+	isMember, err := rt.db.IsMember(*userId, *conversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("IsMember: %v", err)
 	case isMember:
-		rt.sendResponse(w, fmt.Sprintf("User %d already in group %d", userId, group.ConversationId), http.StatusBadRequest)
+		rt.sendResponse(w, "User already in the group", http.StatusBadRequest)
 	default:
-		_, err = rt.db.AddConversation(group.ConversationId, *userId)
+		_, err = rt.db.AddConversation(*conversationId, *userId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("AddConversation: %v", err)
@@ -225,7 +220,7 @@ func (rt *_router) removeUser(w http.ResponseWriter, _ *http.Request, ps httprou
 		return
 	}
 
-	group, err := rt.checkGroup(w, ps)
+	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {
 		return
 	}
@@ -304,96 +299,23 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 }
 
-// operationId: forwardMessageToGroup
-func (rt *_router) forwardMessageToGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
+func (rt *_router) IsValidGroup(w http.ResponseWriter, ps httprouter.Params) (*database.Group, error) {
+	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
 	if err != nil {
-		return
+		rt.sendResponse(w, "Parameter groupId must be an int64", http.StatusBadRequest)
+		return nil, err
 	}
 
-	messageId, err := rt.getMessageIdFromReq(w, r)
-	if err != nil {
-		return
-	}
-
-	message, err := rt.db.GetMessage(*messageId)
+	group, err := rt.db.GetGroupById(groupId)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		rt.sendResponse(w, fmt.Sprintf("Message %d not found", messageId), http.StatusNotFound)
-		return
+		rt.sendResponse(w, fmt.Sprintf("Group id %d not found", groupId), http.StatusNotFound)
+		return nil, err
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetMessage: %v", err)
-		return
-	}
-
-	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
-	switch {
-	case err != nil:
-		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %v", err)
-	case isMember:
-		fmessage, err := rt.db.InsertMessage(
-			message.Text,
-			user.UserId,
-			group.ConversationId,
-			true,
-			nil,
-			message.AttachmentUrl,
-			message.MediaType,
-		)
-
-		if err != nil {
-			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("InsertMessage: %v", err)
-			return
-		}
-
-		rt.sendResponse(w, fmessage, http.StatusCreated)
+		rt.baseLogger.Errorf("GetGroupById: %v", err)
+		return nil, err
 	default:
-		rt.sendResponse(
-			w,
-			fmt.Sprintf(
-				"User %d is not a member of group %d",
-				user.UserId,
-				group.ConversationId,
-			),
-			http.StatusUnauthorized,
-		)
+		return group, nil
 	}
-}
-
-// operationId: sendMessageToGroup
-func (rt *_router) sendMessageToGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	group, err := rt.checkGroup(w, ps)
-	if err != nil {
-		return
-	}
-
-	isMember, err := rt.db.IsMember(user.UserId, group.ConversationId)
-	if err != nil {
-		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("IsMember: %v", err)
-		return
-	}
-
-	if !isMember {
-		rt.sendResponse(
-			w,
-			fmt.Sprintf(
-				"User %d is not a member of group %d",
-				user.UserId,
-				group.ConversationId,
-			),
-			http.StatusUnauthorized,
-		)
-		return
-	}
-
-	message, err := rt._insertMessage(w, r, user.UserId, group.ConversationId, nil)
-	if err != nil {
-		return
-	}
-
-	rt.sendResponse(w, message, http.StatusCreated)
 }

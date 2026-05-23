@@ -13,16 +13,16 @@ import (
 
 // operationId: getUsers
 func (rt *_router) getUsers(w http.ResponseWriter, _ *http.Request, _ httprouter.Params, _ database.User) {
-	userIds, err := rt.db.GetUserIds()
+	users, err := rt.db.GetUsers()
 	if err != nil {
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("GetUserIds: %v", err)
+		rt.baseLogger.Errorf("GetUsers: %v", err)
 		return
 	}
 
 	rt.sendResponse(w, struct {
-		UserIds []int64 `json:"users"`
-	}{UserIds: userIds}, http.StatusOK)
+		Users []database.User `json:"users"`
+	}{Users: users}, http.StatusOK)
 }
 
 // operationId: getUserById

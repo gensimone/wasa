@@ -87,3 +87,11 @@ export async function getConversationByUserId(userId) {
 
     return response.data.messageIds
 }
+
+export async function getUsers() {
+    const response = await api.get(`/users`,
+        { headers: { Authorization: user.userId } }
+    )
+
+    return response.data.users
+}

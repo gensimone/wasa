@@ -77,7 +77,7 @@ func (rt *_router) forwardMessage(
 func (rt *_router) commentMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -101,7 +101,7 @@ func (rt *_router) uncommentMessage(
 func (rt *_router) deleteMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}
@@ -126,7 +126,7 @@ func (rt *_router) deleteMessage(
 func (rt *_router) getMessage(
 	w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User,
 ) {
-	message, err := rt.authMessageAccess(w, ps, user)
+	message, err := rt.authMessageAccessParam(w, ps, user)
 	if err != nil {
 		return
 	}

@@ -1,18 +1,26 @@
 <script>
+import { user } from "@/state/user"
 import { group } from "@/state/group"
 import { expandUrl } from "@/utils/media"
+
 export default {
     props: {
         member: { type: Object, required: true }
     },
 
     computed: {
-        isFounder() {
+        memberIsFounder() {
             return this.member.userId === group.founderId
+        },
+
+        isFounder() {
+            return user.userId === group.founderId
         }
     },
 
-    emits: ["select"],
+    emits: [
+        "removeUser" // Remove user from group (founder only).
+    ],
 
     methods: {
         expandUrl
@@ -21,7 +29,7 @@ export default {
 </script>
 
 <template>
-    <div class="list-item" @click="$emit('select', member)">
+    <div class="list-item" >
         <div class="item-photo-wrapper">
             <img :src="expandUrl(member.photoUrl)" class="item-photo" />
         </div>
@@ -29,9 +37,24 @@ export default {
             <div class="item-name">
                 {{ member.name }}
             </div>
-            <div v-if="isFounder">
-                Founder
-            </div>
+        </div>
+        <div v-if="isFounder" class="remove-button">
+            <button class="icon-btn" @click="$emit('removeUser', member)">
+                <img src="/icons/remove2.svg" class="icon-img"/>
+            </button>
         </div>
     </div>
 </template>
+
+<style scoped>
+.remove-button {
+    position: absolute;
+    right: 20px;
+}
+
+.is-founder {
+    opacity: 50%;
+    position: absolute;
+    right: 20px;
+}
+</style>

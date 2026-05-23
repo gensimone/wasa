@@ -1,0 +1,12 @@
+* Show conversations in "HomeView" in reverse chronological order.
+* Show last message in each conversation in the "HomeView" with the date of the last message.
+* If last message in each conversation in the "HomeView" as an image, show a snippet image.
+* The logged user can search for other users via the username.
+* Ability to leave the group.
+* In group conversations, each message must contain the sender name.
+* Show message receipts.
+* Show message reactions.
+* Ability to forward a message.
+* Ability to delete a message.
+* Ability to add a reaction and remove a reaction.
+* Ability to comment/uncomment a message.

@@ -1,5 +1,4 @@
 <script>
-import { fetchUsers } from "@/services/usersService"
 import {
     setConversationName,
     setConversationPhotoUrl,
@@ -10,6 +9,8 @@ import {
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import UserList from "@/components/Users/UserList.vue"
+import { getUsers } from "@/services/users";
+import { Poller } from "@/services/poller";
 
 export default {
     components: {
@@ -21,6 +22,7 @@ export default {
     data() {
         return {
             users: [],
+            poller: null,
             error: null,
             loading: false
         }
@@ -34,23 +36,19 @@ export default {
             setConversationIsGroup(false)
 
             this.$router.push("/conversation")
-        },
-
-        async fetchUsers() {
-            this.loading = true
-
-            try {
-                this.users = await fetchUsers()
-            } catch (e) {
-                this.error = e?.response?.data?.error || "Unexpected error"
-            } finally {
-                this.loading = false
-            }
         }
     },
 
-    mounted() {
-        this.fetchUsers()
+    async mounted() {
+        this.poller = new Poller(async () => {
+            this.users = await getUsers()
+        })
+
+        this.poller.startPolling()
+    },
+
+    beforeUnmount() {
+        this.poller?.stopPolling()
     }
 }
 </script>
@@ -70,7 +68,7 @@ export default {
                         </div>
                     </div>
                 </div>
-                <UserList :users="users" :loading="loading" @select="startConversation" />
+                <UserList :users="users" @select="startConversation" />
             </div>
         </div>
         <Bottombar />
