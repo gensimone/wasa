@@ -1,5 +1,9 @@
 <script>
+import { user } from "@/state/user"
 import { expandUrl } from "@/utils/media"
+import { Poller } from "@/services/poller"
+import { getReceipts } from "@/services/messages"
+
 export default {
     props: {
         message: Object,
@@ -8,19 +12,67 @@ export default {
 
     emits: ["openImage"],
 
+    data() {
+        return {
+            poller: null,
+            receipts: [],
+            checkIcon: "check-sent"
+        }
+    },
+
     methods: {
         expandUrl,
 
         getTime(sentAt) {
             const date = new Date(sentAt)
-            const hh = date.getHours()
-            const mm = date.getMinutes()
+
+            const hh = String(date.getHours()).padStart(2, "0")
+            const mm = String(date.getMinutes()).padStart(2, "0")
+
             return `${hh}:${mm}`
+        },
+
+        updateCheckIcon() {
+            const statuses = this.receipts.map(r => r.status)
+
+            const hasSent = statuses.includes("sent")
+            const hasReceived = statuses.includes("received")
+            const allRead =
+                statuses.length > 0 &&
+                statuses.every(s => s === "read")
+
+            if (hasSent) {
+                this.checkIcon = "check-sent"
+            }
+            else if (hasReceived) {
+                this.checkIcon = "check-received"
+            }
+            else if (allRead) {
+                this.checkIcon = "check-read"
+                this.poller?.stopPolling()
+            }
         }
+    },
+
+    mounted() {
+        if (this.message.senderId !== user.userId) return
+
+        this.poller = new Poller(async () => {
+            this.receipts = await getReceipts(
+                this.message.messageId
+            )
+
+            this.updateCheckIcon()
+        })
+
+        this.poller.startPolling()
+    },
+
+    beforeUnmount() {
+        this.poller?.stopPolling()
     }
 }
 </script>
-
 <template>
     <div class="message" :class="{ mine: isMine }">
         <div class="bubble">
@@ -36,6 +88,7 @@ export default {
                     {{ getTime(message.createdAt) }}
                 </span>
             </div>
+            <img v-if="isMine" class="check-icon" :src="`/icons/${checkIcon}.svg`" alt="" />
         </div>
     </div>
 </template>
@@ -76,8 +129,16 @@ export default {
 
 .message-meta {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: 4px;
     margin-top: 2px;
+}
+
+.check-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
 }
 
 .time {

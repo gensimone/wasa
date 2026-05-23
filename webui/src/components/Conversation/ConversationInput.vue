@@ -33,8 +33,13 @@ export default {
             <input ref="fileInput" type="file" accept="image/*" style="display: none"
                 @change="$emit('addAttachment', $event)" />
 
-            <input class="prompt" :value="text" :disabled="sending" @input="$emit('update:text', $event.target.value)"
-                placeholder="Type a message..." @keyup.enter="$emit('send')" />
+<input
+    class="prompt"
+    :value="text"
+    @input="$emit('update:text', $event.target.value)"
+    placeholder="Type a message..."
+    @keydown.enter.prevent="$emit('send')"
+/>
 
             <button class="icon-btn" :disable="sending" @click="$emit('send')">
                 <img src="/icons/send.svg" class="icon-img">

@@ -14,7 +14,39 @@ export default {
     },
 
     props: {
-        messages: { type: Array, required: true }
+        messages: { type: Array, required: true },
+        scrollTick: { type: Number, required: true }
+    },
+
+    watch: {
+        messages() {
+            if (this.isNearBottom()) this.scrollToBottomIfNeeded()
+        },
+
+        scrollTick() {
+            this.scrollToBottomIfNeeded()
+        }
+    },
+
+    methods: {
+        isNearBottom() {
+            const el = this.$refs.container
+            return (
+                el.scrollHeight - el.scrollTop - el.clientHeight < 80
+            )
+        },
+
+        scrollToBottomIfNeeded() {
+            this.$nextTick(() => {
+                const bottom = this.$refs.bottom
+                if (!bottom) return
+
+                bottom.scrollIntoView({
+                    behavior: "smooth",
+                    block: "end"
+                })
+            })
+        }
     },
 
     emits: ["openImage"]
@@ -25,14 +57,17 @@ export default {
     <div class="messages" ref="container">
         <Message v-for="message in messages" :key="message.messageId" :message="message"
             :isMine="message.senderId === user.userId" @openImage="$emit('openImage', $event)" />
+
+        <div ref="bottom"></div>
     </div>
 </template>
 
 <style scoped>
 .messages {
     width: min(720px, 100%);
-    overflow-x: hidden;
     height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     padding: 0px 18px;

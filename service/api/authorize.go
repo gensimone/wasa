@@ -17,6 +17,7 @@ func (rt *_router) authRequest(
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
 			rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
+			rt.baseLogger.Info("Not Authorized!!!")
 			return
 		}
 

@@ -14,6 +14,7 @@ export default {
 
     props: {
         messages: { type: Array, required: true },
+        scrollTick: { type: Number, required: true },
         text: { type: String, default: "" },
         attachment: { type: File, default: null },
         attachmentUrl: { type: String, default: null },
@@ -82,7 +83,7 @@ export default {
                 </div>
             </div>
 
-            <MessageList ref="messageList" :messages="messages" @openImage="openImage" />
+            <MessageList ref="messageList" :messages="messages" :scrollTick="scrollTick" @openImage="openImage" />
 
             <ConversationInput :text="text" :sending="sending" :attachment="attachment" :attachmentUrl="attachmentUrl"
                 @update:text="$emit('update:text', $event)" @send="$emit('send')"

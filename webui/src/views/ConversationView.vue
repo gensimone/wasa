@@ -1,6 +1,8 @@
 <script>
 import { conversation, startPollingConversation } from "@/state/conversation"
 import { getConversationMessages, sendMessage } from "@/utils/conversations"
+import { setMessageStatusAsRead } from "@/services/messages"
+import { user } from "@/state/user"
 import { Poller } from "@/services/poller"
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
@@ -18,6 +20,7 @@ export default {
         return {
             poller: null,
             messages: [],
+            scrollTick: 0, // Used to trigger the scroll down.
 
             text: null,
             attachment: null,
@@ -26,8 +29,30 @@ export default {
         }
     },
 
+    watch: {
+        // Temporary solution for message receipts (read).
+        async messages(newValue, oldValue) {
+            const equal = JSON.stringify(newValue) === JSON.stringify(oldValue)
+
+            if (equal) return
+
+            try {
+                const requests = this.messages
+                    .filter(m => m.senderId !== user.userId)
+                    .map(m => setMessageStatusAsRead(m.messageId))
+
+                await Promise.all(requests)
+            } catch (e) {
+                handleError(e)
+            }
+        }
+    },
+
     methods: {
         async sendMessage() {
+            const cleanText = this.text?.trim()
+            if (!cleanText && !this.attachment) return
+
             this.sending = true
 
             try {
@@ -37,6 +62,8 @@ export default {
                 )
 
                 this.messages.push(message)
+
+                this.scrollTick++
 
                 this.text = null
                 if (this.attachment)
@@ -100,9 +127,10 @@ export default {
             { icon: '/icons/home.svg', onClick: () => $router.push('/home') }
         ]" />
         <div class="content">
-            <ConversationBox ref="conversationBox" :messages="messages" :text="text" :attachment="attachment"
-                :attachmentUrl="attachmentUrl" @infoGroup="infoGroup" @update:text="text = $event" @send="sendMessage"
-                @addAttachment="addAttachment" @removeAttachment="removeAttachment" :sending="sending" />
+            <ConversationBox ref="conversationBox" :messages="messages" :scrollTick="scrollTick" :text="text"
+                :attachment="attachment" :attachmentUrl="attachmentUrl" @infoGroup="infoGroup"
+                @update:text="text = $event" @send="sendMessage" @addAttachment="addAttachment"
+                @removeAttachment="removeAttachment" :sending="sending" />
         </div>
         <Bottombar />
     </div>
