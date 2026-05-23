@@ -4,7 +4,7 @@ import { user } from "@/state/user"
 export async function createGroup(name, photo) {
     const formData = new FormData()
 
-    formData.append("name", name)
+    if (name) formData.append("name", name)
 
     if (photo) {
         formData.append("photo", photo)

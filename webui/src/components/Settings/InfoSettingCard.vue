@@ -7,18 +7,18 @@ export default {
     props: {
         photoUrl: { type: String, required: true },
         photoChanged: { type: Boolean, required: true },
-        submitButtonText: { type: String, required: true },
-        title: { type: String, required: true },
         text: { type: String, required: true },
+        title: { type: String, required: true },
+        submitButtonText: { type: String, required: true },
         loading: { type: Boolean, required: true }
     },
 
     emits: [
+        "submit",
         "uploadPhoto",
-        "deletePhoto",
         "revertPhoto",
-        "keyPress",
-        "submit"
+        "deletePhoto",
+        "keyPress"
     ]
 }
 </script>
@@ -26,20 +26,23 @@ export default {
 <template>
     <div class="item-setting-card">
         <form @submit.prevent="$emit('submit')">
+
             <PhotoEditor :photoUrl="photoUrl" :photoChanged="photoChanged" :loading="loading"
                 @uploadPhoto="$emit('uploadPhoto', $event)" @revertPhoto="$emit('revertPhoto')"
                 @deletePhoto="$emit('deletePhoto')" />
 
             <div class="text-editor-box">
-                <h2> {{ title }} </h2>
+                <h2>{{ title }}</h2>
+
                 <div class="input-bar">
                     <input class="prompt" :placeholder="text" @input="$emit('keyPress', $event.target.value)" />
                 </div>
             </div>
 
             <button class="submit-button" :disabled="loading">
-                {{ submitButtonText }}
+                {{ loading ? "Submitting..." : submitButtonText }}
             </button>
+
         </form>
     </div>
 </template>
@@ -50,13 +53,10 @@ export default {
     padding: 34px;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 30px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 22px;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 25px 90px rgba(0, 0, 0, 0.75);
 }
 
 .input-bar {

@@ -2,7 +2,7 @@
 import { expandUrl } from "@/utils/media"
 export default {
     props: {
-        visible: Boolean,
+        visible: { type: Boolean, required: true },
         imageUrl: String
     },
 
@@ -16,7 +16,7 @@ export default {
 
 <template>
     <div v-if="visible" class="image-modal" @click="$emit('close')">
-        <img :src="expandUrl(imageUrl)" class="image-modal-content" />
+        <img :src="imageUrl" class="image-modal-content" />
     </div>
 </template>
 

@@ -1,7 +1,7 @@
 import { getNotifier } from "@/notifier";
 import { logger } from "@/utils/logger";
 
-export function handleError(e, poller = null) {
+export function handleError(e) {
     const notifier = getNotifier()
 
     if (e.response) {

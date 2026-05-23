@@ -1,10 +1,15 @@
 <script>
+import {
+    setConversationName,
+    setConversationPhotoUrl,
+    setConversationId,
+    setConversationIsGroup
+} from "@/state/conversation"
 import { getMembers } from "@/utils/conversations"
 import { conversation } from "@/state/conversation"
-import { group } from "@/state/group"
-import { user } from "@/state/user"
 import { Poller } from "@/services/poller"
 import { removeUser } from "@/services/groups"
+import { handleError } from "@/utils/errors"
 import MemberList from "@/components/GroupInfo/MemberList.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
@@ -30,13 +35,21 @@ export default {
                 this.$notifier.success(`User ${member.name} removed`)
 
             } catch (e) {
-                this.$notifier.error(e?.response?.data?.error || "Unexpected error")
+                handleError(e)
             }
+        },
+
+        async startConversation(member) {
+            setConversationName(member.name)
+            setConversationPhotoUrl(member.photoUrl)
+            setConversationId(member.userId)
+            setConversationIsGroup(false)
+
+            this.$router.push("/conversation")
         }
     },
 
     async mounted() {
-        this.members = await getMembers(conversation.id)
         this.poller = new Poller(async () => {
             this.members = await getMembers(conversation.id)
         })
@@ -56,7 +69,7 @@ export default {
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
         <div class="content">
-            <MemberList :members="members" @removeUser="removeUser" />
+            <MemberList :members="members" @removeUser="removeUser" @selectUser="startConversation" />
         </div>
         <Bottombar />
     </div>

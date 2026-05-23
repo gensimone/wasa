@@ -97,8 +97,7 @@ export default {
 <template>
     <div class="app">
         <Topbar :actions="[
-            { icon: '/icons/home.svg', onClick: () => $router.push('/home') },
-            { icon: '/icons/back.svg', onClick: () => $router.back() }
+            { icon: '/icons/home.svg', onClick: () => $router.push('/home') }
         ]" />
         <div class="content">
             <ConversationBox ref="conversationBox" :messages="messages" :text="text" :attachment="attachment"

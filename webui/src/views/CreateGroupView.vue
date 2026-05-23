@@ -1,6 +1,5 @@
 <script>
 import {
-    conversation,
     setConversationName,
     setConversationPhotoUrl,
     setConversationId,
@@ -9,110 +8,63 @@ import {
 
 import {
     setGroupFounderId,
-    setGroupCreatedAt
+    setGroupCreatedAt,
+    defaultGroupPhotoUrl
 } from "@/state/group"
 
 import { createGroup } from "@/services/groups"
 import { expandUrl } from "@/utils/media"
-import Bottombar from "@/components/Shared/Bottombar.vue"
+import { handleError } from "@/utils/errors"
+
 import Topbar from "@/components/Shared/Topbar.vue"
+import Bottombar from "@/components/Shared/Bottombar.vue"
 import InfoSettingCard from "@/components/Settings/InfoSettingCard.vue"
 
+import { usePhotoManager } from "@/composables/usePhotoManager"
+import { useSettingsForm } from "@/composables/useSettingsForm"
+
 export default {
-    components: {
-        Bottombar,
-        Topbar,
-        InfoSettingCard
-    },
+    components: { Topbar, Bottombar, InfoSettingCard },
 
     data() {
+        const photo = usePhotoManager(
+            expandUrl(defaultGroupPhotoUrl),
+            expandUrl(defaultGroupPhotoUrl)
+        )
+
+        const form = useSettingsForm("", "...")
+
         return {
-            name: null,
-
-            oldPhotoUrl: null,
-            photoUrl: expandUrl(conversation.defaultGroupPhoto),
-            photo: null,
-            photoChanged: false,
-
-            message: null,
-            error: false,
-            loading: false,
+            ...photo,
+            ...form
         }
-    },
-
-    beforeUnmount() {
-        this.revokePhotoUrl()
     },
 
     methods: {
         expandUrl,
 
-        revokePhotoUrl() {
-            if (this.photoUrl) {
-                URL.revokeObjectURL(this.photoUrl)
-            }
-        },
-
-        uploadPhoto(event) {
-            const file = event.target.files[0]
-            if (!file) return
-
-            this.revokePhotoUrl()
-            this.oldPhotoUrl = expandUrl(conversation.defaultGroupPhoto)
-            this.photoUrl = URL.createObjectURL(file)
-
-            this.photo = file
-            this.photoChanged = true
-
-            this.error = false
-            this.message = null
-
-            event.target.value = ""
-        },
-
-        revertPhoto() {
-            this.revokePhotoUrl()
-            this.photoUrl = this.oldPhotoUrl
-            this.photo = null
-            this.photoChanged = false
-
-            this.error = false
-            this.message = null
-        },
-
-        deletePhoto() {
-            this.revokePhotoUrl()
-            this.oldPhotoUrl = this.photoUrl
-            this.photoUrl = expandUrl(conversation.defaultGroupPhoto)
-            this.photo = null
-            this.photoChanged = true
-
-            this.error = false
-            this.message = null
-        },
-
-        async submit() {
-            this.loading = true
-
+        async createGroup() {
             try {
-                const group = await createGroup(this.name, this.photo)
+                await this.submit(async (name) => {
+                    const group = await createGroup(name, this.photo)
 
-                setConversationName(group.name)
-                setConversationPhotoUrl(group.photoUrl)
-                setConversationId(group.conversationId)
-                setConversationIsGroup(true)
-                setGroupFounderId(group.founderid)
-                setGroupCreatedAt(group.createdAt)
+                    setConversationName(group.name)
+                    setConversationPhotoUrl(group.photoUrl)
+                    setConversationId(group.conversationId)
+                    setConversationIsGroup(true)
+                    setGroupFounderId(group.founderid)
+                    setGroupCreatedAt(group.createdAt)
 
-                this.$router.push("/conversation")
+                    this.$router.push("/conversation")
+                })
 
             } catch (e) {
-                console.log(e)
-                this.error = true
-                this.message = e?.response?.data?.error || "Unexpected error"
+                if (e.message === "EMPTY_NAME") {
+                    this.$notifier.error("Invalid group name")
+                } else {
+                    handleError(e)
+                }
             }
-
-            this.loading = false
         }
     }
 }
@@ -120,22 +72,17 @@ export default {
 
 <template>
     <div class="app">
-        <!-- TOPBAR -->
         <Topbar :actions="[
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
 
-        <!-- INFO SETTING CARD -->
         <div class="settings-page">
-            <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" submitButtonText="Create group"
-                :text="name" title="Group name" :loading="loading" :message="message" :error="error"
-                @revertPhoto="revertPhoto" @deletePhoto="deletePhoto" @uploadPhoto="uploadPhoto"
-                @keyPress="name = $event" @submit="submit" />
+            <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="text" title="Group name"
+                submitButtonText="Create group" :loading="loading" @uploadPhoto="uploadPhoto" @revertPhoto="revertPhoto"
+                @deletePhoto="deletePhoto" @keyPress="setText" @submit="createGroup" />
         </div>
 
-        <!-- BOTTOMBAR -->
         <Bottombar />
-
     </div>
 </template>
 
@@ -148,12 +95,5 @@ export default {
     padding: 20px;
     position: relative;
     z-index: 1;
-}
-
-.settings-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
 }
 </style>

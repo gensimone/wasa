@@ -19,7 +19,8 @@ export default {
     },
 
     emits: [
-        "removeUser" // Remove user from group (founder only).
+        "removeUser",
+        "selectUser"
     ],
 
     methods: {
@@ -29,7 +30,7 @@ export default {
 </script>
 
 <template>
-    <div class="list-item" >
+    <div class="list-item" @click="$emit('selectUser', member)">
         <div class="item-photo-wrapper">
             <img :src="expandUrl(member.photoUrl)" class="item-photo" />
         </div>
@@ -38,9 +39,12 @@ export default {
                 {{ member.name }}
             </div>
         </div>
-        <div v-if="isFounder" class="remove-button">
+        <div v-if="memberIsFounder" class="is-founder">
+            Founder
+        </div>
+        <div v-else-if="isFounder" class="remove-button">
             <button class="icon-btn" @click="$emit('removeUser', member)">
-                <img src="/icons/remove2.svg" class="icon-img"/>
+                <img src="/icons/remove2.svg" class="icon-img" />
             </button>
         </div>
     </div>

@@ -5,7 +5,7 @@ import Message from "@/components/Conversation/Message.vue"
 export default {
     data() {
         return {
-            userId: user.userId
+            user,
         }
     },
 
@@ -24,7 +24,7 @@ export default {
 <template>
     <div class="messages" ref="container">
         <Message v-for="message in messages" :key="message.messageId" :message="message"
-            :isMine="message.senderId === userId" @openImage="$emit('openImage', $event)" />
+            :isMine="message.senderId === user.userId" @openImage="$emit('openImage', $event)" />
     </div>
 </template>
 

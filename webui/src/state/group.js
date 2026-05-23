@@ -1,6 +1,6 @@
 import { reactive } from "vue"
 
-export const defaultGroupPhoto = "/media/default-group-photo.jpg"
+export const defaultGroupPhotoUrl = "/media/default-group-photo.jpg"
 
 export const group = reactive({
     founderId: null,

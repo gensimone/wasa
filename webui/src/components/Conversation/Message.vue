@@ -29,7 +29,7 @@ export default {
             </div>
 
             <img v-if="message.attachmentUrl" :src="expandUrl(message.attachmentUrl)" class="message-image"
-                @click="$emit('openImage', message.attachmentUrl)" />
+                @click="$emit('openImage', expandUrl(message.attachmentUrl))" />
 
             <div class="message-meta">
                 <span class="time">

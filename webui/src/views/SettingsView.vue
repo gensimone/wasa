@@ -2,151 +2,85 @@
 import { user, setName, setPhotoUrl, defaultUserPhotoUrl } from "@/state/user"
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users"
 import { expandUrl } from "@/utils/media"
-import Bottombar from "@/components/Shared/Bottombar.vue"
-import Topbar from "@/components/Shared/Topbar.vue"
-import InfoSettingCard from "@/components/Settings/InfoSettingCard.vue"
 import { handleError } from "@/utils/errors"
 
+import Topbar from "@/components/Shared/Topbar.vue"
+import Bottombar from "@/components/Shared/Bottombar.vue"
+import InfoSettingCard from "@/components/Settings/InfoSettingCard.vue"
+
+import { usePhotoManager } from "@/composables/usePhotoManager"
+import { useSettingsForm } from "@/composables/useSettingsForm"
+
 export default {
-    components: {
-        Bottombar,
-        Topbar,
-        InfoSettingCard
-    },
+    components: { Topbar, Bottombar, InfoSettingCard },
 
     data() {
+        const photo = usePhotoManager(
+            expandUrl(user.photoUrl),
+            expandUrl(defaultUserPhotoUrl)
+        )
+
+        const form = useSettingsForm(user.name, user.name)
+
         return {
             user,
 
-            name: user.name,
-            oldPhotoUrl: null,
-            photoUrl: expandUrl(user.photoUrl),
-            photo: null,
-            photoChanged: false,
-            loading: false,
+            ...photo,
+            ...form
         }
     },
 
     watch: {
-        "user.photoUrl"(newPhotoUrl, _) {
-            this.revokePhotoUrl()
-            this.photo = null
-            this.oldPhotoUrl = null
-            this.photoChanged = false
-            this.photoUrl = expandUrl(newPhotoUrl)
+        "user.name"(v) {
+            this.text = v
+            this.placeholder = v
         },
 
-        "user.name"(newName, _) {
-            this.name = newName
+        "user.photoUrl"(v) {
+            this.photoUrl = expandUrl(v)
+            this.photo = null
+            this.photoChanged = false
         }
-    },
-
-    beforeUnmount() {
-        this.revokePhotoUrl()
     },
 
     methods: {
         expandUrl,
 
-        revokePhotoUrl() {
-            if (this.photoUrl) {
-                URL.revokeObjectURL(this.photoUrl)
-            }
-        },
+        async updateProfile() {
+            try {
+                await this.submit(async (name) => {
+                    let changed = false
 
-        uploadPhoto(event) {
-            const file = event.target.files[0]
-            if (!file) return
+                    if (name !== user.name) {
+                        const updatedName = await setMyUserName(name)
+                        setName(updatedName)
+                        changed = true
+                    }
 
-            this.revokePhotoUrl()
-            this.oldPhotoUrl = expandUrl(user.photoUrl)
-            this.photoUrl = URL.createObjectURL(file)
+                    if (this.photo) {
+                        const url = await setMyPhoto(this.photo)
+                        setPhotoUrl(url)
+                        changed = true
+                    } else if (this.photoChanged) {
+                        await deleteMyPhoto()
+                        setPhotoUrl(defaultUserPhotoUrl)
+                        changed = true
+                    }
 
-            this.photo = file
-            this.photoChanged = true
+                    if (!changed) throw new Error("NO_CHANGE")
+                })
 
-            event.target.value = ""
-        },
-
-        revertPhoto() {
-            this.revokePhotoUrl()
-            this.photoUrl = this.oldPhotoUrl
-            this.photo = null
-            this.photoChanged = false
-        },
-
-        deletePhoto() {
-            this.revokePhotoUrl()
-            this.oldPhotoUrl = this.photoUrl
-            this.photoUrl = expandUrl(defaultUserPhotoUrl)
-            this.photo = null
-            this.photoChanged = true
-        },
-
-        async submit() {
-            this.name = this.name.trim()
-            if (!this.name) {
-                this.$notifier.error("Provide a name")
-                return
-            }
-
-            this.loading = true
-            let profileChanged = false
-
-            this.name = this.name?.trim()
-            if (this.name !== user.name) {
-                try {
-                    const name = await setMyUserName(this.name)
-                    setName(name)
-
-                    profileChanged = true
-
-                } catch (e) {
-                    handleError(e)
-                    this.loading = false
-                    return
-                }
-            }
-
-            if (this.photo !== null) {
-                try {
-                    const photoUrl = await setMyPhoto(this.photo)
-                    setPhotoUrl(photoUrl)
-                    this.revokePhotoUrl()
-                    this.photoChanged = false
-                    profileChanged = true
-
-                } catch (e) {
-                    handleError(e)
-                    this.loading = false
-                    return
-                }
-
-            } else if (this.photoChanged) {
-                try {
-                    await deleteMyPhoto()
-                    setPhotoUrl(defaultUserPhotoUrl)
-                    this.photoChanged = false
-                    profileChanged = true
-
-                } catch (e) {
-                    handleError(e)
-                    this.loading = false
-                    return
-                }
-            }
-
-            if (profileChanged) {
                 this.$notifier.success("Profile updated successfully")
-            } else {
-                this.$notifier.error("Nothing to do..")
+
+            } catch (e) {
+                if (e.message === "EMPTY_NAME")
+                    this.$notifier.error("Invalid user name")
+                else if (e.message === "NO_CHANGE")
+                    this.$notifier.error("Nothing to do..")
+                else {
+                    handleError(e)
+                }
             }
-
-            this.loading = false
-        },
-
-        handleKeyPress(name) {
-            this.name = name === "" ? user.name : name
         }
     }
 }
@@ -157,11 +91,13 @@ export default {
         <Topbar :actions="[
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
+
         <div class="settings-page">
-            <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="name" title="Username"
-                submitButtonText="Update" :loading="loading" @revertPhoto="revertPhoto" @deletePhoto="deletePhoto"
-                @uploadPhoto="uploadPhoto" @keyPress="handleKeyPress" @submit="submit" />
+            <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="text" title="Username"
+                submitButtonText="Update" :loading="loading" @uploadPhoto="uploadPhoto" @revertPhoto="revertPhoto"
+                @deletePhoto="deletePhoto(defaultUserPhotoUrl)" @keyPress="setText" @submit="updateProfile" />
         </div>
+
         <Bottombar />
     </div>
 </template>
@@ -175,12 +111,5 @@ export default {
     padding: 20px;
     position: relative;
     z-index: 1;
-}
-
-.settings-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
 }
 </style>
