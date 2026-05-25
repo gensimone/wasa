@@ -1,30 +1,6 @@
 import api from "@/services/axios"
 import { user } from "@/state/user"
 
-export async function getMemberIds(conversationId) {
-    const response = await api.get(`/conversations/${conversationId}/members`,
-        { headers: { Authorization: user.userId } }
-    )
-
-    return response.data.userIds
-}
-
-export async function getLastMessage(conversationId) {
-    const response = await api.get(`/conversations/${conversationId}/last`,
-        { headers: { Authorization: user.userId } }
-    )
-
-    return response.data
-}
-
-export async function getConversation(conversationId) {
-    const response = await api.get(`/conversations/${conversationId}`,
-        { headers: { Authorization: user.userId } }
-    )
-
-    return response.data.messageIds
-}
-
 export async function getMyConversations() {
     const response = await api.get(`/conversations`,
         { headers: { Authorization: user.userId } }
@@ -33,7 +9,18 @@ export async function getMyConversations() {
     return response.data.conversations
 }
 
-export async function sendMessageToConversation(conversationId, text, attachment, mediaType = "image") {
+export async function getConversation(id, direct) {
+    const response = await api.get(`/conversations/${id}`,
+        {
+            headers: { Authorization: user.userId },
+            params: { direct }
+        }
+    )
+
+    return response.data.messageIds
+}
+
+export async function sendMessage(id, direct, text, attachment, mediaType = "image") {
     const formData = new FormData()
 
     if (text) formData.append("text", text)
@@ -43,24 +30,39 @@ export async function sendMessageToConversation(conversationId, text, attachment
         formData.append("mediaType", mediaType)
     }
 
-    const response = await api.post(`/conversations/${conversationId}/message`,
+    const response = await api.post(`/conversations/${id}/message`,
         formData,
         {
             headers: {
                 Authorization: user.userId,
                 "Content-Type": "multipart/form-data"
-            }
+            },
+            params: { direct }
         }
     )
 
     return response.data
 }
 
-export async function forwardMessageToConversation(conversationId, messageId) {
-    const response = await api.post(`conversations/${conversationId}/fmessage`,
-        { messageId: messageId },
-        { headers: { Authorization: user.userId } }
-    )
+export async function forwardMessage(id, direct, messageId) {
+    const response = await api.post(
+        `/conversations/${id}/fmessage`,
+        { messageId },
+        {
+            headers: { Authorization: user.userId },
+            params: { direct }
+        }
+    );
 
-    return response.data
+    return response.data;
 }
+
+// Not needed?
+// export async function getLastMessage(conversationId) {
+//     const response = await api.get(`/conversations/${conversationId}/last`,
+//         { headers: { Authorization: user.userId } }
+//     )
+//
+//     return response.data
+// }
+

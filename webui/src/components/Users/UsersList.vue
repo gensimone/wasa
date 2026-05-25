@@ -1,6 +1,5 @@
 <script>
 import UserItem from "@/components/Users/UserItem.vue"
-
 import { getUsers } from "@/services/users";
 import { user } from "@/state/user";
 import { Poller } from "@/services/poller";

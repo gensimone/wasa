@@ -87,3 +87,11 @@ export async function removeUser(groupId, userId) {
         { headers: { Authorization: user.userId } }
     )
 }
+
+export async function getMemberIds(groupId) {
+    const response = await api.get(`/groups/${groupId}/members`,
+        { headers: { Authorization: user.userId } }
+    )
+
+    return response.data.userIds
+}

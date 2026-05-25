@@ -1,9 +1,5 @@
 <script>
-import {
-    groupConversations,
-    userConversations,
-} from "@/state/conversations"
-
+import { groupConversations, userConversations, } from "@/state/conversations"
 import ConversationItem from "@/components/Conversations/ConversationItem.vue"
 
 export default {
@@ -14,8 +10,8 @@ export default {
     computed: {
         conversationsList() {
             return [
-                ...Array.from(conversations.groupConversations.value.values()),
-                ...Array.from(conversations.userConversations.value.values())
+                ...Array.from(groupConversations.value.values()),
+                ...Array.from(userConversations.value.values())
             ]
         }
     }
@@ -33,8 +29,8 @@ export default {
             </button>
         </div>
 
-        <ConversationItem v-for="c in conversationsList" :key="`${c.isGroup ? 'g' : 'u'}-${c.id}`" :id="c.id"
-            :isGroup="c.isGroup" @select="$emit('select', c)" />
+        <ConversationItem v-for="c in conversationsList" :key="`${c.isGroup ? 'g' : 'u'}-${c.id}`"
+            :conversation="c" @select="$emit('select', c)" />
 
     </div>
 </template>

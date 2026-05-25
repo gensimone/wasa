@@ -1,17 +1,12 @@
 <script>
-import { sendMessage } from "@/services/users";
-import { sendMessageToConversation } from "@/services/conversations";
 import { handleError } from "@/utils/errors"
+import { sendMessage } from "@/services/conversations";
+import { userConversations, groupConversations } from "@/state/conversations"
 
 export default {
     props: {
         id: { type: Number, required: true },
-        routeType: {
-            type: String,
-            required: true,
-            validator: (v) =>
-                ["user", "conversation"].includes(v)
-        }
+        direct: { type: Boolean, required: true }
     },
 
     data() {
@@ -23,35 +18,36 @@ export default {
         }
     },
 
-    emits: ["reportConversationId", "triggerScrolldown", "pushMessage"],
+    emits: ["triggerScrolldown"],
 
     methods: {
-        async send() {
+        async sendMessage() {
             const cleanText = this.text?.trim()
             if (!cleanText && !this.attachment) return
 
             this.sending = true
 
             try {
-                let message
-                if (this.routeType == "user") {
-                    message = await sendMessage(
-                        this.id,
-                        this.text,
-                        this.attachment
-                    )
+                const message = await sendMessage(
+                    this.id,
+                    this.direct,
+                    this.text,
+                    this.attachment,
+                )
 
-                    this.$emit("reportConversationId", message.conversationId)
-
+                if (this.direct) {
+                    const conversationData = userConversations.value.get(this.id)
+                    if (conversationData) {
+                        conversationData.messages.push(message);
+                    } else {
+                        userConversations.value.set(this.id, {
+                            messages: [message]
+                        })
+                    }
                 } else {
-                    message = await sendMessageToConversation(
-                        this.id,
-                        this.text,
-                        this.attachment
-                    )
+                    groupConversations.value.get(this.id).messages.push(message);
                 }
 
-                this.$emit("pushMessage", message)
                 this.$emit("triggerScrolldown")
 
                 this.text = ""
@@ -116,9 +112,9 @@ export default {
             <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="addAttachment($event)" />
 
             <input class="input-bar" :value="text" @input="text = $event.target.value" placeholder="Type a message..."
-                @keydown.enter.prevent="send" />
+                @keydown.enter.prevent="sendMessage" />
 
-            <button class="icon-btn" :disabled="sending" @click="send">
+            <button class="icon-btn" :disabled="sending" @click="sendMessage">
                 <img src="/icons/send.svg" class="icon-img">
             </button>
         </div>

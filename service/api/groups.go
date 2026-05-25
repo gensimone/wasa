@@ -92,6 +92,26 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 	}{PhotoUrl: photoUrl}, http.StatusOK)
 }
 
+// operationId: getMemberIds
+func (rt *_router) getMemberIds(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
+	conversationId, err := rt.authConversationAccessParam(w, ps, user)
+	if err != nil {
+		return
+	}
+
+	userIds, err := rt.db.GetMembers(*conversationId)
+	if err != nil {
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMembers: %v", err)
+		return
+	}
+
+	rt.sendResponse(w, struct {
+		UserIds []int64 `json:"userIds"`
+	}{UserIds: userIds}, http.StatusOK)
+}
+
+// operationId: deleteGroupPhoto
 func (rt *_router) deleteGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
 	group, err := rt.IsValidGroup(w, ps)
 	if err != nil {

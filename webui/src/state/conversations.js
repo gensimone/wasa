@@ -1,6 +1,6 @@
 import { ref } from "vue"
 import { Poller } from "@/services/poller"
-import { getUserById, getConversationByUserId } from "@/services/users"
+import { getUserById } from "@/services/users"
 import { getMessage } from "@/services/messages"
 import { getGroup } from "@/services/groups"
 import { getMyConversations, getConversation } from "@/services/conversations"
@@ -30,10 +30,8 @@ async function fetchMessageCached(id) {
     return msg
 }
 
-export async function getConversationMessages(id, isGroup) {
-    const messageIds = isGroup
-        ? await getConversation(id)
-        : await getConversationByUserId(id)
+export async function getConversationMessages(id, direct) {
+    const messageIds = await getConversation(id, direct)
 
     if (!messageIds?.length) return []
 
@@ -50,7 +48,7 @@ export async function getConversationMessages(id, isGroup) {
 
 async function fetchGroupConversation(id) {
     const [messages, group] = await Promise.all([
-        getConversationMessages(id, true),
+        getConversationMessages(id, false),
         getGroup(id)
     ])
 
@@ -70,7 +68,7 @@ async function fetchGroupConversation(id) {
 
 async function fetchUserConversation(id) {
     const [messages, user] = await Promise.all([
-        getConversationMessages(id, false),
+        getConversationMessages(id, true),
         getUserById(id)
     ])
 
@@ -105,7 +103,6 @@ export function startPollingConversations(interval = 5000) {
     stopPollingConversations()
 
     poller = new Poller(async () => {
-        if (document.visibilityState !== "visible") return
         await fetchConversations()
     }, interval)
 

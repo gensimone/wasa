@@ -44,9 +44,9 @@ func (rt *_router) authRequest(
 func (rt *_router) authConversationAccessParam(
 	w http.ResponseWriter, ps httprouter.Params, user database.User,
 ) (*int64, error) {
-	conversationId, err := strconv.ParseInt(ps.ByName("conversationId"), 10, 64)
+	conversationId, err := strconv.ParseInt(ps.ByName("id"), 10, 64)
 	if err != nil {
-		rt.sendResponse(w, "Parameter conversationId must be an int64", http.StatusBadRequest)
+		rt.sendResponse(w, "Parameter id must be an int64", http.StatusBadRequest)
 		return nil, err
 	}
 

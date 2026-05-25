@@ -1,7 +1,0 @@
-#!/bin/sh
-
-curl -X POST http://localhost:3000/conversations/$2/message \
-  -H "Authorization: $1" \
-  -F "text=$3" \
-  -F "file=$4" \
-  -F "mediaType=$5"

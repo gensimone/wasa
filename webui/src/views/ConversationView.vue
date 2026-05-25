@@ -1,6 +1,4 @@
 <script>
-import { conversations } from "@/state/conversations"
-
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import ConversationBox from "@/components/Conversations/ConversationBox.vue"
@@ -8,6 +6,15 @@ import ConversationBox from "@/components/Conversations/ConversationBox.vue"
 export default {
     components: { Topbar, Bottombar, ConversationBox },
 
+    computed: {
+        id() {
+            return Number(this.$route.params.id);
+        },
+
+        direct() {
+            return this.$route.query.direct === "true"
+        }
+    }
 }
 </script>
 
@@ -17,7 +24,7 @@ export default {
             { icon: '/icons/home.svg', onClick: () => $router.push('/home') }
         ]" />
         <div class="content">
-            <ConversationBox :id="id" :routeType="routeType" @reportConversationId="reportConversationId" />
+            <ConversationBox :id="id" :direct="direct" />
         </div>
         <Bottombar />
     </div>

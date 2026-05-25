@@ -2,10 +2,10 @@
 import ImageModal from "@/components/Shared/ImageModal.vue"
 import MessageList from "@/components/Messages/MessageList.vue"
 import ConversationInput from "@/components/Conversations/ConversationInput.vue"
-import { conversations } from "@/state/conversations"
+import { userConversations, groupConversations } from "@/state/conversations"
+import { expandUrl } from "@/utils/media"
 import { getUserById } from "@/services/users"
 import { handleError } from "@/utils/errors"
-import { expandUrl } from "@/utils/media"
 
 export default {
     components: { MessageList, ConversationInput, ImageModal },
@@ -13,38 +13,53 @@ export default {
     data() {
         return {
             scrollTick: 0,
-            photoUrl: null,
-            name: null,
             zoomedImage: null,
             showImageModal: false,
-            isGroup: false
+
+            userFetchPromise: null,
+            userFetched: null
         }
     },
 
     props: {
         id: { type: Number, required: true },
-        routeType: {
-            type: String,
-            required: true,
-            validator: (v) =>
-                ["user", "conversation"].includes(v)
+        direct: { type: Boolean, required: true }
+    },
+
+    computed: {
+        conversationData() {
+            return this.direct
+                ? userConversations.value.get(this.id)
+                : groupConversations.value.get(this.id)
+        },
+
+        messages() {
+            return this.conversationData?.messages || []
+        },
+
+        name() {
+            console.log(this.conversationData?.name)
+            return this.conversationData?.name
+                || this.userFetched?.name
+                || ""
+        },
+
+        photoUrl() {
+            return this.conversationData?.photoUrl
+                || this.userFetched?.photoUrl
+                || ""
         }
     },
 
     watch: {
-        async id() {
-            await this.configureConversationData()
-        }
-    },
-
-    computed: {
-        messages() {
-            if (this.routeType == "conversation") {
-                return conversations.conversationsMap.value.get(this.id)?.messages || []
-            } else {
-                return []
+        conversationData: {
+            immediate: true,
+            handler(val) {
+                if (!val?.name || !val?.photoUrl) {
+                    this.ensureUserData();
+                }
             }
-        },
+        }
     },
 
     methods: {
@@ -60,41 +75,17 @@ export default {
             this.zoomedImage = null
         },
 
-        pushMessage(message) {
-            console.log(message)
-            this.messages.push(message)
-        },
+        async ensureUserData() {
+            if (this.userFetched) return
 
-        async configureConversationData() {
-            if (this.routeType == "conversation") {
-                const conversation = conversations.conversationsMap.value.get(this.id)
-                this.photoUrl = conversation?.photoUrl
-                this.name = conversation?.name
-                this.isGroup = conversation?.isGroup
-
-            } else {
-                try {
-                    const user = await getUserById(this.id)
-                    this.photoUrl = user.photoUrl
-                    this.name = user.name
-                    this.isGroup = false
-                } catch (e) {
-                    handleError(e)
-                    this.$router.push('/home')
-                }
+            try {
+                this.userFetched = await getUserById(this.id)
+            } catch (e) {
+                handleError(e)
+                this.$router.push('/home')
             }
-        },
-
-        openGroupInfo() {
-            this.$router.push(`/group/${this.id}/info`)
         }
-    },
-
-    async mounted() {
-        await this.configureConversationData()
-    },
-
-    emits: ["reportConversationId"]
+    }
 }
 </script>
 
@@ -102,15 +93,12 @@ export default {
     <div class="conversation-box">
 
         <div class="conversation-box-header">
-
-            <img class="conversation-box-photo" :src="expandUrl(photoUrl)" @click="openImage(photoUrl)" />
-
+            <img class="conversation-box-photo" :src="expandUrl(photoUrl)" />
             <div class="conversation-box-name">
                 {{ name }}
             </div>
-
             <div class="conversation-box-info-button">
-                <button v-if="isGroup" class="conversation-box-info-btn" @click="openGroupInfo">
+                <button v-if="!direct" class="conversation-box-info-btn" @click="openGroupInfo">
                     <img src="/icons/info.svg" class="icon-img">
                 </button>
             </div>
@@ -118,9 +106,7 @@ export default {
 
         <MessageList :messages="messages" :scrollTick="scrollTick" @openImage="openImage" />
 
-        <ConversationInput @reportConversationId="$emit('reportConversationId', $event)" @pushMessage="pushMessage"
-            @triggerScrolldown="scrollTick++" :id="id" :routeType="routeType" />
-
+        <ConversationInput @triggerScrolldown="scrollTick++" :direct="direct" :id="id" />
     </div>
 
     <ImageModal :visible="showImageModal" :imageUrl="zoomedImage" @close="closeImage" />

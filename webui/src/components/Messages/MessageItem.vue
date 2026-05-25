@@ -6,16 +6,19 @@ import { getReceipts } from "@/services/messages"
 
 export default {
     props: {
-        message: Object,
-        isMine: Boolean
+        message: { type: Object, required: true }
     },
-
-    emits: ["openImage"],
 
     data() {
         return {
             poller: null,
             checkIcon: "check-sent"
+        }
+    },
+
+    computed: {
+        isMine() {
+            return this.message.senderId === user.userId
         }
     },
 
@@ -62,15 +65,14 @@ export default {
         if (this.message.senderId !== user.userId) return
 
         this.poller = new Poller(async () => {
-            const receipts = await getReceipts(
-                this.message.messageId
-            )
-
+            const receipts = await getReceipts(this.message.messageId)
             this.updateCheckIcon(receipts)
         })
 
         this.poller.startPolling()
     },
+
+    emits: ["openImage"],
 
     beforeUnmount() {
         this.poller?.stopPolling()

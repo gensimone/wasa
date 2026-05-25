@@ -15,13 +15,12 @@ echo "Set user photos"
 
 echo
 echo "Send some messages"
-./sendMessage 1 2 "Hi Acid Burn!" # Creates conversation with ID: 1
-./sendMessage 1 2 "Take a look at this" @./assets/hack_the_planet.jpg image
-./sendMessageToConversation 2 1 "Cool!"
+./sendMessage 1 2 true "Hi Acid Burn!"
+./sendMessage 1 2 true "Take a look at this" @./assets/hack_the_planet.jpg image
 
 echo
 echo "Creating group"
-./createGroup 1 "HackThePlanet" @./assets/hack_the_planet.jpg # Group ID: 2
+./createGroup 1 "HackThePlanet" @./assets/hack_the_planet.jpg # ID: 2
 ./addToGroup  1 2 2 # Add Acid Burn in group.
 ./addToGroup  1 2 3 # Add Lord Nikon in group.
 ./addToGroup  1 2 4 # Add Cerial Killer in group.

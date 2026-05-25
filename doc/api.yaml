@@ -264,6 +264,49 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
+  /group/{groupId}/members:
+    parameters:
+      - name: groupId
+        in: path
+        description: Group id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: ["groups"]
+      summary: Get group members ids
+      description: Get group members ids
+      operationId: getMemberIds
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              example:
+                type: object
+              schema:
+                description: User ids
+                type: object
+                properties:
+                  userIds:
+                    description: User ids
+                    type: array
+                    minItems: 1
+                    maxItems: 1024
+                    items:
+                      description: User id
+                      type: integer
+                      format: int64
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
   /groups/{groupId}/user:
     parameters:
       - name: groupId
@@ -364,15 +407,21 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /conversations/{conversationId}:
+  /conversations/{id}:
     parameters:
-      - name: conversationId
+      - name: id
         in: path
         description: Conversation id
         required: true
         schema:
           type: integer
           format: int64
+      - name: direct
+        in: query
+        description: Is it a group or a direct conversation?
+        required: true
+        schema:
+          type: boolean
     get:
       tags: ["conversations"]
       summary: Get conversation by id
@@ -407,20 +456,26 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /conversations/{conversationId}/message:
+  /conversations/{id}/message:
     parameters:
-      - name: conversationId
+      - name: id
         in: path
-        description: Conversation id
+        description: Group or user id
         required: true
         schema:
           type: integer
           format: int64
+      - name: direct
+        in: query
+        description: Is it a direct message?
+        required: true
+        schema:
+          type: boolean
     post:
       tags: ["conversations"]
-      summary: Send a message to a conversation
-      description: Send a message to a conversation
-      operationId: sendMessageToConversation
+      summary: Send a message
+      description: Send a message
+      operationId: sendMessage
       requestBody:
         required: true
         content:
@@ -445,20 +500,26 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /conversations/{conversationId}/fmessage:
+  /conversations/{id}/fmessage:
     parameters:
-      - name: conversationId
+      - name: id
         in: path
-        description: Conversation id
+        description: Group or user id
         required: true
         schema:
           type: integer
           format: int64
+      - name: direct
+        in: query
+        description: Is it a direct message?
+        required: true
+        schema:
+          type: boolean
     post:
       tags: ["conversations"]
-      summary: Forward a message to a conversation
-      description: Forward a message to a conversation
-      operationId: forwardMessageToConversation
+      summary: Forward a message
+      description: Forward a message
+      operationId: forwardMessage
       requestBody:
         required: true
         content:
@@ -489,19 +550,25 @@ paths:
         '500':
           $ref: "#/components/responses/InternalServerError"
 
-  /conversations/{conversationId}/last:
+  /conversations/{id}/last:
     parameters:
-      - name: conversationId
+      - name: id
         in: path
         description: Conversation id
         required: true
         schema:
           type: integer
           format: int64
+      - name: direct
+        in: query
+        description: Is it a direct message?
+        required: true
+        schema:
+          type: boolean
     get:
       tags: ["conversations"]
-      summary: Get last message of conversation
-      description: Get last message of conversation
+      summary: Get the last message of conversation
+      description: Get the last message of conversation
       operationId: getLastMessage
       responses:
         '200':
@@ -512,49 +579,6 @@ paths:
                 type: object
               schema:
                 $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /conversations/{conversationId}/members:
-    parameters:
-      - name: conversationId
-        in: path
-        description: Conversation id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    get:
-      tags: ["conversations"]
-      summary: Get member ids of a conversation
-      description: Get member ids of a conversation
-      operationId: getMemberIds
-      responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                description: User ids of conversation
-                type: object
-                properties:
-                  userIds:
-                    description: User ids
-                    type: array
-                    minItems: 1
-                    maxItems: 1024
-                    items:
-                      description: User id
-                      type: integer
-                      format: int64
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':
@@ -994,131 +1018,6 @@ paths:
                 properties:
                   photoUrl:
                     $ref: "#/components/schemas/PhotoUrl"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /users/{userId}/message:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
-      tags: ["users"]
-      summary: Send a message to a user
-      description: Send a message to a user
-      operationId: sendMessage
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/MessageContent"
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /users/{userId}/fmessage:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    post:
-      tags: ["users"]
-      summary: Forward a message to a user
-      description: Forward a message to a group
-      operationId: forwardMessage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              description: Request body
-              type: object
-              properties:
-                messageId:
-                  description: The message to forward
-                  type: integer
-                  format: int64
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /users/{userId}/messages:
-    parameters:
-      - name: userId
-        in: path
-        description: User id
-        required: true
-        schema:
-          type: integer
-          format: int64
-    get:
-      tags: ["users"]
-      summary: Get conversation by id
-      description: Get conversation by id
-      operationId: getConversationByUserId
-      responses:
-        '200':
-          description: Successful
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                description: Conversation messages
-                type: object
-                properties:
-                  messageIds:
-                    description: Message ids
-                    type: array
-                    minItems: 1
-                    maxItems: 1024
-                    items:
-                      description: Message id
-                      type: integer
-                      format: int64
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':

@@ -2,44 +2,19 @@
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import UsersList from "@/components/Users/UsersList.vue"
-import { getConversationByUserId } from "@/services/users"
-import { getMessage } from "@/services/messages";
-import { handleError } from "@/utils/errors"
 
 export default {
     components: { Topbar, Bottombar, UsersList },
 
     methods: {
-        async startConversation(user) {
-            let messageIds
-            try {
-                messageIds = await getConversationByUserId(user.userId)
-            } catch (e) {
-                handleError(e)
-                this.$router.push('/home')
-                return
-            }
-
-            if (messageIds?.length !== 0) {
-                try {
-                    const message = await getMessage(messageIds[0])
-                    this.$router.push(`/conversation/${message.conversationId}`)
-                } catch (e) {
-                    handleError(e)
-                    this.$router.push('/home')
-                }
-
-            } else {
-                this.$router.push({
-                    path: `/conversation/${user.userId}`,
-                    query: {
-                        user: 1
-                    }
-                })
-            }
+        async select(user) {
+            this.$router.push({
+                name: "conversation",
+                params: { id: user.userId },
+                query: { direct: true }
+            })
         }
-    },
-
+    }
 }
 </script>
 
@@ -58,7 +33,7 @@ export default {
                         </div>
                     </div>
                 </div>
-                <UsersList @select="startConversation" />
+                <UsersList @select="select" />
             </div>
         </div>
         <Bottombar />

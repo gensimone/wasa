@@ -22,14 +22,15 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/groups/:groupId/photo", rt.authRequest(rt.deleteGroupPhoto))
 	rt.router.DELETE("/groups/:groupId/user", rt.authRequest(rt.leaveGroup))
 	rt.router.DELETE("/groups/:groupId/user/:userId", rt.authRequest(rt.removeUser))
+	rt.router.GET("/groups/:groupId/members", rt.authRequest(rt.getMemberIds))
 
 	// Conversations.
 	rt.router.GET("/conversations", rt.authRequest(rt.getMyConversations))
-	rt.router.GET("/conversations/:conversationId", rt.authRequest(rt.getConversation))
-	rt.router.GET("/conversations/:conversationId/members", rt.authRequest(rt.getMemberIds))
-	rt.router.POST("/conversations/:conversationId/message", rt.authRequest(rt.sendMessageToConversation))
-	rt.router.POST("/conversations/:conversationId/fmessage", rt.authRequest(rt.forwardMessageToConversation))
-	rt.router.GET("/conversations/:conversationId/last", rt.authRequest(rt.getLastMessage))
+	rt.router.GET("/conversations/:id", rt.authRequest(rt.getConversation))
+	rt.router.POST("/conversations/:id/message", rt.authRequest(rt.sendMessage))
+	rt.router.POST("/conversations/:id/fmessage", rt.authRequest(rt.forwardMessage))
+	// Deprecated.
+	// rt.router.GET("/conversations/:id/last", rt.authRequest(rt.getLastMessage))
 
 	// Reactions.
 	rt.router.POST("/reactions/:messageId", rt.authRequest(rt.addReaction))
@@ -53,9 +54,6 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.PUT("/users/:userId/name", rt.authRequest(rt.setMyUserName))
 	rt.router.PUT("/users/:userId/photo", rt.authRequest(rt.setMyPhoto))
 	rt.router.DELETE("/users/:userId/photo", rt.authRequest(rt.deleteMyPhoto))
-	rt.router.POST("/users/:userId/message", rt.authRequest(rt.sendMessage))
-	rt.router.POST("/users/:userId/fmessage", rt.authRequest(rt.forwardMessage))
-	rt.router.GET("/users/:userId/messages", rt.authRequest(rt.getConversationByUserId))
 
 	// Authentication.
 	rt.router.POST("/session", rt.doLogin)

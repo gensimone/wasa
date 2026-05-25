@@ -29,9 +29,8 @@ export default {
                 this.scrollToBottomIfNeeded()
             }
 
-            const equal = JSON.stringify(newValue) === JSON.stringify(oldValue)
-
-            if (equal) return
+            // FIXME: Improve this.
+            if (JSON.stringify(newValue) === JSON.stringify(oldValue)) return
 
             try {
                 const requests = this.messages
@@ -76,9 +75,7 @@ export default {
 
 <template>
     <div class="message-list" ref="container">
-        <MessageItem v-for="message in messages" :key="message.messageId" :message="message"
-            :isMine="message.senderId === user.userId" @openImage="$emit('openImage', $event)" />
-
+        <MessageItem v-for="m in messages" :key="m.messageId" :message="m" @openImage="$emit('openImage', $event)" />
         <div ref="bottom"></div>
     </div>
 </template>

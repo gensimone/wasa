@@ -12,7 +12,7 @@ export default {
             this.$router.push({
                 name: "conversation",
                 params: { id: conversation.id },
-                query: { isGroup: conversation.isGroup }
+                query: { direct: !conversation.isGroup }
             })
         },
 
@@ -27,7 +27,7 @@ export default {
 <template>
     <div class="app">
         <Topbar :actions="[
-            { icon: '/icons/settings.svg', onClick: () => $router.push('/settings') },
+            { icon: '/icons/settings.svg', onClick: () => $router.push('/user/settings') },
             { icon: '/icons/logout.svg', onClick: () => logout() }
         ]" />
         <div class="content">

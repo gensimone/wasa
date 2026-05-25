@@ -20,17 +20,19 @@ export class Poller {
     async loop() {
         if (!this.running) return
 
-        try {
-            await this.callback()
-            this.currentInterval = this.baseInterval
+        if (document.visibilityState === "visible") {
+            try {
+                await this.callback()
+                this.currentInterval = this.baseInterval
 
-        } catch (e) {
-            handleError(e)
+            } catch (e) {
+                handleError(e)
 
-            this.currentInterval = Math.min(
-                this.currentInterval * this.factor,
-                this.maxInterval
-            )
+                this.currentInterval = Math.min(
+                    this.currentInterval * this.factor,
+                    this.maxInterval
+                )
+            }
         }
 
         this.timer = setTimeout(() => this.loop(), this.currentInterval)
