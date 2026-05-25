@@ -3,16 +3,16 @@ import App from '@/App.vue'
 import router from '@/router'
 import notifier from "@/notifier"
 
-import { loadUserState } from '@/state/user.js'
-import { loadConversationState } from '@/state/conversation.js'
-import { loadGroupState } from '@/state/group'
+import { user, hydrateUserState, startPollingUser } from '@/state/user.js'
+import { startPollingConversations } from '@/state/conversations.js'
 
-import './main.css'
+import './styles/index.css'
 
-// Load local storage data.
-loadUserState()
-loadConversationState()
-loadGroupState()
+hydrateUserState()
+if (user.userId) {
+    startPollingUser()
+    startPollingConversations()
+}
 
 const app = createApp(App)
 app.use(router)

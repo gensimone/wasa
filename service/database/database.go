@@ -28,6 +28,7 @@ type AppDatabase interface {
 
 	// Conversations.
 	GetMembers(int64) ([]int64, error)
+	GetOtherMembers(int64, int64) ([]int64, error)
 	IsMember(int64, int64) (bool, error)
 	AddConversation(int64, int64) (sql.Result, error)
 	DeleteConversation(int64) (sql.Result, error)

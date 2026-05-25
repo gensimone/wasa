@@ -51,8 +51,7 @@ export async function deleteMyPhoto() {
 export async function sendMessage(userId, text, attachment, mediaType = "image") {
     const formData = new FormData()
 
-    if (text)
-        formData.append("text", text)
+    if (text) formData.append("text", text)
 
     if (attachment) {
         formData.append("file", attachment)

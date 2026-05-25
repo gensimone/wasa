@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gensimone/WASA-project/service/database"
 	"github.com/julienschmidt/httprouter"
@@ -14,10 +15,9 @@ func (rt *_router) authRequest(
 	fn func(http.ResponseWriter, *http.Request, httprouter.Params, database.User),
 ) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		auth := r.Header.Get("Authorization")
+		auth := strings.TrimSpace(r.Header.Get("Authorization"))
 		if auth == "" {
 			rt.sendResponse(w, "Unauthorized", http.StatusUnauthorized)
-			rt.baseLogger.Info("Not Authorized!!!")
 			return
 		}
 

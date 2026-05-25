@@ -32,6 +32,37 @@ func (db *appdbimpl) GetMembers(conversationId int64) ([]int64, error) {
 	return userIds, nil
 }
 
+// Returns the member of the conversation specified by the conversation id
+// that is not the identified by the specified user id.
+func (db *appdbimpl) GetOtherMembers(conversationId, userId int64) ([]int64, error) {
+	rows, err := db.c.Query(
+		`SELECT user_id
+		FROM user_conversations
+		WHERE conversation_id = ? AND user_id != ?`,
+		conversationId, userId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var userIds []int64
+	for rows.Next() {
+		var userId int64
+		if err := rows.Scan(&userId); err != nil {
+			return nil, err
+		}
+		userIds = append(userIds, userId)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userIds, nil
+}
+
 // Returns true if the specified user id is part of the specified conversation id.
 func (db *appdbimpl) IsMember(userId, conversationId int64) (bool, error) {
 	var exists bool

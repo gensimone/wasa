@@ -1,57 +1,45 @@
 <script>
-import {
-    setConversationName,
-    setConversationPhotoUrl,
-    setConversationId,
-    setConversationIsGroup
-} from "@/state/conversation"
-
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
-import UserList from "@/components/Users/UserList.vue"
-import { getUsers } from "@/services/users";
-import { user } from "@/state/user";
-import { Poller } from "@/services/poller";
+import UsersList from "@/components/Users/UsersList.vue"
+import { getConversationByUserId } from "@/services/users"
+import { getMessage } from "@/services/messages";
+import { handleError } from "@/utils/errors"
 
 export default {
-    components: {
-        Topbar,
-        Bottombar,
-        UserList
-    },
-
-    data() {
-        return {
-            users: [],
-            poller: null,
-            error: null,
-            loading: false
-        }
-    },
+    components: { Topbar, Bottombar, UsersList },
 
     methods: {
-        startConversation(user) {
-            setConversationName(user.name)
-            setConversationPhotoUrl(user.photoUrl)
-            setConversationId(user.userId)
-            setConversationIsGroup(false)
+        async startConversation(user) {
+            let messageIds
+            try {
+                messageIds = await getConversationByUserId(user.userId)
+            } catch (e) {
+                handleError(e)
+                this.$router.push('/home')
+                return
+            }
 
-            this.$router.push("/conversation")
+            if (messageIds?.length !== 0) {
+                try {
+                    const message = await getMessage(messageIds[0])
+                    this.$router.push(`/conversation/${message.conversationId}`)
+                } catch (e) {
+                    handleError(e)
+                    this.$router.push('/home')
+                }
+
+            } else {
+                this.$router.push({
+                    path: `/conversation/${user.userId}`,
+                    query: {
+                        user: 1
+                    }
+                })
+            }
         }
     },
 
-    async mounted() {
-        this.poller = new Poller(async () => {
-            const users = await getUsers()
-            this.users = users.filter(u => u.userId != user.userId)
-        })
-
-        this.poller.startPolling()
-    },
-
-    beforeUnmount() {
-        this.poller?.stopPolling()
-    }
 }
 </script>
 
@@ -70,9 +58,65 @@ export default {
                         </div>
                     </div>
                 </div>
-                <UserList :users="users" @select="startConversation" />
+                <UsersList @select="startConversation" />
             </div>
         </div>
         <Bottombar />
     </div>
 </template>
+
+<style scoped>
+.items-list {
+    width: min(720px, 100%);
+    padding: 20px;
+    border-radius: 22px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 25px 90px var(--shadow);
+
+    backdrop-filter: blur(20px);
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 14px;
+    margin-bottom: 10px;
+
+    border-radius: 18px;
+
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+
+    cursor: pointer;
+    overflow: hidden;
+
+    animation: fadeInUp 0.35s ease both;
+}
+
+.list-item:hover {
+    transform: translateY(-6px) scale(1.02);
+    border: 1px solid var(--accent);
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.item-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+
+    color: var(--text);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>

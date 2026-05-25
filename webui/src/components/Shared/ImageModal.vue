@@ -24,32 +24,19 @@ export default {
 .image-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    z-index: 3;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
-    cursor: zoom-out;
+
+    background: rgba(0, 0, 0, 0.85);
 }
 
 .image-modal-content {
     max-width: 90%;
     max-height: 90%;
+
     border-radius: 12px;
-    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
-    transform: scale(1);
-    animation: zoomIn 0.2s ease;
-}
-
-@keyframes zoomIn {
-    from {
-        transform: scale(0.85);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
 }
 </style>

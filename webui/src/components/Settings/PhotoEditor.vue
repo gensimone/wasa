@@ -23,7 +23,7 @@ export default {
 </script>
 
 <template>
-    <div class="avatar-row">
+    <div class="photo-editor">
         <button v-if="photoChanged" type="button" class="icon-btn" :disabled="loading" @click="$emit('revertPhoto')">
             <img src="/icons/revert.svg" class="icon-img">
         </button>
@@ -34,7 +34,7 @@ export default {
             <img src="/icons/remove.svg" class="icon-img">
         </button>
 
-        <label class="avatar-wrapper">
+        <label class="photo-editor-photo-wrapper">
             <img :src="photoUrl" class="avatar-big" />
             <input type="file" accept="image/*" hidden @change="$emit('uploadPhoto', $event)" />
         </label>
@@ -44,3 +44,22 @@ export default {
         </button>
     </div>
 </template>
+
+<style scoped>
+.photo-editor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.photo-editor-photo-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.invisible-placeholder {
+    visibility: hidden;
+}
+</style>

@@ -348,8 +348,8 @@ paths:
                     items:
                       type: object
                       properties:
-                        conversationId:
-                          description: Conversation id
+                        id:
+                          description: Conversation or User id
                           type: integer
                           format: int64
                         isGroup:
@@ -1269,7 +1269,6 @@ components:
       format: url
       minLength: 1
       maxLength: 1024
-
 
     Message:
       description: Message

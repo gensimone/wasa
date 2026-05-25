@@ -1,10 +1,6 @@
 <script>
 export default {
     props: {
-        title: {
-            String,
-            default: "Wasatext"
-        },
         actions: {
             type: Array,
             default: () => []
@@ -19,8 +15,10 @@ export default {
 
 <template>
     <header class="topbar">
-        <div class="header-title">{{ title }}</div>
-        <div class="actions">
+        <button class="topbar-title" @click="$router.push('/home')">
+            WASAText
+        </button>
+        <div class="topbar-actions">
             <a v-for="(l, i) in links" :key="i" class="icon-btn" :href="l.link" target="_blank">
                 <img :src="l.icon" class="icon-img">
             </a>
@@ -33,34 +31,38 @@ export default {
 
 <style scoped>
 .topbar {
-    left: 0;
     position: fixed;
+    top: 0;
+    left: 0;
+
     width: 100%;
-    top: 0px;
     height: 65px;
+
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+
     padding: 0 22px;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.35);
+
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 18px 70px var(--shadow);
+
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 18px 70px rgba(0, 0, 0, 0.7);
 
+    z-index: 2;
 }
 
-.header-title {
-    font-size: 1.45rem;
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(245, 245, 245, 0.92);
-    text-shadow: 0 0 12px rgba(0, 255, 120, 0.18);
-}
-
-.actions {
+.topbar-actions {
     display: flex;
     gap: 12px;
+}
+
+.topbar-title {
+    font-size: 1.45rem;
+    font-weight: 0;
+    border: 0px;
+    background: transparent;
+    color: var(--text);
 }
 </style>

@@ -1,30 +1,14 @@
 <script>
-import {
-    setConversationName,
-    setConversationPhotoUrl,
-    setConversationId,
-    setConversationIsGroup
-} from "@/state/conversation"
-import { getMembers } from "@/utils/conversations"
-import { conversation } from "@/state/conversation"
-import { Poller } from "@/services/poller"
-import { removeUser } from "@/services/groups"
-import { handleError } from "@/utils/errors"
-import MemberList from "@/components/GroupInfo/MemberList.vue"
+import MemberList from "@/components/Groups/MemberList.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import Topbar from "@/components/Shared/Topbar.vue"
 
 export default {
-    components: {
-        Bottombar,
-        Topbar,
-        MemberList
-    },
+    components: { Bottombar, Topbar, MemberList },
 
     data() {
         return {
-            members: [],
-            poller: { default: null, type: Poller }
+            members: []
         }
     },
 
@@ -48,18 +32,6 @@ export default {
 
             this.$router.push("/conversation")
         }
-    },
-
-    async mounted() {
-        this.poller = new Poller(async () => {
-            this.members = await getMembers(conversation.id)
-        })
-
-        this.poller.startPolling()
-    },
-
-    beforeUnmount() {
-        this.poller?.stopPolling()
     }
 }
 </script>
@@ -75,5 +47,3 @@ export default {
         <Bottombar />
     </div>
 </template>
-
-<style scoped></style>

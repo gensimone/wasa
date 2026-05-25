@@ -1,16 +1,17 @@
 <script>
-import { user } from "@/state/user.js"
-import Message from "@/components/Conversation/Message.vue"
+import MessageItem from "@/components/Messages/MessageItem.vue"
+
+import { user } from "@/state/user"
+import { setMessageStatusAsRead } from "@/services/messages"
+import { handleError } from "@/utils/errors"
 
 export default {
+    components: { MessageItem },
+
     data() {
         return {
-            user,
+            user
         }
-    },
-
-    components: {
-        Message
     },
 
     props: {
@@ -19,12 +20,28 @@ export default {
     },
 
     watch: {
-        messages() {
-            if (this.isNearBottom()) this.scrollToBottomIfNeeded()
-        },
-
         scrollTick() {
             this.scrollToBottomIfNeeded()
+        },
+
+        async messages(newValue, oldValue) {
+            if (this.isNearBottom()) {
+                this.scrollToBottomIfNeeded()
+            }
+
+            const equal = JSON.stringify(newValue) === JSON.stringify(oldValue)
+
+            if (equal) return
+
+            try {
+                const requests = this.messages
+                    .filter(m => m.senderId !== user.userId)
+                    .map(m => setMessageStatusAsRead(m.messageId))
+
+                await Promise.all(requests)
+            } catch (e) {
+                handleError(e)
+            }
         }
     },
 
@@ -49,13 +66,17 @@ export default {
         }
     },
 
+    mounted() {
+        this.scrollToBottomIfNeeded()
+    },
+
     emits: ["openImage"]
 }
 </script>
 
 <template>
-    <div class="messages" ref="container">
-        <Message v-for="message in messages" :key="message.messageId" :message="message"
+    <div class="message-list" ref="container">
+        <MessageItem v-for="message in messages" :key="message.messageId" :message="message"
             :isMine="message.senderId === user.userId" @openImage="$emit('openImage', $event)" />
 
         <div ref="bottom"></div>
@@ -63,49 +84,12 @@ export default {
 </template>
 
 <style scoped>
-.messages {
-    width: min(720px, 100%);
+.message-list {
     height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding: 0px 18px;
     position: relative;
-}
-
-.messages::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: 22px;
-    background: linear-gradient(120deg,
-            rgba(0, 255, 120, 0.14),
-            rgba(255, 255, 255, 0.05),
-            rgba(0, 255, 120, 0.14));
-
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.25;
-    pointer-events: none;
-    animation: borderGlow 4s ease-in-out infinite alternate;
-}
-
-@keyframes borderGlow {
-    0% {
-        opacity: 0.18;
-    }
-
-    100% {
-        opacity: 0.35;
-    }
-}
-
-@media (max-width: 600px) {
-    .messages {
-        height: 65vh;
-        padding: 14px;
-    }
 }
 </style>

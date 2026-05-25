@@ -24,23 +24,21 @@ export default {
 </script>
 
 <template>
-    <div class="item-setting-card">
+    <div class="setting-card">
         <form @submit.prevent="$emit('submit')">
 
             <PhotoEditor :photoUrl="photoUrl" :photoChanged="photoChanged" :loading="loading"
                 @uploadPhoto="$emit('uploadPhoto', $event)" @revertPhoto="$emit('revertPhoto')"
                 @deletePhoto="$emit('deletePhoto')" />
 
-            <div class="text-editor-box">
+            <div class="setting-card-input-box">
                 <h2>{{ title }}</h2>
 
-                <div class="input-bar">
-                    <input class="prompt" :placeholder="text" @input="$emit('keyPress', $event.target.value)" />
-                </div>
+                <input class="input-bar" :placeholder="text" @input="$emit('keyPress', $event.target.value)" />
             </div>
 
             <button class="submit-button" :disabled="loading">
-                {{ loading ? "Submitting..." : submitButtonText }}
+                {{ submitButtonText }}
             </button>
 
         </form>
@@ -48,7 +46,7 @@ export default {
 </template>
 
 <style scoped>
-.item-setting-card {
+.setting-card {
     width: min(520px, 92%);
     padding: 34px;
     display: flex;
@@ -59,18 +57,12 @@ export default {
     border-radius: 22px;
 }
 
-.input-bar {
-    display: flex;
-    gap: 10px;
-    border-radius: 0px;
-}
-
-.text-editor-box {
+.setting-card-input-box {
     width: 100%;
     text-align: center;
 }
 
-.text-editor-box h2 {
+.setting-card-input-box h2 {
     margin-top: 35px;
     margin-bottom: 14px;
     font-size: 1.2rem;

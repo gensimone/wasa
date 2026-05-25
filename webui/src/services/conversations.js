@@ -36,7 +36,7 @@ export async function getMyConversations() {
 export async function sendMessageToConversation(conversationId, text, attachment, mediaType = "image") {
     const formData = new FormData()
 
-    formData.append("text", text)
+    if (text) formData.append("text", text)
 
     if (attachment) {
         formData.append("file", attachment)

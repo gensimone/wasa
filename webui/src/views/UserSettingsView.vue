@@ -1,18 +1,17 @@
 <script>
-import { user, setName, setPhotoUrl, defaultUserPhotoUrl } from "@/state/user"
+import { user, updateUserState, defaultUserPhotoUrl } from "@/state/user"
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users"
 import { expandUrl } from "@/utils/media"
 import { handleError } from "@/utils/errors"
 
-import Topbar from "@/components/Shared/Topbar.vue"
-import Bottombar from "@/components/Shared/Bottombar.vue"
-import InfoSettingCard from "@/components/Settings/InfoSettingCard.vue"
-
 import { usePhotoManager } from "@/composables/usePhotoManager"
 import { useSettingsForm } from "@/composables/useSettingsForm"
+import SettingsCard from "@/components/Settings/SettingsCard.vue"
+import Topbar from "@/components/Shared/Topbar.vue"
+import Bottombar from "@/components/Shared/Bottombar.vue"
 
 export default {
-    components: { Topbar, Bottombar, InfoSettingCard },
+    components: { SettingsCard, Topbar, Bottombar },
 
     data() {
         const photo = usePhotoManager(
@@ -53,17 +52,19 @@ export default {
 
                     if (name !== user.name) {
                         const updatedName = await setMyUserName(name)
-                        setName(updatedName)
+
+                        updateUserState({ name: updatedName })
                         changed = true
                     }
 
                     if (this.photo) {
                         const url = await setMyPhoto(this.photo)
-                        setPhotoUrl(url)
+                        updateUserState({ photoUrl: url })
                         changed = true
+
                     } else if (this.photoChanged) {
                         await deleteMyPhoto()
-                        setPhotoUrl(defaultUserPhotoUrl)
+                        updateUserState({ photoUrl: null })
                         changed = true
                     }
 
@@ -91,25 +92,11 @@ export default {
         <Topbar :actions="[
             { icon: '/icons/back.svg', onClick: () => $router.back() }
         ]" />
-
-        <div class="settings-page">
-            <InfoSettingCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="text" title="Username"
+        <div class="content-center">
+            <SettingsCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="text" title="Username"
                 submitButtonText="Update" :loading="loading" @uploadPhoto="uploadPhoto" @revertPhoto="revertPhoto"
-                @deletePhoto="deletePhoto(defaultUserPhotoUrl)" @keyPress="setText" @submit="updateProfile" />
+                @deletePhoto="deletePhoto" @keyPress="setText" @submit="updateProfile" />
         </div>
-
         <Bottombar />
     </div>
 </template>
-
-<style scoped>
-.settings-page {
-    min-height: calc(100vh - 70px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    position: relative;
-    z-index: 1;
-}
-</style>

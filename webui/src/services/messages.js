@@ -9,13 +9,14 @@ export async function getMessage(messageId) {
 }
 
 export async function deleteMessage(messageId) {
-    await api.delete(`/messages/${messageId}`,
+    return await api.delete(`/messages/${messageId}`,
         { headers: { Authorization: user.userId } }
     )
 }
 
 export async function setMessageStatusAsRead(messageId) {
-    await api.put(`/messages/${messageId}/receipts`,
+    return await api.put(`/messages/${messageId}/receipts`,
+        {},
         { headers: { Authorization: user.userId } }
     )
 }

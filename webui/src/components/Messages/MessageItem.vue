@@ -15,7 +15,6 @@ export default {
     data() {
         return {
             poller: null,
-            receipts: [],
             checkIcon: "check-sent"
         }
     },
@@ -32,8 +31,13 @@ export default {
             return `${hh}:${mm}`
         },
 
-        updateCheckIcon() {
-            const statuses = this.receipts.map(r => r.status)
+        updateCheckIcon(receipts) {
+            if (!receipts) {
+                this.poller?.stopPolling()
+                return
+            }
+
+            const statuses = receipts.map(r => r.status)
 
             const hasSent = statuses.includes("sent")
             const hasReceived = statuses.includes("received")
@@ -58,11 +62,11 @@ export default {
         if (this.message.senderId !== user.userId) return
 
         this.poller = new Poller(async () => {
-            this.receipts = await getReceipts(
+            const receipts = await getReceipts(
                 this.message.messageId
             )
 
-            this.updateCheckIcon()
+            this.updateCheckIcon(receipts)
         })
 
         this.poller.startPolling()
@@ -74,37 +78,65 @@ export default {
 }
 </script>
 <template>
-    <div class="message" :class="{ mine: isMine }">
-        <div class="bubble">
-            <div v-if="message.text" class="message-text">
+    <div class="message-item" :class="{ mine: isMine }">
+        <div class="message-item-bubble">
+            <div v-if="message.text" class="message-item-text">
                 {{ message.text }}
             </div>
 
-            <img v-if="message.attachmentUrl" :src="expandUrl(message.attachmentUrl)" class="message-image"
+            <img v-if="message.attachmentUrl" :src="expandUrl(message.attachmentUrl)" class="message-item-image"
                 @click="$emit('openImage', expandUrl(message.attachmentUrl))" />
 
-            <div class="message-meta">
-                <span class="time">
+            <div class="message-item-meta">
+                <span class="message-item-time">
                     {{ getTime(message.createdAt) }}
                 </span>
             </div>
-            <img v-if="isMine" class="check-icon" :src="`/icons/${checkIcon}.svg`" alt="" />
+            <img v-if="isMine" class="message-item-check-icon" :src="`/icons/${checkIcon}.svg`" alt="" />
         </div>
     </div>
 </template>
 
-<style>
-.message {
+<style scoped>
+.message-item {
     display: flex;
-    margin: 6px 0;
-    animation: fadeInUp 0.35s ease both;
+    margin: 6px 20px;
 }
 
-.message.mine {
+.message-item.mine {
     justify-content: flex-end;
 }
 
-.message-image {
+.message-item-bubble {
+    max-width: 70%;
+    padding: 10px 14px;
+
+    border-radius: 18px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.message-item.mine .message-item-bubble {
+    background: var(--accent);
+    border: 1px solid var(--accent-strong);
+}
+
+.message-item-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.message-item-meta .message-item-time {
+    font-size: 0.72rem;
+    opacity: 0.55;
+    margin-left: auto;
+}
+
+.message-item-image {
     width: 220px;
     height: 160px;
     border-radius: 12px;
@@ -113,66 +145,18 @@ export default {
     display: block;
 }
 
-.message-text {
+.message-item-text {
     font-size: 0.95rem;
     line-height: 1.35;
     word-wrap: break-word;
     white-space: pre-wrap;
     padding-right: 40px;
+    color: var(--text);
 }
 
-.message-content {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.message-meta {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-    margin-top: 2px;
-}
-
-.check-icon {
+.message-item-check-icon {
     width: 16px;
     height: 16px;
     opacity: 0.9;
-}
-
-.time {
-    font-size: 0.72rem;
-    opacity: 0.55;
-    margin-left: auto;
-}
-
-.bubble {
-    max-width: 70%;
-    padding: 10px 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(245, 245, 245, 0.92);
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-}
-
-.message.mine .bubble {
-    background: rgba(0, 255, 120, 0.12);
-    border: 1px solid rgba(0, 255, 120, 0.2);
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(12px) scale(0.98);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
 </style>

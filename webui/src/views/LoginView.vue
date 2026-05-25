@@ -1,17 +1,15 @@
 <script>
-import { setName, setPhotoUrl, setUserId } from "@/state/user"
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import LoginBox from "@/components/Login/LoginBox.vue"
+
+import { updateUserState, startPollingUser } from "@/state/user"
+import { startPollingConversations } from "@/state/conversations"
 import { doLogin } from "@/services/session"
 import { handleError } from "@/utils/errors"
 
 export default {
-    components: {
-        Topbar,
-        Bottombar,
-        LoginBox
-    },
+    components: { Topbar, Bottombar, LoginBox },
 
     data() {
         return {
@@ -27,9 +25,9 @@ export default {
             try {
                 const user = await doLogin(this.name)
 
-                setName(user.name)
-                setPhotoUrl(user.photoUrl)
-                setUserId(user.userId)
+                updateUserState(user)
+                startPollingUser()
+                startPollingConversations()
 
                 this.$router.push("/home")
 

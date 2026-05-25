@@ -21,8 +21,8 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps
 	}
 
 	type data struct {
-		ConversationId int64 `json:"conversationId"`
-		IsGroup        bool  `json:"isGroup"`
+		Id      int64 `json:"id"`
+		IsGroup bool  `json:"isGroup"`
 	}
 
 	var conversations []data
@@ -34,10 +34,32 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, _ *http.Request, ps
 			return
 		}
 
-		conversations = append(conversations, data{
-			ConversationId: conversationId,
-			IsGroup:        isGroup,
-		})
+		var entry data
+		if !isGroup {
+			otherMembers, err := rt.db.GetOtherMembers(conversationId, user.UserId)
+			switch {
+			case err != nil:
+				rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+				rt.baseLogger.Errorf("GetOtherMembers: %v", err)
+				return
+			case len(otherMembers) > 1:
+				rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+				rt.baseLogger.Errorf("Invalid state: non-group conversations must have exactly two members. Found: %d", len(otherMembers))
+				return
+			default:
+				entry = data{
+					Id:      otherMembers[0],
+					IsGroup: false,
+				}
+			}
+		} else {
+			entry = data{
+				Id:      conversationId,
+				IsGroup: true,
+			}
+		}
+
+		conversations = append(conversations, entry)
 	}
 
 	rt.sendResponse(w, struct {
@@ -130,19 +152,42 @@ func (rt *_router) getLastMessage(w http.ResponseWriter, _ *http.Request, ps htt
 		return
 	}
 
-	var message *database.Message
 	if len(messageIds) == 0 {
-		message = nil
-	} else {
-		message, err = rt.db.GetMessage(messageIds[len(messageIds)-1])
-		if err != nil {
-			rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetMessage: %v", err)
-			return
-		}
+		rt.sendResponse(w, nil, http.StatusOK)
+		return
 	}
 
-	rt.sendResponse(w, message, http.StatusOK)
+	message, err := rt.db.GetMessage(messageIds[len(messageIds)-1])
+	if err != nil {
+		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetMessage: %v", err)
+		return
+	}
+
+	// NOTE: We must be the receiver of the message in order to update its receipt.
+	if message.SenderId == user.UserId {
+		rt.sendResponse(w, message, http.StatusOK)
+		return
+	}
+
+	receipt, err := rt.db.GetReceipt(message.MessageId, user.UserId)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		rt.sendResponse(w, message, http.StatusOK)
+	case err != nil:
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetReceipt: %v", err)
+	case receipt.Status == database.Received || receipt.Status == database.Read:
+		rt.sendResponse(w, message, http.StatusOK)
+	case receipt.Status == database.Sent:
+		_, err = rt.db.SetReceiptStatus(message.MessageId, user.UserId, database.Received)
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("SetReceiptStatus: %v", err)
+			return
+		}
+		rt.sendResponse(w, message, http.StatusOK)
+	}
 }
 
 // operationId: getMemberIds
