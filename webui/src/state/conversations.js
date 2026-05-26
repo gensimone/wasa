@@ -1,127 +1,125 @@
-import Poller from "@/services/poller"
-import { ref } from "vue"
-import { getUserById } from "@/services/users"
-import { getMessage } from "@/services/messages"
-import { getGroup } from "@/services/groups"
-import { getMyConversations, getConversation } from "@/services/conversations"
-import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "../assets/default"
+import Poller from "@/services/poller";
+import { ref } from "vue";
+import { getUserById } from "@/services/users";
+import { getMessage } from "@/services/messages";
+import { getGroup } from "@/services/groups";
+import { getMyConversations, getConversation } from "@/services/conversations";
+import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "../assets/default";
 
-export const userConversations = ref(new Map())
-export const groupConversations = ref(new Map())
+export const userConversations = ref(new Map());
+export const groupConversations = ref(new Map());
 
-let poller = null
+let poller = null;
 
-const CACHE_TTL = 30_000
-const messageCache = new Map()
+const CACHE_TTL = 30_000;
+const messageCache = new Map();
 
 async function fetchMessageCached(id) {
-    const cached = messageCache.get(id)
+  const cached = messageCache.get(id);
 
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        return cached.data
-    }
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
 
-    const msg = await getMessage(id)
+  const msg = await getMessage(id);
 
-    messageCache.set(id, {
-        data: msg,
-        timestamp: Date.now()
-    })
+  messageCache.set(id, {
+    data: msg,
+    timestamp: Date.now(),
+  });
 
-    return msg
+  return msg;
 }
 
 export async function getConversationMessages(id, direct) {
-    const messageIds = await getConversation(id, direct)
+  const messageIds = await getConversation(id, direct);
 
-    if (!messageIds?.length) return []
+  if (!messageIds?.length) return [];
 
-    const messages = await Promise.all(
-        messageIds.map(fetchMessageCached)
-    )
+  const messages = await Promise.all(messageIds.map(fetchMessageCached));
 
-    return messages
+  return messages;
 
-    // return messages.sort(
-    //   (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-    // )
+  // return messages.sort(
+  //   (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+  // )
 }
 
 async function fetchGroupConversation(id) {
-    const [messages, group] = await Promise.all([
-        getConversationMessages(id, false),
-        getGroup(id)
-    ])
+  const [messages, group] = await Promise.all([
+    getConversationMessages(id, false),
+    getGroup(id),
+  ]);
 
-    return [
-        id,
-        {
-            id: id,
-            founderId: group.founderId,
-            name: group.name,
-            photoUrl: group.photoUrl || defaultGroupPhotoUrl,
-            createdAt: group.createdAt,
-            isGroup: true,
-            messages
-        }
-    ]
+  return [
+    id,
+    {
+      id: id,
+      founderId: group.founderId,
+      name: group.name,
+      photoUrl: group.photoUrl || defaultGroupPhotoUrl,
+      createdAt: group.createdAt,
+      isGroup: true,
+      messages,
+    },
+  ];
 }
 
 async function fetchUserConversation(id) {
-    const [messages, user] = await Promise.all([
-        getConversationMessages(id, true),
-        getUserById(id)
-    ])
+  const [messages, user] = await Promise.all([
+    getConversationMessages(id, true),
+    getUserById(id),
+  ]);
 
-    return [
-        id,
-        {
-            id: user.userId,
-            name: user.name,
-            photoUrl: user.photoUrl || defaultUserPhotoUrl,
-            isGroup: false,
-            messages
-        }
-    ]
+  return [
+    id,
+    {
+      id: user.userId,
+      name: user.name,
+      photoUrl: user.photoUrl || defaultUserPhotoUrl,
+      isGroup: false,
+      messages,
+    },
+  ];
 }
 
 export async function fetchConversations() {
-    const fetched = (await getMyConversations()) || []
+  const fetched = (await getMyConversations()) || [];
 
-    const groupIds = fetched.filter(c => c.isGroup).map(c => c.id)
-    const userIds = fetched.filter(c => !c.isGroup).map(c => c.id)
+  const groupIds = fetched.filter((c) => c.isGroup).map((c) => c.id);
+  const userIds = fetched.filter((c) => !c.isGroup).map((c) => c.id);
 
-    const [groups, users] = await Promise.all([
-        Promise.all(groupIds.map(fetchGroupConversation)),
-        Promise.all(userIds.map(fetchUserConversation))
-    ])
+  const [groups, users] = await Promise.all([
+    Promise.all(groupIds.map(fetchGroupConversation)),
+    Promise.all(userIds.map(fetchUserConversation)),
+  ]);
 
-    // FIXME: Do not trigger update if the old messages
-    // are the same to the current ones.
+  // FIXME: Do not trigger update if the old messages
+  // are the same to the current ones.
 
-    groupConversations.value = new Map(groups)
-    userConversations.value = new Map(users)
+  groupConversations.value = new Map(groups);
+  userConversations.value = new Map(users);
 }
 
 export function startPollingConversations(interval = 5000) {
-    stopPollingConversations()
+  stopPollingConversations();
 
-    poller = new Poller(async () => {
-        await fetchConversations()
-    }, interval)
+  poller = new Poller(async () => {
+    await fetchConversations();
+  }, interval);
 
-    poller.startPolling()
+  poller.startPolling();
 }
 
 export function stopPollingConversations() {
-    if (poller) {
-        poller.stopPolling()
-        poller = null
-    }
+  if (poller) {
+    poller.stopPolling();
+    poller = null;
+  }
 }
 
 export function clearConversations() {
-    userConversations.value.clear()
-    groupConversations.value.clear()
-    messageCache.clear()
+  userConversations.value.clear();
+  groupConversations.value.clear();
+  messageCache.clear();
 }

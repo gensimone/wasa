@@ -1,62 +1,62 @@
-import { ref } from "vue"
+import { ref } from "vue";
 
 export function usePhotoManager(initialUrl, defaultUrl) {
-    const photoUrl = ref(initialUrl)
-    const oldPhotoUrl = ref(null)
-    const photo = ref(null)
-    const photoChanged = ref(false)
+  const photoUrl = ref(initialUrl);
+  const oldPhotoUrl = ref(null);
+  const photo = ref(null);
+  const photoChanged = ref(false);
 
-    function revoke(url) {
-        if (url && url.startsWith("blob:")) {
-            URL.revokeObjectURL(url)
-        }
+  function revoke(url) {
+    if (url && url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function uploadPhoto(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    revoke(photoUrl.value);
+
+    if (!photoUrl.value.startsWith("blob:")) {
+      oldPhotoUrl.value = photoUrl.value;
     }
 
-    function uploadPhoto(event) {
-        const file = event.target.files?.[0]
-        if (!file) return
+    photoUrl.value = URL.createObjectURL(file);
 
-        revoke(photoUrl.value)
+    photo.value = file;
+    photoChanged.value = true;
 
-        if (!photoUrl.value.startsWith("blob:")) {
-            oldPhotoUrl.value = photoUrl.value
-        }
+    event.target.value = "";
+  }
 
-        photoUrl.value = URL.createObjectURL(file)
+  function revertPhoto() {
+    revoke(photoUrl.value);
 
-        photo.value = file
-        photoChanged.value = true
+    photoUrl.value = oldPhotoUrl.value;
+    photo.value = null;
+    photoChanged.value = false;
+  }
 
-        event.target.value = ""
-    }
+  function deletePhoto() {
+    revoke(photoUrl.value);
 
-    function revertPhoto() {
-        revoke(photoUrl.value)
+    oldPhotoUrl.value = photoUrl.value;
+    photoUrl.value = defaultUrl;
 
-        photoUrl.value = oldPhotoUrl.value
-        photo.value = null
-        photoChanged.value = false
-    }
+    photo.value = null;
+    photoChanged.value = true;
+  }
 
-    function deletePhoto() {
-        revoke(photoUrl.value)
+  return {
+    photoUrl,
+    oldPhotoUrl,
+    photo,
+    photoChanged,
 
-        oldPhotoUrl.value = photoUrl.value
-        photoUrl.value = defaultUrl
-
-        photo.value = null
-        photoChanged.value = true
-    }
-
-    return {
-        photoUrl,
-        oldPhotoUrl,
-        photo,
-        photoChanged,
-
-        uploadPhoto,
-        revertPhoto,
-        deletePhoto,
-        revoke
-    }
+    uploadPhoto,
+    revertPhoto,
+    deletePhoto,
+    revoke,
+  };
 }

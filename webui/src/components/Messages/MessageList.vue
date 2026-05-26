@@ -1,80 +1,95 @@
 <script>
-import MessageItem from "@/components/Messages/MessageItem.vue"
+import MessageItem from "@/components/Messages/MessageItem.vue";
 
-import { user } from "@/state/user"
+import { user } from "@/state/user";
 
 export default {
-    components: { MessageItem },
+  components: { MessageItem },
 
-    data() {
-        return {
-            user
-        }
+  data() {
+    return {
+      user,
+    };
+  },
+
+  props: {
+    messages: { type: Array, required: true },
+    scrollTick: { type: Number, required: true },
+  },
+
+  watch: {
+    scrollTick() {
+      this.scrollToBottomIfNeeded();
+    },
+  },
+
+  methods: {
+    isNearBottom() {
+      const el = this.$refs.container;
+      return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
     },
 
-    props: {
-        messages: { type: Array, required: true },
-        scrollTick: { type: Number, required: true }
+    // FIXME: It doesn't work.
+    scrollToBottomIfNeeded() {
+      this.$nextTick(() => {
+        const bottom = this.$refs.bottom;
+        if (!bottom) return;
+
+        bottom.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
     },
 
-    watch: {
-        scrollTick() {
-            this.scrollToBottomIfNeeded()
-        }
+    scrollToBottomInstant() {
+      const bottom = this.$refs.bottom;
+      if (!bottom) return;
+
+      bottom.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
     },
+  },
 
-    methods: {
-        isNearBottom() {
-            const el = this.$refs.container
-            return (
-                el.scrollHeight - el.scrollTop - el.clientHeight < 80
-            )
-        },
+  emits: [
+    "react",
+    "replyToMessage",
+    "forwardMessage",
+    "showInfoMessage",
+    "deleteMessage",
+  ],
 
-        // FIXME: It doesn't work.
-        scrollToBottomIfNeeded() {
-            this.$nextTick(() => {
-                const bottom = this.$refs.bottom
-                if (!bottom) return
-
-                bottom.scrollIntoView({
-                    behavior: "smooth",
-                    block: "end"
-                })
-            })
-        },
-
-        scrollToBottomInstant() {
-            const bottom = this.$refs.bottom
-            if (!bottom) return
-
-            bottom.scrollIntoView({
-                behavior: "auto",
-                block: "end"
-            })
-        }
-    },
-
-    mounted() {
-        this.scrollToBottomInstant()
-    }
-}
+  mounted() {
+    this.scrollToBottomInstant();
+  },
+};
 </script>
 
 <template>
-    <div class="message-list" ref="container">
-        <MessageItem v-for="m in messages" :key="m.messageId" :message="m" />
-        <div ref="bottom"></div>
-    </div>
+  <div class="message-list" ref="container">
+    <MessageItem
+      v-for="m in messages"
+      :key="m.messageId"
+      :message="m"
+      @react="$emit('react', $event)"
+      @replyToMessage="$emit('replyToMessage', $event)"
+      @forwardMessage="$emit('forwardMessage', $event)"
+      @showInfoMessage="$emit('showInfoMessage', $event)"
+      @deleteMessage="$emit('deleteMessage', $event)"
+    />
+    <div ref="bottom"></div>
+  </div>
 </template>
 
 <style scoped>
 .message-list {
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    position: relative;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 </style>

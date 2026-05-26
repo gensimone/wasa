@@ -1,42 +1,42 @@
 <script>
-import { user } from "@/state/user"
+import { user } from "@/state/user";
 export default {
-    computed: {
-        footerText() {
-            if (user.name) {
-                return `Logged as ${user.name}`
-            }
+  computed: {
+    footerText() {
+      if (user.name) {
+        return `Logged as ${user.name}`;
+      }
 
-            return "Made by Simone Gentili"
-        }
-    }
-}
+      return "Made by Simone Gentili";
+    },
+  },
+};
 </script>
 
 <template>
-    <footer class="bottombar">
-        {{ footerText }}
-    </footer>
+  <footer class="bottombar">
+    {{ footerText }}
+  </footer>
 </template>
 
 <style scoped>
 .bottombar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
 
-    width: 100%;
-    padding: 5px;
+  width: 100%;
+  padding: 5px;
 
-    text-align: center;
-    font-size: 12px;
+  text-align: center;
+  font-size: 12px;
 
-    color: var(--text-muted);
+  color: var(--text-muted);
 
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    backdrop-filter: blur(10px);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(10px);
 
-    z-index: 1;
+  z-index: 1;
 }
 </style>

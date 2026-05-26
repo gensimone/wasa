@@ -91,21 +91,15 @@ export default {
     closeMenu() {
       this.menu.visible = false;
     },
-
-    replyMessage() {
-      this.$emit("replyMessage", this.message);
-      this.closeMenu();
-    },
-
-    forwardMessage() {
-      this.$emit("forwardMessage", this.message);
-      this.closeMenu();
-    },
-
-    showInfo() {
-      this.closeMenu();
-    },
   },
+
+  emits: [
+    "react",
+    "replyToMessage",
+    "forwardMessage",
+    "showInfoMessage",
+    "deleteMessage",
+  ],
 
   async mounted() {
     if (this.message.senderId !== user.userId) {
@@ -165,6 +159,11 @@ export default {
           :x="menu.x"
           :y="menu.y"
           @close="closeMenu"
+          @react="$emit('react', $event)"
+          @replyToMessage="$emit('replyToMessage', $event)"
+          @forwardMessage="$emit('forwardMessage', $event)"
+          @showInfoMessage="$emit('showInfoMessage', $event)"
+          @deleteMessage="$emit('deleteMessage', $event)"
         />
       </Transition>
     </div>

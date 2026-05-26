@@ -1,49 +1,49 @@
 body {
-    background: var(--bg);
-    color: var(--text);
+  background: var(--bg);
+  color: var(--text);
 }
 
 .app {
-    min-height: 100vh;
-    font-family: "Inter", "Segoe UI", sans-serif;
-    color: var(--text);
-    background: var(--bg);
-    overflow-x: hidden;
-    position: relative;
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+  position: relative;
 }
 
 .app::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
 
-    background:
-        radial-gradient(circle at 20% 20%, var(--surface), transparent 55%),
-        radial-gradient(circle at 80% 70%, var(--surface-2), transparent 55%),
-        radial-gradient(circle at 50% 90%, var(--accent), transparent 60%);
+  background:
+    radial-gradient(circle at 20% 20%, var(--surface), transparent 55%),
+    radial-gradient(circle at 80% 70%, var(--surface-2), transparent 55%),
+    radial-gradient(circle at 50% 90%, var(--accent), transparent 60%);
 
-    filter: blur(140px);
-    opacity: 0.9;
-    animation: fogShift 12s ease-in-out infinite alternate;
+  filter: blur(140px);
+  opacity: 0.9;
+  animation: fogShift 12s ease-in-out infinite alternate;
 }
 
 .app::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
 
-    background-size: 90px 90px;
-    opacity: 0.08;
-    animation: gridMove 18s linear infinite;
+  background-size: 90px 90px;
+  opacity: 0.08;
+  animation: gridMove 18s linear infinite;
 }
 
 .app::before,
 .app::after {
-    pointer-events: none;
+  pointer-events: none;
 }
 
 ::-webkit-scrollbar {
-    width: 0px;
+  width: 0px;
 }

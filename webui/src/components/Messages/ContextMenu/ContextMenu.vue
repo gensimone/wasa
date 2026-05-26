@@ -1,74 +1,79 @@
 <script>
-import ReactionBar from "./ReactionBar.vue"
-import MessageMenu from "./MessageMenu.vue"
+import ReactionBar from "./ReactionBar.vue";
+import MessageMenu from "./MessageMenu.vue";
 
 export default {
-    components: { ReactionBar, MessageMenu },
+  components: { ReactionBar, MessageMenu },
 
-    props: {
-        x: { type: Number, required: true },
-        y: { type: Number, required: true },
-        message: { type: Object, required: true },
-        canClose: { type: Boolean, required: true },
+  props: {
+    x: { type: Number, required: true },
+    y: { type: Number, required: true },
+    message: { type: Object, required: true },
+    canClose: { type: Boolean, required: true },
+  },
+
+  emits: [
+    "close",
+
+    "react",
+    "replyToMessage",
+    "forwardMessage",
+    "showInfoMessage",
+    "deleteMessage",
+  ],
+
+  mounted() {
+    window.addEventListener("click", this.onOutsideClick);
+    window.addEventListener("contextmenu", this.onOutsideClick);
+    window.addEventListener("keydown", this.onKeyDown);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("click", this.onOutsideClick);
+    window.removeEventListener("contextmenu", this.onOutsideClick);
+    window.removeEventListener("keydown", this.onKeyDown);
+  },
+
+  methods: {
+    onOutsideClick() {
+      if (this.canClose) this.$emit("close");
     },
 
-    emits: [
-        "close",
-
-        "react",
-
-        "replyToMessage",
-        "forwardMessage",
-        "showInfoMessage",
-        "deleteMessage"
-    ],
-
-    mounted() {
-        window.addEventListener("click", this.onOutsideClick)
-        window.addEventListener("contextmenu", this.onOutsideClick)
-        window.addEventListener("keydown", this.onKeyDown)
+    onKeyDown(e) {
+      if (e.key === "Escape") {
+        this.$emit("close");
+      }
     },
-
-    beforeUnmount() {
-        window.removeEventListener("click", this.onOutsideClick)
-        window.removeEventListener("contextmenu", this.onOutsideClick)
-        window.removeEventListener("keydown", this.onKeyDown)
-    },
-
-    methods: {
-        onOutsideClick() {
-            if (this.canClose)
-                this.$emit("close")
-        },
-
-        onKeyDown(e) {
-            if (e.key === "Escape") {
-                this.$emit("close")
-            }
-        }
-    }
-}
+  },
+};
 </script>
 
 <template>
-    <div v-if="true" class="context-menu" :style="{ top: y + 'px', left: x + 'px' }">
-        <ReactionBar :message="message" @react="$emit('react')" />
-        <MessageMenu :message="message" @replyToMessage="$emit('replyToMessage')"
-            @forwardMessage="$emit('forwardMessage')" @showInfoMessage="$emit('showInfoMessage')"
-            @deleteMessage="$emit('deleteMessage')" />
-    </div>
+  <div
+    v-if="true"
+    class="context-menu"
+    :style="{ top: y + 'px', left: x + 'px' }"
+  >
+    <ReactionBar :message="message" @react="$emit('react', $event)" />
+    <MessageMenu
+      :message="message"
+      @replyToMessage="$emit('replyToMessage', $event)"
+      @forwardMessage="$emit('forwardMessage', $event)"
+      @showInfoMessage="$emit('showInfoMessage', $event)"
+      @deleteMessage="$emit('deleteMessage', $event)"
+    />
+  </div>
 </template>
-
 
 <style scoped>
 .context-menu {
-    position: fixed;
-    background: var(--surface-3);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    min-width: 180px;
-    z-index: 2;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 1.0);
+  position: fixed;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 180px;
+  z-index: 2;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 1);
 }
 </style>

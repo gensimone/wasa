@@ -1,41 +1,41 @@
-import { ref } from "vue"
+import { ref } from "vue";
 
 export function useSettingsForm(initialText = "", defaultText = "...") {
-    const text = ref(initialText)
-    const placeholder = ref(defaultText)
-    const loading = ref(false)
+  const text = ref(initialText);
+  const placeholder = ref(defaultText);
+  const loading = ref(false);
 
-    function setText(value) {
-        text.value = value === "" ? placeholder.value : value
+  function setText(value) {
+    text.value = value === "" ? placeholder.value : value;
+  }
+
+  function validate() {
+    const value = text.value?.trim();
+    return value || null;
+  }
+
+  async function submit(handler) {
+    const value = validate();
+
+    if (!value) {
+      throw new Error("EMPTY_NAME");
     }
 
-    function validate() {
-        const value = text.value?.trim()
-        return value || null
+    loading.value = true;
+
+    try {
+      await handler(value);
+    } finally {
+      loading.value = false;
     }
+  }
 
-    async function submit(handler) {
-        const value = validate()
+  return {
+    text,
+    loading,
+    placeholder,
 
-        if (!value) {
-            throw new Error("EMPTY_NAME")
-        }
-
-        loading.value = true
-
-        try {
-            await handler(value)
-        } finally {
-            loading.value = false
-        }
-    }
-
-    return {
-        text,
-        loading,
-        placeholder,
-
-        setText,
-        submit
-    }
+    setText,
+    submit,
+  };
 }
