@@ -35,7 +35,7 @@ export default {
             </div>
         </div>
 
-        <div v-if="lastMessage?.attachmentUrl" class="item-photo-wrapper">
+        <div v-if="lastMessage?.attachmentUrl" class="conversation-item-photo-wrapper">
             <img :src="expandUrl(lastMessage.attachmentUrl)" class="conversation-item-photo" />
         </div>
 

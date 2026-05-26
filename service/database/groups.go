@@ -17,7 +17,7 @@ func (db *appdbimpl) SetGroupName(groupId int64, name string) (sql.Result, error
 }
 
 // Sets the photo (URL) of the group identified by the specified group id.
-func (db *appdbimpl) SetGroupPhotoUrl(groupId int64, photoUrl string) (sql.Result, error) {
+func (db *appdbimpl) SetGroupPhotoUrl(groupId int64, photoUrl *string) (sql.Result, error) {
 	return db.c.Exec(
 		`UPDATE groups
 		SET photo_url = ?
@@ -64,7 +64,7 @@ func (db *appdbimpl) GroupExists(founderId int64, name string) (bool, error) {
 
 // Creates a new record in the groups table with the specified parameters and returns
 // a Group struct that describes the created record.
-func (db *appdbimpl) CreateGroup(founderId int64, name, photoUrl string) (*Group, error) {
+func (db *appdbimpl) CreateGroup(founderId int64, name string, photoUrl *string) (*Group, error) {
 	tx, err := db.GetTransaction()
 	if err != nil {
 		return nil, err

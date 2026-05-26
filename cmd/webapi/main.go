@@ -92,29 +92,6 @@ func run() error {
 		}
 	}
 
-	// Copy default photos for groups and users if necessary.
-	for _, srcPath := range []string{cfg.DefaultUserPhoto, cfg.DefaultGroupPhoto} {
-		filename := filepath.Base(srcPath)
-		dstPath := filepath.Join(cfg.RootMedia, filename)
-
-		_, err = os.Stat(dstPath)
-		switch {
-		case err == nil:
-			continue
-		case os.IsNotExist(err):
-			err = copyFileToDir(srcPath, dstPath)
-			if err == nil {
-				continue
-			}
-		}
-
-		logger.WithError(err).Errorf("Error copying file %s to %s", srcPath, dstPath)
-		return fmt.Errorf("Copying file %s to %s: %w", srcPath, dstPath, err)
-	}
-
-	defaultUserPhoto := filepath.Join(cfg.Media, filepath.Base(cfg.DefaultUserPhoto))
-	defaultGroupPhoto := filepath.Join(cfg.Media, filepath.Base(cfg.DefaultGroupPhoto))
-
 	// Start Database.
 	logger.Println("Initializing database support")
 	dbconn, err := sql.Open("sqlite3", cfg.DB)
@@ -148,12 +125,10 @@ func run() error {
 
 	// Create the API router
 	apirouter, err := api.New(api.Config{
-		Logger:            logger,
-		Database:          db,
-		RootMedia:         cfg.RootMedia,
-		Media:             cfg.Media,
-		DefaultUserPhoto:  defaultUserPhoto,
-		DefaultGroupPhoto: defaultGroupPhoto,
+		Logger:    logger,
+		Database:  db,
+		RootMedia: cfg.RootMedia,
+		Media:     cfg.Media,
 	})
 	if err != nil {
 		logger.WithError(err).Error("Error creating the API server instance")

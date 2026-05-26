@@ -1,9 +1,13 @@
 <script>
+import { getIcon } from '@/state/theme';
+import { expandUrl } from '@/utils/media';
+import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from '@/assets/default';
 export default {
     props: {
-        photoUrl: String,
-        photoChanged: Boolean,
-        loading: Boolean
+        photoUrl: { type: String, required: true },
+        photoChanged: { type: Boolean, required: true },
+        loading: { type: Boolean, required: true },
+        enableEditing: { type: Boolean, required: true }
     },
 
     emits: [
@@ -12,10 +16,17 @@ export default {
         "uploadPhoto"
     ],
 
+    methods: {
+        expandUrl,
+        getIcon
+    },
+
     computed: {
         isDefault() {
-            const filename = this.photoUrl.split("/").pop()
-            return filename === "default-user-photo.jpg" || filename === "default-group-photo.jpg"
+            return (
+                this.photoUrl === defaultUserPhotoUrl ||
+                this.photoUrl === defaultGroupPhotoUrl
+            )
         },
     },
 
@@ -24,24 +35,30 @@ export default {
 
 <template>
     <div class="photo-editor">
-        <button v-if="photoChanged" type="button" class="icon-btn" :disabled="loading" @click="$emit('revertPhoto')">
-            <img src="/icons/revert.svg" class="icon-img">
-        </button>
-        <button v-else-if="!isDefault" type="button" class="icon-btn" :disabled="loading" @click="$emit('deletePhoto')">
-            <img src="/icons/remove.svg" class="icon-img">
-        </button>
-        <button v-else type="button" class="icon-btn invisible-placeholder" disabled>
-            <img src="/icons/remove.svg" class="icon-img">
-        </button>
+        <div v-if="enableEditing">
+            <button v-if="photoChanged" type="button" class="icon-btn" :disabled="loading"
+                @click="$emit('revertPhoto')">
+                <img :src="getIcon('revert')" class="icon-img">
+            </button>
+            <button v-else-if="!isDefault" type="button" class="icon-btn" :disabled="loading"
+                @click="$emit('deletePhoto')">
+                <img :src="getIcon('trash')" class="icon-img">
+            </button>
+            <button v-else type="button" class="icon-btn invisible-placeholder" disabled>
+                <img :src="getIcon('trash')" class="icon-img">
+            </button>
+        </div>
 
         <label class="photo-editor-photo-wrapper">
-            <img :src="photoUrl" class="avatar-big" />
-            <input type="file" accept="image/*" hidden @change="$emit('uploadPhoto', $event)" />
+            <img :src="expandUrl(photoUrl)" class="avatar-big" />
+            <input type="file" accept="image/*" :disabled="!enableEditing" hidden @change="$emit('uploadPhoto', $event)" />
         </label>
 
-        <button type="button" class="icon-btn invisible-placeholder" disabled>
-            <img src="/icons/revert.svg" class="icon-img">
-        </button>
+        <div v-if="enableEditing">
+            <button type="button" class="icon-btn invisible-placeholder" disabled>
+                <img :src="getIcon('revert')" class="icon-img">
+            </button>
+        </div>
     </div>
 </template>
 
@@ -61,5 +78,15 @@ export default {
 
 .invisible-placeholder {
     visibility: hidden;
+}
+
+.avatar-big {
+    width: 170px;
+    height: 170px;
+
+    border-radius: 50%;
+    object-fit: cover;
+
+    border: 2px solid var(--accent);
 }
 </style>

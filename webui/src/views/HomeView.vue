@@ -27,8 +27,8 @@ export default {
 <template>
     <div class="app">
         <Topbar :actions="[
-            { icon: '/icons/settings.svg', onClick: () => $router.push('/user/settings') },
-            { icon: '/icons/logout.svg', onClick: () => logout() }
+            { icon: 'settings', onClick: () => $router.push('/user/settings') },
+            { icon: 'logout', onClick: () => logout() }
         ]" />
         <div class="content">
             <ConversationsList @select="select" />

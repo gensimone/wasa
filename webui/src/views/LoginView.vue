@@ -7,6 +7,7 @@ import { updateUserState, startPollingUser } from "@/state/user"
 import { startPollingConversations } from "@/state/conversations"
 import { doLogin } from "@/services/session"
 import { handleError } from "@/utils/errors"
+import { startMessageNotifier } from "@/notifier/messageNotifier"
 
 export default {
     components: { Topbar, Bottombar, LoginBox },
@@ -26,8 +27,10 @@ export default {
                 const user = await doLogin(this.name)
 
                 updateUserState(user)
+
                 startPollingUser()
                 startPollingConversations()
+                startMessageNotifier()
 
                 this.$router.push("/home")
 
@@ -45,7 +48,7 @@ export default {
 <template>
     <div class="app">
         <Topbar :links="[
-            { icon: '/icons/github.svg', link: 'https://github.com/gensimone' }
+            { icon: 'github', link: 'https://github.com/gensimone' }
         ]" />
 
         <LoginBox :name="name" :loading="loading" @update:name="name = $event" @submit="doLogin" />

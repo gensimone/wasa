@@ -1,14 +1,21 @@
 <script>
+import { expandUrl } from "@/utils/media"
+import { getIcon } from "@/state/theme";
 export default {
     props: {
         type: {
             type: String,
             required: true,
             validator: (v) =>
-                ["success", "error", "warning", "info"].includes(v)
+                ["success", "error", "warning", "info", "message"].includes(v)
         },
-        message: { type: String, required: true },
-        duration: { type: Number, default: 5000 }
+        duration: { type: Number, default: 5000 },
+
+        text: { type: String, required: true },
+        thumbnailUrl: { type: String, required: false },
+        attachmentUrl: { type: String, required: false },
+        id: { type: Number, required: false },
+        isGroup: { type: Boolean, required: false }
     },
 
     data() {
@@ -17,7 +24,15 @@ export default {
             startTime: 0,
             remaining: this.duration,
             timeoutId: null,
-            frameId: null
+            frameId: null,
+        }
+    },
+
+    computed: {
+        photoUrl() {
+            return this.type === "message"
+                ? expandUrl(this.thumbnailUrl)
+                : getIcon(this.type)
         }
     },
 
@@ -32,6 +47,9 @@ export default {
     emits: ["close"],
 
     methods: {
+        expandUrl,
+        getIcon,
+
         startTimer() {
             this.clearTimers()
             this.startTime = Date.now()
@@ -69,6 +87,19 @@ export default {
             }
         },
 
+        handleClick() {
+            if (this.type === "message") {
+                this.$router.push({
+                    name: "conversation",
+                    params: { id: this.id },
+                    query: { direct: !this.isGroup }
+                })
+                this.close()
+            } else {
+                this.close()
+            }
+        },
+
         close() {
             this.clearTimers()
             this.$emit("close")
@@ -83,9 +114,18 @@ export default {
 </script>
 
 <template>
-    <div class="notification" :class="type" @mouseenter="pauseTimer" @mouseleave="resumeTimer" @click="close">
-        <div class="notification-message">
-            {{ message }}
+    <div class="notification" :class="type" @mouseenter="pauseTimer" @mouseleave="resumeTimer" @click="handleClick()">
+
+        <img :src="photoUrl" class="notification-thumbnail" />
+
+        <div class="notification-content">
+
+            <div class="notification-message">
+                {{ text }}
+            </div>
+
+            <img v-if="attachmentUrl" :src="expandUrl(attachmentUrl)" class="notification-attachment" />
+
         </div>
 
         <div class="progress" :style="{ width: progress + '%' }" />
@@ -94,59 +134,112 @@ export default {
 
 <style scoped>
 .notification {
-    pointer-events: auto;
     position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
     width: 320px;
-    padding: 16px;
-    border-radius: 10px;
-    cursor: pointer;
+    padding: 12px 14px;
+    border-radius: 12px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+
+    color: var(--text);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    box-shadow:
+        0 10px 30px var(--shadow),
+        0 0 0 1px rgba(255,255,255,0.02);
+
     overflow: hidden;
-    color: white;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-    z-index: 999999;
+    z-index: 4;
+    pointer-events: auto;
 }
 
-.notification.success {
-    background: #16251a;
-    border-left: 5px solid #4ade80;
+/* glow laterale */
+.notification::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    border-radius: inherit;
+    background: var(--accent-color);
 }
 
-.notification.success .progress {
-    background: #4ade80;
+/* =========================
+   CONTENT
+========================= */
+
+.notification-thumbnail {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
-.notification.error {
-    background: #2a1a1a;
-    border-left: 5px solid #ef4444;
+.notification-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
 }
 
-.notification.error .progress {
-    background: #ef4444;
+.notification-message {
+    font-size: 14px;
+    line-height: 1.35;
+    word-break: break-word;
+    color: var(--text);
 }
 
-.notification.warning {
-    background: #2a241a;
-    border-left: 5px solid #f59e0b;
+.notification-attachment {
+    width: 100%;
+    max-width: 160px;
+    max-height: 90px;
+    border-radius: 8px;
+    object-fit: cover;
+    align-self: flex-start;
 }
 
-.notification.warning .progress {
-    background: #f59e0b;
-}
-
-.notification.info {
-    background: #1b1f2a;
-    border-left: 5px solid #60a5fa;
-}
-
-.notification.info .progress {
-    background: #60a5fa;
-}
+/* =========================
+   PROGRESS
+========================= */
 
 .progress {
     position: absolute;
     bottom: 0;
     left: 0;
-    height: 4px;
+    height: 3px;
+    width: 100%;
+
+    background: var(--accent-color);
+
     transition: width 0.1s linear;
+}
+
+/* =========================
+   TYPES
+========================= */
+
+.notification.success {
+    --accent-color: var(--success);
+}
+
+.notification.error {
+    --accent-color: var(--error);
+}
+
+.notification.warning {
+    --accent-color: var(--warning);
+}
+
+.notification.info,
+.notification.message {
+    --accent-color: var(--info);
 }
 </style>

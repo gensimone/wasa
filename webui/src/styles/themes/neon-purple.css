@@ -1,0 +1,34 @@
+:root,
+[data-theme="dark"] {
+    --bg: #0b0712;
+    --text: rgba(245, 240, 255, 0.92);
+    --text-muted: rgba(245, 240, 255, 0.6);
+
+    --surface: rgba(255, 255, 255, 0.035);
+    --surface-2: rgba(255, 255, 255, 0.02);
+
+    --border: rgba(180, 120, 255, 0.14);
+
+    --accent: rgba(160, 80, 255, 0.22);
+    --accent-strong: rgba(160, 80, 255, 0.42);
+
+    --shadow: rgba(0, 0, 0, 0.8);
+    --glow: rgba(160, 80, 255, 0.16);
+}
+
+[data-theme="light"] {
+    --bg: #eee9f6;
+    --text: rgba(20, 12, 35, 0.92);
+    --text-muted: rgba(20, 12, 35, 0.65);
+
+    --surface: rgba(255, 255, 255, 0.78);
+    --surface-2: rgba(0, 0, 0, 0.06);
+
+    --border: rgba(120, 0, 200, 0.14);
+
+    --accent: rgba(140, 60, 255, 0.3);
+    --accent-strong: rgba(140, 60, 255, 0.48);
+
+    --shadow: rgba(0, 0, 0, 0.16);
+    --glow: rgba(140, 60, 255, 0.1);
+}

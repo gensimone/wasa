@@ -21,7 +21,7 @@ export default {
 <template>
     <div class="app">
         <Topbar :actions="[
-            { icon: '/icons/home.svg', onClick: () => $router.push('/home') }
+            { icon: 'back', onClick: () => $router.back() }
         ]" />
         <div class="content">
             <ConversationBox :id="id" :direct="direct" />

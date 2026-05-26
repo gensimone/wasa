@@ -1,6 +1,6 @@
 import { handleError } from "@/utils/errors";
 
-export class Poller {
+class Poller {
     constructor(
         callback,
         interval = 3000,
@@ -52,3 +52,5 @@ export class Poller {
         }
     }
 }
+
+export default Poller

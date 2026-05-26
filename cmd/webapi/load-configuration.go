@@ -31,10 +31,6 @@ type WebAPIConfiguration struct {
 	RootMedia string `conf:"default:/tmp/wasatext/media"`
 	Media     string `conf:"default:/media"`
 
-	// Default user and group photos.
-	DefaultUserPhoto  string `conf:"default:assets/default-user-photo.jpg"`
-	DefaultGroupPhoto string `conf:"default:assets/default-group-photo.jpg"`
-
 	DB string `conf:"default:/tmp/wasatext/db/wasatext.db"`
 }
 

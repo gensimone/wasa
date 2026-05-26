@@ -53,6 +53,7 @@ export function usePhotoManager(initialUrl, defaultUrl) {
 
         uploadPhoto,
         revertPhoto,
-        deletePhoto
+        deletePhoto,
+        revoke
     }
 }

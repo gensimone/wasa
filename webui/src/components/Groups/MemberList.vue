@@ -1,11 +1,13 @@
 <script>
 import MemberItem from "@/components/Groups/MemberItem.vue"
+import { getIcon } from "@/state/theme";
 
 export default {
     components: { MemberItem },
 
     props: {
-        members: { type: Array, required: true }
+        members: { type: Array, required: true },
+        founderId: { type: Number, required: true }
     },
 
     emits: [
@@ -13,6 +15,10 @@ export default {
         "addToGroup",
         "selectUser"
     ],
+
+    methods: {
+        getIcon
+    }
 }
 </script>
 
@@ -23,12 +29,12 @@ export default {
             <h2>Members</h2>
 
             <button class="icon-btn" @click="$router.push('/group/add')">
-                <img src="/icons/plus.svg" class="icon-img" />
+                <img :src="getIcon('plus')" class="icon-img" />
             </button>
         </div>
 
         <MemberItem v-for="m in members" :key="m.userId" :member="m" @removeUser="$emit('removeUser', $event)"
-            @selectUser="$emit('selectUser', $event)" />
+            :founderId="founderId" @selectUser="$emit('selectUser', $event)" />
     </div>
 </template>
 

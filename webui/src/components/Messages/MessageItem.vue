@@ -1,8 +1,10 @@
 <script>
+import Poller from "@/services/poller"
+import logger from "@/utils/logger"
+import { getIcon } from "@/state/theme"
 import { user } from "@/state/user"
 import { expandUrl } from "@/utils/media"
-import { Poller } from "@/services/poller"
-import { getReceipts } from "@/services/messages"
+import { getReceipts, setMessageStatusAsRead } from "@/services/messages"
 
 export default {
     props: {
@@ -24,6 +26,7 @@ export default {
 
     methods: {
         expandUrl,
+        getIcon,
 
         getTime(sentAt) {
             const date = new Date(sentAt)
@@ -50,19 +53,25 @@ export default {
 
             if (hasSent) {
                 this.checkIcon = "check-sent"
-            }
-            else if (hasReceived) {
+            } else if (hasReceived) {
                 this.checkIcon = "check-received"
-            }
-            else if (allRead) {
+            } else if (allRead) {
                 this.checkIcon = "check-read"
                 this.poller?.stopPolling()
             }
         }
     },
 
-    mounted() {
-        if (this.message.senderId !== user.userId) return
+    async mounted() {
+        if (this.message.senderId !== user.userId) {
+            try {
+                await setMessageStatusAsRead(this.message.messageId)
+            } catch (e) {
+                logger.error(e)
+            } finally {
+                return
+            }
+        }
 
         this.poller = new Poller(async () => {
             const receipts = await getReceipts(this.message.messageId)
@@ -94,7 +103,7 @@ export default {
                     {{ getTime(message.createdAt) }}
                 </span>
             </div>
-            <img v-if="isMine" class="message-item-check-icon" :src="`/icons/${checkIcon}.svg`" alt="" />
+            <img v-if="isMine" class="message-item-check-icon" :src="getIcon(checkIcon)" alt="" />
         </div>
     </div>
 </template>

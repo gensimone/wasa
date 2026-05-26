@@ -138,7 +138,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	_, err = rt.db.SetMyPhotoUrl(user.UserId, photoUrl)
+	_, err = rt.db.SetMyPhotoUrl(user.UserId, &photoUrl)
 	if err != nil {
 		rt.baseLogger.Errorf("SetMyPhotoUrl: %v", err)
 		_ = rt.removeMediaFile(photoUrl)
@@ -154,27 +154,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 }
 
 func (rt *_router) deleteMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
-	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter userId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	if userId != user.UserId {
-		rt.sendResponse(
-			w,
-			"Parameter userId must be equal to the provided authentication id",
-			http.StatusBadRequest,
-		)
-		return
-	}
-
-	if user.PhotoUrl == rt.defaultUserPhoto {
-		rt.sendResponse(w, "No photo to delete", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.db.SetMyPhotoUrl(user.UserId, rt.defaultUserPhoto)
+	_, err := rt.db.SetMyPhotoUrl(user.UserId, nil)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("SetMyPhotoUrl: %v", err)
@@ -192,23 +172,27 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, _ httprouter.
 	}
 
 	user, err := rt.db.GetUserByName(*name)
+
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		userId, err := rt.db.CreateUser(*name, rt.defaultUserPhoto)
+		userId, err := rt.db.CreateUser(*name, nil)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("CreateUser: %v", err)
 			return
 		}
+
 		rt.sendResponse(w, database.User{
 			UserId:   *userId,
 			Name:     *name,
-			PhotoUrl: rt.defaultUserPhoto,
+			PhotoUrl: nil,
 		}, http.StatusCreated)
+
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GetUserByName: %v", err)
 		return
+
 	default:
 		rt.sendResponse(w, user, http.StatusCreated)
 	}

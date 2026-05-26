@@ -1,7 +1,9 @@
 <script>
+import { getIcon } from "@/state/theme"
 import ImageModal from "@/components/Shared/ImageModal.vue"
 import MessageList from "@/components/Messages/MessageList.vue"
 import ConversationInput from "@/components/Conversations/ConversationInput.vue"
+import { defaultUserPhotoUrl, defaultGroupPhotoUrl } from "@/assets/default"
 import { userConversations, groupConversations } from "@/state/conversations"
 import { expandUrl } from "@/utils/media"
 import { getUserById } from "@/services/users"
@@ -16,8 +18,10 @@ export default {
             zoomedImage: null,
             showImageModal: false,
 
-            userFetchPromise: null,
-            userFetched: null
+            fallbackUserName: "",
+            fallbackGroupName: "",
+            fallbackUserPhotoUrl: defaultUserPhotoUrl,
+            fallbackGroupPhotoUrl: defaultGroupPhotoUrl
         }
     },
 
@@ -38,16 +42,13 @@ export default {
         },
 
         name() {
-            console.log(this.conversationData?.name)
             return this.conversationData?.name
-                || this.userFetched?.name
-                || ""
+                || (this.direct ? this.fallbackUserName : this.fallbackGroupName)
         },
 
         photoUrl() {
             return this.conversationData?.photoUrl
-                || this.userFetched?.photoUrl
-                || ""
+                || (this.direct ? this.fallbackUserPhotoUrl : this.fallbackGroupPhotoUrl)
         }
     },
 
@@ -55,7 +56,11 @@ export default {
         conversationData: {
             immediate: true,
             handler(val) {
-                if (!val?.name || !val?.photoUrl) {
+                if (
+                    (!val?.name || !val?.photoUrl)
+                    && this.direct
+                    && this.fallbackUserName === ""
+                ) {
                     this.ensureUserData();
                 }
             }
@@ -64,6 +69,7 @@ export default {
 
     methods: {
         expandUrl,
+        getIcon,
 
         openImage(url) {
             this.zoomedImage = url
@@ -75,11 +81,18 @@ export default {
             this.zoomedImage = null
         },
 
-        async ensureUserData() {
-            if (this.userFetched) return
+        openGroupSettings() {
+            this.$router.push({
+                name: "group",
+                params: { id: this.id }
+            })
+        },
 
+        async ensureUserData() {
             try {
-                this.userFetched = await getUserById(this.id)
+                const userFetched = await getUserById(this.id)
+                this.fallbackUserName = userFetched.name
+                this.fallbackUserPhotoUrl = userFetched.photoUrl
             } catch (e) {
                 handleError(e)
                 this.$router.push('/home')
@@ -93,13 +106,13 @@ export default {
     <div class="conversation-box">
 
         <div class="conversation-box-header">
-            <img class="conversation-box-photo" :src="expandUrl(photoUrl)" />
+            <img class="conversation-box-photo" :src="expandUrl(photoUrl)" @click="openImage(expandUrl(photoUrl))" />
             <div class="conversation-box-name">
                 {{ name }}
             </div>
             <div class="conversation-box-info-button">
-                <button v-if="!direct" class="conversation-box-info-btn" @click="openGroupInfo">
-                    <img src="/icons/info.svg" class="icon-img">
+                <button v-if="!direct" class="conversation-box-info-btn" @click="openGroupSettings">
+                    <img :src="getIcon('info')" class="icon-img">
                 </button>
             </div>
         </div>

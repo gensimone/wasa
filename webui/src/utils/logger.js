@@ -6,7 +6,7 @@ function wrap(fn) {
     }
 }
 
-export const logger = {
+const logger = {
     log: wrap(console.log),
     error: wrap(console.error),
     warn: wrap(console.warn),
@@ -18,3 +18,5 @@ export const logger = {
         if (DEV) console.assert(cond, ...args)
     }
 }
+
+export default logger

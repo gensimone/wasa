@@ -2,8 +2,6 @@
 import MessageItem from "@/components/Messages/MessageItem.vue"
 
 import { user } from "@/state/user"
-import { setMessageStatusAsRead } from "@/services/messages"
-import { handleError } from "@/utils/errors"
 
 export default {
     components: { MessageItem },
@@ -22,25 +20,6 @@ export default {
     watch: {
         scrollTick() {
             this.scrollToBottomIfNeeded()
-        },
-
-        async messages(newValue, oldValue) {
-            if (this.isNearBottom()) {
-                this.scrollToBottomIfNeeded()
-            }
-
-            // FIXME: Improve this.
-            if (JSON.stringify(newValue) === JSON.stringify(oldValue)) return
-
-            try {
-                const requests = this.messages
-                    .filter(m => m.senderId !== user.userId)
-                    .map(m => setMessageStatusAsRead(m.messageId))
-
-                await Promise.all(requests)
-            } catch (e) {
-                handleError(e)
-            }
         }
     },
 

@@ -1,16 +1,11 @@
 <script>
-import { expandUrl } from "@/utils/media"
 export default {
     props: {
         visible: { type: Boolean, required: true },
         imageUrl: String
     },
 
-    emits: ["close"],
-
-    methods: {
-        expandUrl
-    }
+    emits: ["close"]
 }
 </script>
 

@@ -3,16 +3,16 @@ package database
 import "time"
 
 type User struct {
-	UserId   int64  `json:"userId"`
-	Name     string `json:"name"`
-	PhotoUrl string `json:"photoUrl"`
+	UserId   int64   `json:"userId"`
+	Name     string  `json:"name"`
+	PhotoUrl *string `json:"photoUrl"`
 }
 
 type Group struct {
 	ConversationId int64     `json:"conversationId"`
 	FounderId      int64     `json:"founderId"`
 	Name           string    `json:"name"`
-	PhotoUrl       string    `json:"photoUrl"`
+	PhotoUrl       *string   `json:"photoUrl"`
 	CreatedAt      time.Time `json:"createdAt"`
 }
 

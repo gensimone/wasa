@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -42,20 +43,20 @@ func (rt *_router) authRequest(
 }
 
 func (rt *_router) authConversationAccessParam(
-	w http.ResponseWriter, ps httprouter.Params, user database.User,
+	w http.ResponseWriter, ps httprouter.Params, user database.User, param string,
 ) (*int64, error) {
-	conversationId, err := strconv.ParseInt(ps.ByName("id"), 10, 64)
+	conversationId, err := strconv.ParseInt(ps.ByName(param), 10, 64)
 	if err != nil {
-		rt.sendResponse(w, "Parameter id must be an int64", http.StatusBadRequest)
+		rt.sendResponse(w, fmt.Sprintf("Parameter %s must be an int64", param), http.StatusBadRequest)
 		return nil, err
 	}
 
-	return rt.authConversationAccess(w, user, conversationId)
+	return &conversationId, rt.authConversationAccess(w, user, conversationId)
 }
 
 func (rt *_router) authConversationAccess(
 	w http.ResponseWriter, user database.User, conversationId int64,
-) (*int64, error) {
+) error {
 	isMember, err := rt.db.IsMember(user.UserId, conversationId)
 	switch {
 	case err != nil:
@@ -67,7 +68,7 @@ func (rt *_router) authConversationAccess(
 		err = errors.New(errMsg)
 	}
 
-	return &conversationId, err
+	return err
 }
 
 func (rt *_router) authMessageAccessParam(

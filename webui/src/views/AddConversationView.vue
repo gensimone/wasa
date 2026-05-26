@@ -1,4 +1,5 @@
 <script>
+import { getIcon } from "@/state/theme"
 import Topbar from "@/components/Shared/Topbar.vue"
 import Bottombar from "@/components/Shared/Bottombar.vue"
 import UsersList from "@/components/Users/UsersList.vue"
@@ -7,6 +8,8 @@ export default {
     components: { Topbar, Bottombar, UsersList },
 
     methods: {
+        getIcon,
+
         async select(user) {
             this.$router.push({
                 name: "conversation",
@@ -21,12 +24,12 @@ export default {
 <template>
     <div class="app">
         <Topbar :actions="[
-            { icon: '/icons/back.svg', onClick: () => $router.back() }
+            { icon: 'back', onClick: () => $router.back() }
         ]" />
         <div class="content">
             <div class="items-list">
                 <div class="list-item" @click="$router.push('/group/create')">
-                    <img src="/icons/plus.svg" class="icon-img" />
+                    <img :src="getIcon('plus')" class="icon-img" />
                     <div class="item-info">
                         <div class="item-name">
                             Create a new group

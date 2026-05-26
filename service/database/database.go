@@ -8,8 +8,8 @@ import (
 type AppDatabase interface {
 	// Users.
 	SetMyUserName(int64, string) (sql.Result, error)
-	SetMyPhotoUrl(int64, string) (sql.Result, error)
-	CreateUser(string, string) (*int64, error)
+	SetMyPhotoUrl(int64, *string) (sql.Result, error)
+	CreateUser(string, *string) (*int64, error)
 	GetUserIds() ([]int64, error)
 	GetUsers() ([]User, error)
 	GetUserById(int64) (*User, error)
@@ -19,10 +19,10 @@ type AppDatabase interface {
 
 	// Groups.
 	SetGroupName(int64, string) (sql.Result, error)
-	SetGroupPhotoUrl(int64, string) (sql.Result, error)
+	SetGroupPhotoUrl(int64, *string) (sql.Result, error)
 	IsFounder(int64, int64) (bool, error)
 	GroupExists(int64, string) (bool, error)
-	CreateGroup(int64, string, string) (*Group, error)
+	CreateGroup(int64, string, *string) (*Group, error)
 	GetGroupById(int64) (*Group, error)
 	IsGroup(int64) (bool, error)
 
@@ -75,14 +75,14 @@ func New(db *sql.DB) (AppDatabase, error) {
 			`CREATE TABLE users (
                 user_id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
-                photo_url TEXT NOT NULL
+                photo_url TEXT
             );`,
 
 			`CREATE TABLE groups (
                 conversation_id INTEGER PRIMARY KEY,
                 founder_id INTEGER NOT NULL,
 				name TEXT NOT NULL,
-                photo_url TEXT NOT NULL,
+                photo_url TEXT,
 				created_at TIMESTAMP,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
 				FOREIGN KEY (founder_id) REFERENCES users(user_id) ON DELETE CASCADE

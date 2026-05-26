@@ -7,10 +7,11 @@ export default {
     props: {
         photoUrl: { type: String, required: true },
         photoChanged: { type: Boolean, required: true },
-        text: { type: String, required: true },
         title: { type: String, required: true },
+        loading: { type: Boolean, required: true },
+        text: { type: String, required: true },
         submitButtonText: { type: String, required: true },
-        loading: { type: Boolean, required: true }
+        enableEditing: { type: Boolean, required: true }
     },
 
     emits: [
@@ -27,17 +28,18 @@ export default {
     <div class="setting-card">
         <form @submit.prevent="$emit('submit')">
 
-            <PhotoEditor :photoUrl="photoUrl" :photoChanged="photoChanged" :loading="loading"
-                @uploadPhoto="$emit('uploadPhoto', $event)" @revertPhoto="$emit('revertPhoto')"
+            <PhotoEditor :photoUrl="photoUrl" :enableEditing="enableEditing" :photoChanged="photoChanged"
+                :loading="loading" @uploadPhoto="$emit('uploadPhoto', $event)" @revertPhoto="$emit('revertPhoto')"
                 @deletePhoto="$emit('deletePhoto')" />
 
             <div class="setting-card-input-box">
                 <h2>{{ title }}</h2>
 
-                <input class="input-bar" :placeholder="text" @input="$emit('keyPress', $event.target.value)" />
+                <input class="input-bar" :placeholder="text" :disabled="!enableEditing"
+                    @input="$emit('keyPress', $event.target.value)" />
             </div>
 
-            <button class="submit-button" :disabled="loading">
+            <button v-if="enableEditing" class="submit-button" :disabled="loading">
                 {{ submitButtonText }}
             </button>
 

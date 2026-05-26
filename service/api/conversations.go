@@ -79,7 +79,7 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 	if direct {
 		conversationId, _, err = rt._getConversation(w, r, ps, user)
 	} else {
-		conversationId, err = rt.authConversationAccessParam(w, ps, user)
+		conversationId, err = rt.authConversationAccessParam(w, ps, user, "id")
 	}
 
 	if err != nil {
@@ -182,7 +182,7 @@ func (rt *_router) sendMessage(
 		}
 		conversationId = conversationId2
 	} else {
-		conversationId, err = rt.authConversationAccessParam(w, ps, user)
+		conversationId, err = rt.authConversationAccessParam(w, ps, user, "id")
 		if err != nil {
 			return
 		}
@@ -223,7 +223,7 @@ func (rt *_router) forwardMessage(
 
 		conversationId = conversationId2
 	} else {
-		conversationId, err = rt.authConversationAccessParam(w, ps, user)
+		conversationId, err = rt.authConversationAccessParam(w, ps, user, "id")
 		if err != nil {
 			return
 		}

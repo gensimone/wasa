@@ -1,4 +1,5 @@
 <script>
+import { getIcon } from "@/state/theme";
 import { groupConversations, userConversations, } from "@/state/conversations"
 import ConversationItem from "@/components/Conversations/ConversationItem.vue"
 
@@ -6,6 +7,10 @@ export default {
     components: { ConversationItem },
 
     emits: ["select"],
+
+    methods: {
+        getIcon
+    },
 
     computed: {
         conversationsList() {
@@ -25,12 +30,12 @@ export default {
             <h2> Conversations </h2>
 
             <button class="icon-btn" @click="$router.push('/conversation/add')">
-                <img src="/icons/plus.svg" class="icon-img">
+                <img :src="getIcon('plus')" class="icon-img">
             </button>
         </div>
 
-        <ConversationItem v-for="c in conversationsList" :key="`${c.isGroup ? 'g' : 'u'}-${c.id}`"
-            :conversation="c" @select="$emit('select', c)" />
+        <ConversationItem v-for="c in conversationsList" :key="`${c.isGroup ? 'g' : 'u'}-${c.id}`" :conversation="c"
+            @select="$emit('select', c)" />
 
     </div>
 </template>

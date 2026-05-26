@@ -1,34 +1,32 @@
 <script>
-import { user } from "@/state/user"
-import { group } from "@/state/group"
 import { expandUrl } from "@/utils/media"
+import { getIcon } from "@/state/theme";
 
 export default {
     props: {
-        member: { type: Object, required: true }
+        member: { type: Object, required: true },
+        founderId: { type: Number, required: true }
+    },
+
+    computed: {
+        isFounder() {
+            return this.member.userId === this.founderId
+        }
     },
 
     emits: ["removeUser", "selectUser"],
 
-    computed: {
-        isFounder() {
-            return this.member.userId === group.founderId
-        },
-
-        currentUserIsFounder() {
-            return user.userId === group.founderId
-        }
-    },
-
     methods: {
         expandUrl,
+        getIcon,
 
-        onSelect() {
-            if (this.member.userId !== user.userId)
-                this.$emit("selectUser", this.member)
+        selectUser() {
+            if (!this.isFounder) {
+                this.$emit('selectUser', this.member)
+            }
         },
 
-        onRemove(event) {
+        removeUser(event) {
             event.stopPropagation()
             this.$emit("removeUser", this.member)
         }
@@ -37,7 +35,7 @@ export default {
 </script>
 
 <template>
-    <div class="member-item" @click="onSelect">
+    <div class="member-item" @click="selectUser()">
 
         <div class="member-item-photo-wrapper">
             <img :src="expandUrl(member.photoUrl)" class="member-item-photo" />
@@ -53,9 +51,9 @@ export default {
             Founder
         </div>
 
-        <div class="member-item-actions" v-if="currentUserIsFounder && !isFounder">
-            <button class="icon-btn" @click="onRemove">
-                <img src="/icons/minus.svg" class="icon-img" />
+        <div class="member-item-actions" v-if="!isFounder">
+            <button class="icon-btn" @click="removeUser">
+                <img :src="getIcon('minus')" class="icon-img" />
             </button>
         </div>
 

@@ -13,7 +13,7 @@ func (db *appdbimpl) SetMyUserName(userId int64, name string) (sql.Result, error
 }
 
 // Sets the photo of the user identified by the specified user id.
-func (db *appdbimpl) SetMyPhotoUrl(userId int64, photoUrl string) (sql.Result, error) {
+func (db *appdbimpl) SetMyPhotoUrl(userId int64, photoUrl *string) (sql.Result, error) {
 	return db.c.Exec(
 		`UPDATE users
 		SET photo_url = ?
@@ -24,7 +24,7 @@ func (db *appdbimpl) SetMyPhotoUrl(userId int64, photoUrl string) (sql.Result, e
 }
 
 // Creates a new user with the specified name and returns its user id.
-func (db *appdbimpl) CreateUser(name, photoUrl string) (*int64, error) {
+func (db *appdbimpl) CreateUser(name string, photoUrl *string) (*int64, error) {
 	res, err := db.c.Exec(
 		`INSERT INTO users (
 			name,

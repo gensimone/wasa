@@ -78,7 +78,7 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	_, err = rt.db.SetGroupPhotoUrl(group.ConversationId, photoUrl)
+	_, err = rt.db.SetGroupPhotoUrl(group.ConversationId, &photoUrl)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("SetGroupPhotoUrl: %v", err)
@@ -94,12 +94,12 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 
 // operationId: getMemberIds
 func (rt *_router) getMemberIds(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	conversationId, err := rt.authConversationAccessParam(w, ps, user)
+	groupId, err := rt.authConversationAccessParam(w, ps, user, "groupId")
 	if err != nil {
 		return
 	}
 
-	userIds, err := rt.db.GetMembers(*conversationId)
+	userIds, err := rt.db.GetMembers(*groupId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Sever Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("GetMembers: %v", err)
@@ -123,12 +123,7 @@ func (rt *_router) deleteGroupPhoto(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 
-	if group.PhotoUrl == rt.defaultGroupPhoto {
-		rt.sendResponse(w, "No photo to delete", http.StatusBadRequest)
-		return
-	}
-
-	_, err = rt.db.SetGroupPhotoUrl(group.ConversationId, rt.defaultGroupPhoto)
+	_, err = rt.db.SetGroupPhotoUrl(group.ConversationId, nil)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("SetGroupPhotoUrl: %v", err)
@@ -206,12 +201,12 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	conversationId, err := rt.authConversationAccess(w, user, group.ConversationId)
+	err = rt.authConversationAccess(w, user, group.ConversationId)
 	if err != nil {
 		return
 	}
 
-	isMember, err := rt.db.IsMember(*userId, *conversationId)
+	isMember, err := rt.db.IsMember(*userId, group.ConversationId)
 	switch {
 	case err != nil:
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
@@ -219,7 +214,7 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 	case isMember:
 		rt.sendResponse(w, "User already in the group", http.StatusBadRequest)
 	default:
-		_, err = rt.db.AddConversation(*conversationId, *userId)
+		_, err = rt.db.AddConversation(group.ConversationId, *userId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 			rt.baseLogger.Errorf("AddConversation: %v", err)
@@ -296,18 +291,15 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, ps httpro
 			return
 		}
 
-		// NOTE: If the client does not provide the group photo we use the default one.
 		var photoUrl string
-		if len(r.MultipartForm.File["photo"]) == 0 {
-			photoUrl = rt.defaultGroupPhoto
-		} else {
+		if len(r.MultipartForm.File["photo"]) > 0 {
 			photoUrl, err = rt.uploadMediaFile(w, r, "photo")
 			if err != nil {
 				return
 			}
 		}
 
-		group, err := rt.db.CreateGroup(user.UserId, name, photoUrl)
+		group, err := rt.db.CreateGroup(user.UserId, name, &photoUrl)
 		if err != nil {
 			rt.baseLogger.Errorf("CreateGroup: %v", err)
 			_ = rt.removeMediaFile(photoUrl)

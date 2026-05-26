@@ -1,5 +1,6 @@
 <script>
 import Notification from "./Notification.vue"
+import { setNotifier } from ".";
 
 export default {
     components: { Notification },
@@ -10,30 +11,33 @@ export default {
         }
     },
 
+    mounted() {
+        setNotifier(this.add)
+    },
+
     methods: {
         add(notification) {
-            const newMessage = notification.message?.trim()
-            if (!newMessage) throw new Error("Empty notification message")
+            const text = notification.text?.trim()
 
-            const lastNotification = this.notifications.at(-1)
-
-            if (
-                lastNotification?.message === newMessage &&
-                lastNotification?.type === notification.type
-            ) return
-
-            const id = Date.now() + Math.random()
+            const notificationId = Date.now() + Math.random()
 
             this.notifications.push({
-                id,
-                message: newMessage,
+                notificationId: notificationId,
                 type: notification.type || "info",
-                duration: notification.duration || 5000
+                duration: notification.duration || 5000,
+                text: text,
+
+                // Conversation messages.
+                thumbnailUrl: notification.thumbnailUrl || null,
+                attachmentUrl: notification.attachmentUrl || null,
+                id: notification.id || null,
+                isGroup: notification.isGroup || null
             })
         },
 
-        remove(id) {
-            this.notifications = this.notifications.filter(n => n.id !== id)
+        remove(notificationId) {
+            this.notifications = this.notifications
+                .filter(n => n.notificationId !== notificationId)
         }
     }
 }
@@ -41,14 +45,15 @@ export default {
 
 <template>
     <TransitionGroup name="toast" tag="div" class="toast-container">
-        <Notification v-for="n in notifications" :key="n.id" :message="n.message" :type="n.type" :duration="n.duration"
-            @close="remove(n.id)" />
+        <Notification v-for="n in notifications" :key="n.notificationId" :text="n.text" :id="n.id" :isGroup="n.isGroup"
+            :attachmentUrl="n.attachmentUrl" :thumbnailUrl="n.thumbnailUrl" :type="n.type" :duration="n.duration"
+            @close="remove(n.notificationId)" />
     </TransitionGroup>
 </template>
 
 <style scoped>
 .toast-container {
-    z-index: 999999;
+    z-index: 4;
     position: fixed;
     bottom: 20px;
     right: 20px;

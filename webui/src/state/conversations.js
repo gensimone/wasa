@@ -1,9 +1,10 @@
+import Poller from "@/services/poller"
 import { ref } from "vue"
-import { Poller } from "@/services/poller"
 import { getUserById } from "@/services/users"
 import { getMessage } from "@/services/messages"
 import { getGroup } from "@/services/groups"
 import { getMyConversations, getConversation } from "@/services/conversations"
+import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "../assets/default"
 
 export const userConversations = ref(new Map())
 export const groupConversations = ref(new Map())
@@ -58,7 +59,7 @@ async function fetchGroupConversation(id) {
             id: id,
             founderId: group.founderId,
             name: group.name,
-            photoUrl: group.photoUrl,
+            photoUrl: group.photoUrl || defaultGroupPhotoUrl,
             createdAt: group.createdAt,
             isGroup: true,
             messages
@@ -77,7 +78,7 @@ async function fetchUserConversation(id) {
         {
             id: user.userId,
             name: user.name,
-            photoUrl: user.photoUrl,
+            photoUrl: user.photoUrl || defaultUserPhotoUrl,
             isGroup: false,
             messages
         }
@@ -94,6 +95,9 @@ export async function fetchConversations() {
         Promise.all(groupIds.map(fetchGroupConversation)),
         Promise.all(userIds.map(fetchUserConversation))
     ])
+
+    // FIXME: Do not trigger update if the old messages
+    // are the same to the current ones.
 
     groupConversations.value = new Map(groups)
     userConversations.value = new Map(users)
@@ -114,4 +118,10 @@ export function stopPollingConversations() {
         poller.stopPolling()
         poller = null
     }
+}
+
+export function clearConversations() {
+    userConversations.value.clear()
+    groupConversations.value.clear()
+    messageCache.clear()
 }

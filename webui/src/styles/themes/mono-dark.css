@@ -1,0 +1,37 @@
+:root,
+[data-theme="dark"] {
+    --bg: #050505;
+
+    --text: rgba(255, 255, 255, 0.92);
+    --text-muted: rgba(255, 255, 255, 0.65);
+
+    --surface: rgba(255, 255, 255, 0.06);
+    --surface-2: rgba(255, 255, 255, 0.035);
+
+    --border: rgba(255, 255, 255, 0.12);
+
+    --accent: rgba(255, 255, 255, 0.12);
+    --accent-strong: rgba(255, 255, 255, 0.2);
+
+    --shadow: rgba(0, 0, 0, 0.95);
+    --glow: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="light"] {
+    /* light coerente ma freddo e contrastato */
+    --bg: #d9d9dc;
+
+    --text: rgba(15, 15, 15, 0.92);
+    --text-muted: rgba(15, 15, 15, 0.6);
+
+    --surface: rgba(255, 255, 255, 0.75);
+    --surface-2: rgba(0, 0, 0, 0.08);
+
+    --border: rgba(0, 0, 0, 0.18);
+
+    --accent: rgba(0, 0, 0, 0.12);
+    --accent-strong: rgba(0, 0, 0, 0.22);
+
+    --shadow: rgba(0, 0, 0, 0.25);
+    --glow: rgba(0, 0, 0, 0.06);
+}

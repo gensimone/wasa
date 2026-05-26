@@ -1,8 +1,8 @@
 <script>
 import UserItem from "@/components/Users/UserItem.vue"
+import Poller from "@/services/poller";
 import { getUsers } from "@/services/users";
 import { user } from "@/state/user";
-import { Poller } from "@/services/poller";
 
 export default {
     components: { UserItem },
@@ -30,7 +30,8 @@ export default {
     async mounted() {
         this.poller = new Poller(async () => {
             const users = await getUsers()
-            this.users = users.filter(u => u.userId != user.userId)
+            this.users = users
+                .filter(u => u.userId != user.userId)
         })
 
         this.poller.startPolling()

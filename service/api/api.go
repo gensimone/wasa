@@ -15,9 +15,6 @@ type Config struct {
 
 	RootMedia string
 	Media     string
-
-	DefaultUserPhoto  string
-	DefaultGroupPhoto string
 }
 
 type Router interface {
@@ -38,25 +35,17 @@ func New(cfg Config) (Router, error) {
 	if cfg.Media == "" {
 		return nil, errors.New("media directory is required")
 	}
-	if cfg.DefaultUserPhoto == "" {
-		return nil, errors.New("default user photo is required")
-	}
-	if cfg.DefaultGroupPhoto == "" {
-		return nil, errors.New("default group photo is required")
-	}
 
 	router := httprouter.New()
 	router.RedirectTrailingSlash = false
 	router.RedirectFixedPath = false
 
 	return &_router{
-		router:            router,
-		baseLogger:        cfg.Logger,
-		db:                cfg.Database,
-		rootMedia:         cfg.RootMedia,
-		media:             cfg.Media,
-		defaultUserPhoto:  cfg.DefaultUserPhoto,
-		defaultGroupPhoto: cfg.DefaultGroupPhoto,
+		router:     router,
+		baseLogger: cfg.Logger,
+		db:         cfg.Database,
+		rootMedia:  cfg.RootMedia,
+		media:      cfg.Media,
 	}, nil
 }
 
@@ -65,11 +54,7 @@ type _router struct {
 	baseLogger logrus.FieldLogger
 	db         database.AppDatabase
 
-	// Various path used internally by some API handlers.
+	// Directory for attachments
 	rootMedia string
 	media     string
-
-	// Default user and group photos.
-	defaultUserPhoto  string
-	defaultGroupPhoto string
 }

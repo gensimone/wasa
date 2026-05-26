@@ -1,11 +1,7 @@
-@import "./components/avatar.css";
-@import "./components/settings-card.css";
-
 @import "./containers.css";
 @import "./icon-button.css";
 @import "./input-bar.css";
 @import "./submit.css";
-
 @import "./animations.css";
 @import "./globals.css";
 @import "./theme.css"

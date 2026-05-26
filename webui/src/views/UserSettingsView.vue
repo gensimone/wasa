@@ -1,9 +1,8 @@
 <script>
-import { user, updateUserState, defaultUserPhotoUrl } from "@/state/user"
+import { user, updateUserState } from "@/state/user"
+import { defaultUserPhotoUrl } from "@/assets/default"
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users"
-import { expandUrl } from "@/utils/media"
 import { handleError } from "@/utils/errors"
-
 import { usePhotoManager } from "@/composables/usePhotoManager"
 import { useSettingsForm } from "@/composables/useSettingsForm"
 import SettingsCard from "@/components/Settings/SettingsCard.vue"
@@ -15,8 +14,8 @@ export default {
 
     data() {
         const photo = usePhotoManager(
-            expandUrl(user.photoUrl),
-            expandUrl(defaultUserPhotoUrl)
+            user.photoUrl,
+            defaultUserPhotoUrl
         )
 
         const form = useSettingsForm(user.name, user.name)
@@ -36,15 +35,17 @@ export default {
         },
 
         "user.photoUrl"(v) {
-            this.photoUrl = expandUrl(v)
+            this.photoUrl = v
             this.photo = null
             this.photoChanged = false
         }
     },
 
-    methods: {
-        expandUrl,
+    beforeUnmount() {
+        this.revoke()
+    },
 
+    methods: {
         async updateProfile() {
             try {
                 await this.submit(async (name) => {
@@ -90,12 +91,12 @@ export default {
 <template>
     <div class="app">
         <Topbar :actions="[
-            { icon: '/icons/back.svg', onClick: () => $router.back() }
+            { icon: 'back', onClick: () => $router.back() }
         ]" />
         <div class="content-center">
-            <SettingsCard :photoUrl="photoUrl" :photoChanged="photoChanged" :text="text" title="Username"
-                submitButtonText="Update" :loading="loading" @uploadPhoto="uploadPhoto" @revertPhoto="revertPhoto"
-                @deletePhoto="deletePhoto" @keyPress="setText" @submit="updateProfile" />
+            <SettingsCard :photoUrl="photoUrl" :enableEditing="true" :photoChanged="photoChanged" :text="text"
+                title="Username" submitButtonText="Update" :loading="loading" @uploadPhoto="uploadPhoto"
+                @revertPhoto="revertPhoto" @deletePhoto="deletePhoto" @keyPress="setText" @submit="updateProfile" />
         </div>
         <Bottombar />
     </div>

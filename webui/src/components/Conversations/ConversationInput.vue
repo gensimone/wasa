@@ -1,4 +1,5 @@
 <script>
+import { getIcon } from "@/state/theme";
 import { handleError } from "@/utils/errors"
 import { sendMessage } from "@/services/conversations";
 import { userConversations, groupConversations } from "@/state/conversations"
@@ -21,6 +22,8 @@ export default {
     emits: ["triggerScrolldown"],
 
     methods: {
+        getIcon,
+
         async sendMessage() {
             const cleanText = this.text?.trim()
             if (!cleanText && !this.attachment) return
@@ -100,13 +103,13 @@ export default {
         <div v-if="attachment" class="conversation-input-attachment-preview">
             <img class="conversation-input-preview-img" :src="attachmentUrl" />
             <button class="icon-btn" @click="removeAttachment">
-                <img src="/icons/remove.svg" class="icon-img">
+                <img :src="getIcon('trash')" class="icon-img">
             </button>
         </div>
 
         <div class="conversation-input">
             <button class="icon-btn" @click="$refs.fileInput.click()">
-                <img src="/icons/upload.svg" class="icon-img">
+                <img :src="getIcon('upload')" class="icon-img">
             </button>
 
             <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="addAttachment($event)" />
@@ -115,7 +118,7 @@ export default {
                 @keydown.enter.prevent="sendMessage" />
 
             <button class="icon-btn" :disabled="sending" @click="sendMessage">
-                <img src="/icons/send.svg" class="icon-img">
+                <img :src="getIcon('send')" class="icon-img">
             </button>
         </div>
     </div>
