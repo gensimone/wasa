@@ -1,7 +1,9 @@
 <script>
-import { getIcon } from '@/state/theme';
-import { expandUrl } from '@/utils/media';
-import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from '@/assets/default';
+import { getIcon } from "@/state/theme";
+import { expandUrl } from "@/utils/media";
+import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "@/assets/default";
+import { setImageModal } from "@/state/imageModal";
+
 export default {
     props: {
         photoUrl: { type: String, required: true },
@@ -18,7 +20,8 @@ export default {
 
     methods: {
         expandUrl,
-        getIcon
+        getIcon,
+        setImageModal
     },
 
     computed: {
@@ -36,29 +39,26 @@ export default {
 <template>
     <div class="photo-editor">
         <div v-if="enableEditing">
-            <button v-if="photoChanged" type="button" class="icon-btn" :disabled="loading"
-                @click="$emit('revertPhoto')">
+            <button v-if="photoChanged" class="icon-btn" :disabled="loading" @click="$emit('revertPhoto')">
                 <img :src="getIcon('revert')" class="icon-img">
             </button>
-            <button v-else-if="!isDefault" type="button" class="icon-btn" :disabled="loading"
-                @click="$emit('deletePhoto')">
+            <button v-else-if="!isDefault" class="icon-btn" :disabled="loading" @click="$emit('deletePhoto')">
                 <img :src="getIcon('trash')" class="icon-img">
             </button>
-            <button v-else type="button" class="icon-btn invisible-placeholder" disabled>
-                <img :src="getIcon('trash')" class="icon-img">
+            <button v-else class="icon-btn invisible-placeholder" disabled>
             </button>
         </div>
 
         <label class="photo-editor-photo-wrapper">
-            <img :src="expandUrl(photoUrl)" class="avatar-big" />
-            <input type="file" accept="image/*" :disabled="!enableEditing" hidden @change="$emit('uploadPhoto', $event)" />
+            <img :src="expandUrl(photoUrl)" class="avatar-big" @click="setImageModal(photoUrl)" />
         </label>
 
-        <div v-if="enableEditing">
-            <button type="button" class="icon-btn invisible-placeholder" disabled>
-                <img :src="getIcon('revert')" class="icon-img">
-            </button>
-        </div>
+        <label class="icon-btn" :class="{ disabled: !enableEditing }">
+            <img :src="getIcon('plus')" class="icon-img">
+
+            <input type="file" accept="image/*" hidden @change="$emit('uploadPhoto', $event)"
+                :disabled="!enableEditing" />
+        </label>
     </div>
 </template>
 

@@ -37,6 +37,6 @@ export default {
     border-top: 1px solid var(--border);
     backdrop-filter: blur(10px);
 
-    z-index: 2;
+    z-index: 1;
 }
 </style>

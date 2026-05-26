@@ -31,6 +31,7 @@ export default {
             )
         },
 
+        // FIXME: It doesn't work.
         scrollToBottomIfNeeded() {
             this.$nextTick(() => {
                 const bottom = this.$refs.bottom
@@ -41,20 +42,28 @@ export default {
                     block: "end"
                 })
             })
+        },
+
+        scrollToBottomInstant() {
+            const bottom = this.$refs.bottom
+            if (!bottom) return
+
+            bottom.scrollIntoView({
+                behavior: "auto",
+                block: "end"
+            })
         }
     },
 
     mounted() {
-        this.scrollToBottomIfNeeded()
-    },
-
-    emits: ["openImage"]
+        this.scrollToBottomInstant()
+    }
 }
 </script>
 
 <template>
     <div class="message-list" ref="container">
-        <MessageItem v-for="m in messages" :key="m.messageId" :message="m" @openImage="$emit('openImage', $event)" />
+        <MessageItem v-for="m in messages" :key="m.messageId" :message="m" />
         <div ref="bottom"></div>
     </div>
 </template>

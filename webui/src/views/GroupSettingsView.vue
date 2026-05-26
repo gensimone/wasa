@@ -7,6 +7,7 @@ import { handleError } from "@/utils/errors"
 import { groupConversations } from "@/state/conversations"
 import { getMemberIds, removeUser } from "@/services/groups"
 import { getUserById } from "@/services/users"
+import { defaultUserPhotoUrl } from "../assets/default"
 
 export default {
     components: { Bottombar, Topbar, MemberList },
@@ -54,7 +55,12 @@ export default {
             const memberIds = await getMemberIds(this.groupId)
             this.members = await Promise.all(
                 memberIds.map(async (userId) => {
-                    return await getUserById(userId)
+                    const user = await getUserById(userId)
+                    if (!user.photoUrl) {
+                        user.photoUrl = defaultUserPhotoUrl
+                    }
+
+                    return user
                 })
             )
         }, 10000)

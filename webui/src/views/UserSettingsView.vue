@@ -65,7 +65,7 @@ export default {
 
                     } else if (this.photoChanged) {
                         await deleteMyPhoto()
-                        updateUserState({ photoUrl: null })
+                        updateUserState({ photoUrl: defaultUserPhotoUrl })
                         changed = true
                     }
 

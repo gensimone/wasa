@@ -18,7 +18,10 @@ export function usePhotoManager(initialUrl, defaultUrl) {
 
         revoke(photoUrl.value)
 
-        oldPhotoUrl.value = photoUrl.value
+        if (!photoUrl.value.startsWith("blob:")) {
+            oldPhotoUrl.value = photoUrl.value
+        }
+
         photoUrl.value = URL.createObjectURL(file)
 
         photo.value = file

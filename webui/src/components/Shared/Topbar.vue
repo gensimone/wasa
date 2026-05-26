@@ -62,7 +62,7 @@ export default {
 
     backdrop-filter: blur(10px);
 
-    z-index: 2;
+    z-index: 1;
 }
 
 .topbar-actions {

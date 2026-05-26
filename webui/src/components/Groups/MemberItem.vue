@@ -5,7 +5,7 @@ import { getIcon } from "@/state/theme";
 export default {
     props: {
         member: { type: Object, required: true },
-        founderId: { type: Number, required: true }
+        founderId: { required: true }
     },
 
     computed: {

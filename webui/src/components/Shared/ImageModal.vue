@@ -1,17 +1,28 @@
 <script>
+import imageModal from '@/state/imageModal';
+
 export default {
-    props: {
-        visible: { type: Boolean, required: true },
-        imageUrl: String
+    computed: {
+        visible() {
+            return imageModal.visible
+        },
+
+        photoUrl() {
+            return imageModal.photoUrl
+        }
     },
 
-    emits: ["close"]
+    methods: {
+        close() {
+            imageModal.visible = false
+        }
+    }
 }
 </script>
 
 <template>
-    <div v-if="visible" class="image-modal" @click="$emit('close')">
-        <img :src="imageUrl" class="image-modal-content" />
+    <div v-if="visible" class="image-modal" @click="close()">
+        <img :src="photoUrl" class="image-modal-content" />
     </div>
 </template>
 
@@ -19,7 +30,7 @@ export default {
 .image-modal {
     position: fixed;
     inset: 0;
-    z-index: 3;
+    z-index: 2;
 
     display: flex;
     align-items: center;

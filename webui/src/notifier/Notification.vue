@@ -1,6 +1,8 @@
 <script>
 import { expandUrl } from "@/utils/media"
 import { getIcon } from "@/state/theme";
+import imageModal from "@/state/imageModal"
+
 export default {
     props: {
         type: {
@@ -95,6 +97,7 @@ export default {
                     query: { direct: !this.isGroup }
                 })
                 this.close()
+                imageModal.visible = false
             } else {
                 this.close()
             }
@@ -153,7 +156,7 @@ export default {
 
     box-shadow:
         0 10px 30px var(--shadow),
-        0 0 0 1px rgba(255,255,255,0.02);
+        0 0 0 1px rgba(255, 255, 255, 0.02);
 
     overflow: hidden;
     z-index: 4;

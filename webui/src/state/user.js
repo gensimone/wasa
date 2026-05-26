@@ -73,7 +73,7 @@ export async function fetchUserState() {
     })
 }
 
-export function startPollingUser(interval = 5000) {
+export function startPollingUser(interval = 10000) {
     stopPollingUser()
 
     user.poller = new Poller(async () => {

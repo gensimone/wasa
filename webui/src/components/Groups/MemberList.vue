@@ -7,7 +7,7 @@ export default {
 
     props: {
         members: { type: Array, required: true },
-        founderId: { type: Number, required: true }
+        founderId: { required: true }
     },
 
     emits: [

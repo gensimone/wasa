@@ -20,8 +20,8 @@ export default {
             <h2> Login </h2>
 
             <form @submit.prevent="$emit('submit')">
-                <input class="input-bar" :value="name" @input="$emit('update:name', $event.target.value)"
-                    type="text" placeholder="Username" required />
+                <input class="input-bar" :value="name" @input="$emit('update:name', $event.target.value)" type="text"
+                    placeholder="Username" required />
 
                 <button class="submit-button" type="submit" :disabled="loading">
                     {{ loading ? "Logging in..." : "Login" }}
@@ -45,7 +45,7 @@ export default {
 
 .login-box-title {
     font-size: 1.5rem;
-    color: var(--text-muted);
+    color: var(--text);
     text-transform: uppercase;
 }
 
@@ -66,6 +66,6 @@ export default {
     font-size: 1.4rem;
     font-weight: 800;
     letter-spacing: 1px;
-    color: rgba(245, 245, 245, 0.9);
+    color: var(--text);
 }
 </style>

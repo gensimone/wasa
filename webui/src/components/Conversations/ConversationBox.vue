@@ -1,22 +1,20 @@
 <script>
-import { getIcon } from "@/state/theme"
-import ImageModal from "@/components/Shared/ImageModal.vue"
 import MessageList from "@/components/Messages/MessageList.vue"
 import ConversationInput from "@/components/Conversations/ConversationInput.vue"
+import { getIcon } from "@/state/theme"
 import { defaultUserPhotoUrl, defaultGroupPhotoUrl } from "@/assets/default"
 import { userConversations, groupConversations } from "@/state/conversations"
 import { expandUrl } from "@/utils/media"
 import { getUserById } from "@/services/users"
 import { handleError } from "@/utils/errors"
+import { setImageModal } from "@/state/imageModal"
 
 export default {
-    components: { MessageList, ConversationInput, ImageModal },
+    components: { MessageList, ConversationInput },
 
     data() {
         return {
             scrollTick: 0,
-            zoomedImage: null,
-            showImageModal: false,
 
             fallbackUserName: "",
             fallbackGroupName: "",
@@ -70,16 +68,7 @@ export default {
     methods: {
         expandUrl,
         getIcon,
-
-        openImage(url) {
-            this.zoomedImage = url
-            this.showImageModal = true
-        },
-
-        closeImage() {
-            this.showImageModal = false
-            this.zoomedImage = null
-        },
+        setImageModal,
 
         openGroupSettings() {
             this.$router.push({
@@ -106,7 +95,8 @@ export default {
     <div class="conversation-box">
 
         <div class="conversation-box-header">
-            <img class="conversation-box-photo" :src="expandUrl(photoUrl)" @click="openImage(expandUrl(photoUrl))" />
+            <img class="conversation-box-photo" :src="expandUrl(photoUrl)"
+                @click="setImageModal(expandUrl(photoUrl))" />
             <div class="conversation-box-name">
                 {{ name }}
             </div>
@@ -117,12 +107,10 @@ export default {
             </div>
         </div>
 
-        <MessageList :messages="messages" :scrollTick="scrollTick" @openImage="openImage" />
+        <MessageList :messages="messages" :scrollTick="scrollTick" />
 
         <ConversationInput @triggerScrolldown="scrollTick++" :direct="direct" :id="id" />
     </div>
-
-    <ImageModal :visible="showImageModal" :imageUrl="zoomedImage" @close="closeImage" />
 </template>
 
 <style scoped>
