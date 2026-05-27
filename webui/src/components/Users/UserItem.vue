@@ -1,9 +1,11 @@
 <script>
 import { defaultUserPhotoUrl } from "@/assets/default";
 import { expandUrl } from "@/utils/media";
+
 export default {
   props: {
     user: { type: Object, required: true },
+    selected: Boolean,
   },
 
   emits: ["select"],
@@ -19,10 +21,11 @@ export default {
 </script>
 
 <template>
-  <div class="user-item" @click="$emit('select', user)">
+  <div class="user-item" :class="{ selected }" @click="$emit('select', user)">
     <div class="user-item-photo-wrapper">
       <img :src="expandUrl(getPhotoUrl(user))" class="user-item-photo" />
     </div>
+
     <div class="user-item-info">
       <div class="user-item-name">
         {{ user.name }}

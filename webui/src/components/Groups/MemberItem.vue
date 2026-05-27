@@ -1,11 +1,18 @@
 <script>
 import { expandUrl } from "@/utils/media";
 import { getIcon } from "@/state/theme";
+import { user } from "@/state/user";
 
 export default {
   props: {
     member: { type: Object, required: true },
     founderId: { required: true },
+  },
+
+  data() {
+    return {
+      user,
+    };
   },
 
   computed: {
@@ -21,7 +28,7 @@ export default {
     getIcon,
 
     selectUser() {
-      if (!this.isFounder) {
+      if (this.member.userId !== user.userId) {
         this.$emit("selectUser", this.member);
       }
     },
@@ -48,7 +55,10 @@ export default {
 
     <div class="member-item-badge" v-if="isFounder">Founder</div>
 
-    <div class="member-item-actions" v-if="!isFounder">
+    <div
+      class="member-item-actions"
+      v-if="!isFounder && user.userId === founderId"
+    >
       <button class="icon-btn" @click="removeUser">
         <img :src="getIcon('minus')" class="icon-img" />
       </button>

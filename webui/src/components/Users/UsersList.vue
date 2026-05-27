@@ -1,28 +1,22 @@
 <script>
-import UserItem from "@/components/Users/UserItem.vue";
+import UsersPicker from "@/components/Users/UsersPicker.vue";
 import Poller from "@/services/poller";
 import { getUsers } from "@/services/users";
 import { user } from "@/state/user";
 
 export default {
-  components: { UserItem },
+  components: { UsersPicker },
 
   data() {
     return {
-      query: "",
       users: [],
       poller: null,
     };
   },
 
-  computed: {
-    usersToShow() {
-      if (!this.query.trim()) return this.users;
-
-      return this.users.filter((u) =>
-        u.name.toLowerCase().includes(this.query.toLowerCase()),
-      );
-    },
+  props: {
+    canSelectMultiple: { type: Boolean, required: true },
+    excludeUsers: { type: Array, required: false },
   },
 
   emits: ["select"],
@@ -30,7 +24,9 @@ export default {
   async mounted() {
     this.poller = new Poller(async () => {
       const users = await getUsers();
-      this.users = users.filter((u) => u.userId != user.userId);
+      this.users = users
+        .filter((u) => u.userId != user.userId)
+        .filter((u) => !this.excludeUsers?.some((e) => e.userId === u.userId));
     });
 
     this.poller.startPolling();
@@ -43,31 +39,9 @@ export default {
 </script>
 
 <template>
-  <div class="users-list">
-    <input
-      class="input-bar"
-      placeholder="Search.."
-      @input="query = $event.target.value"
-    />
-    <UserItem
-      v-for="u in usersToShow"
-      :key="u.userId"
-      :user="u"
-      @select="$emit('select', $event)"
-    />
-  </div>
+  <UsersPicker
+    :canSelectMultiple="canSelectMultiple"
+    :users="users"
+    @select="$emit('select', $event)"
+  />
 </template>
-
-<style scoped>
-.users-list {
-  width: min(720px, 100%);
-  padding: 20px;
-  border-radius: 22px;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: 0 25px 90px var(--shadow);
-
-  backdrop-filter: blur(20px);
-}
-</style>

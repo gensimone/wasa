@@ -41,7 +41,7 @@ export async function addToGroup(groupId, userId) {
     { headers: { Authorization: user.userId } },
   );
 
-  return response.data.userId;
+  return response.data;
 }
 
 export async function setGroupName(groupId, rawName) {

@@ -85,13 +85,7 @@ paths:
         content:
           application/json:
             schema:
-              description: The user to add
-              type: object
-              properties:
-                userId:
-                  description: User id
-                  type: integer
-                  format: int64
+              $ref: "#/components/schemas/User"
       responses:
         '201':
           description: Created

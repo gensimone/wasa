@@ -221,9 +221,14 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 			return
 		}
 
-		rt.sendResponse(w, struct {
-			UserId int64 `json:"userId"`
-		}{UserId: *userId}, http.StatusCreated)
+		addedUser, err := rt.db.GetUserById(*userId)
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetUserById: %v", err)
+			return
+		}
+
+		rt.sendResponse(w, addedUser, http.StatusCreated)
 	}
 }
 

@@ -32,7 +32,7 @@ export default {
             <div class="item-name">Create a new group</div>
           </div>
         </div>
-        <UsersList @select="select" />
+        <UsersList @select="select" :canSelectMultiple="false" />
       </div>
     </div>
     <Bottombar />

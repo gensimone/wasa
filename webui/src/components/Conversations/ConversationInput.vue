@@ -43,6 +43,8 @@ export default {
           if (conversationData) {
             conversationData.messages.push(message);
           } else {
+            // We want to see the message immediately,
+            // without waiting for the next poll.
             userConversations.value.set(this.id, {
               messages: [message],
             });

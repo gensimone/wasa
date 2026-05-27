@@ -57,7 +57,7 @@ export default {
       <img
         :src="expandUrl(photoUrl)"
         class="avatar-big"
-        @click="setImageModal(photoUrl)"
+        @click="setImageModal(expandUrl(photoUrl))"
       />
     </label>
 

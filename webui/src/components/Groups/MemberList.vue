@@ -5,15 +5,31 @@ import { getIcon } from "@/state/theme";
 export default {
   components: { MemberItem },
 
+  data() {
+    return {
+      query: "",
+    };
+  },
+
   props: {
     members: { type: Array, required: true },
     founderId: { required: true },
   },
 
-  emits: ["removeUser", "addToGroup", "selectUser"],
+  emits: ["removeUser", "goInAddToGroup", "selectUser"],
 
   methods: {
     getIcon,
+  },
+
+  computed: {
+    membersToShow() {
+      if (!this.query.trim()) return this.members;
+
+      return this.members.filter((m) =>
+        m.name.toLowerCase().includes(this.query.toLowerCase()),
+      );
+    },
   },
 };
 </script>
@@ -23,13 +39,19 @@ export default {
     <div class="members-list-header">
       <h2>Members</h2>
 
-      <button class="icon-btn" @click="$router.push('/group/add')">
+      <button class="icon-btn" @click="$emit('goInAddToGroup')">
         <img :src="getIcon('plus')" class="icon-img" />
       </button>
     </div>
 
+    <input
+      class="input-bar"
+      placeholder="Search.."
+      @input="query = $event.target.value"
+    />
+
     <MemberItem
-      v-for="m in members"
+      v-for="m in membersToShow"
       :key="m.userId"
       :member="m"
       @removeUser="$emit('removeUser', $event)"
