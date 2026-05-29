@@ -48,7 +48,7 @@ export async function sendMessage(
 export async function forwardMessage(id, direct, messageId) {
   const response = await api.post(
     `/conversations/${id}/fmessage`,
-    { messageId },
+    { messageId: messageId },
     {
       headers: { Authorization: user.userId },
       params: { direct },

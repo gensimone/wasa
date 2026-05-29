@@ -1,16 +1,8 @@
 <script>
 import MessageItem from "@/components/Messages/MessageItem.vue";
 
-import { user } from "@/state/user";
-
 export default {
   components: { MessageItem },
-
-  data() {
-    return {
-      user,
-    };
-  },
 
   props: {
     messages: { type: Array, required: true },

@@ -4,21 +4,27 @@ import Bottombar from "@/components/Shared/Bottombar.vue";
 import Topbar from "@/components/Shared/Topbar.vue";
 import Poller from "@/services/poller";
 import SettingsCard from "@/components/Settings/SettingsCard.vue";
-import UsersList from "@/components/Users/UsersList.vue";
+import ItemsList from "@/components/Users/ItemsList.vue";
 import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
 import { defaultGroupPhotoUrl } from "@/assets/default";
 import { handleError } from "@/utils/errors";
-import { groupConversations } from "@/state/conversations";
-import { getMemberIds, removeUser } from "@/services/groups";
-import { getUserById } from "@/services/users";
-import { defaultUserPhotoUrl } from "@/assets/default";
-import { user } from "@/state/user";
+import { userId, users } from "@/state/users";
+import { groups } from "@/state/conversations";
+
+import {
+  addToGroup,
+  getMemberIds,
+  removeUser,
+  setGroupName,
+  setGroupPhoto,
+  deleteGroupPhoto,
+} from "@/services/groups";
+
 import { getIcon } from "@/state/theme";
-import { addToGroup } from "@/services/groups";
 
 export default {
-  components: { Bottombar, Topbar, SettingsCard, MemberList, UsersList },
+  components: { Bottombar, Topbar, SettingsCard, MemberList, ItemsList },
 
   computed: {
     groupId() {
@@ -26,22 +32,19 @@ export default {
     },
 
     founderId() {
-      return groupConversations.value.get(this.groupId)?.founderId;
+      return groups.value.get(this.groupId)?.founderId;
     },
 
     isFounder() {
-      return this.founderId === user.userId;
+      return this.founderId === userId.value;
     },
 
     groupName() {
-      return groupConversations.value.get(this.groupId)?.name;
+      return groups.value.get(this.groupId)?.name;
     },
 
     groupPhotoUrl() {
-      return (
-        groupConversations.value.get(this.groupId)?.photoUrl ||
-        defaultGroupPhotoUrl
-      );
+      return groups.value.get(this.groupId)?.photoUrl || defaultGroupPhotoUrl;
     },
   },
 
@@ -50,6 +53,8 @@ export default {
       immediate: true,
       handler(newUrl) {
         this.photoUrl = newUrl;
+        this.photo = null;
+        this.photoChanged = false;
       },
     },
 
@@ -79,18 +84,28 @@ export default {
   methods: {
     getIcon,
 
+    // TODO: Implement the following functions:
+    // - leaveGroup()  (any member)
+    // - removeGroup() (founder only)
+
     async addMemberToGroup(user) {
       try {
-        const newMember = await addToGroup(this.groupId, user.userId);
-        this.members.push(newMember);
+        const newMember = await addToGroup(this.groupId, user.id);
         this.$notifier.success(`User ${newMember.name} added`);
+        return newMember;
       } catch (e) {
         handleError(e);
       }
     },
 
-    addUsersGroup(users) {
-      Promise.all(users.map(this.addMemberToGroup));
+    async addUsersGroup(users) {
+      // Avoid UI flickering by sorting members by ID.
+      const addedMembers = await Promise.all(users.map(this.addMemberToGroup));
+
+      const newMembersList = [...addedMembers, ...this.members];
+      newMembersList.sort((a, b) => a.userId - b.userId);
+
+      this.members = newMembersList;
       this.inAddToGroup = false;
     },
 
@@ -112,21 +127,54 @@ export default {
       });
     },
 
-    updateGroup() {},
+    async updateGroup() {
+      try {
+        await this.submit(async (name) => {
+          let changed = false;
+
+          if (name !== this.groupName) {
+            const updatedName = await setGroupName(this.groupId, name);
+            this.placeholder = updatedName;
+            changed = true;
+          }
+
+          if (this.photo) {
+            const url = await setGroupPhoto(this.groupId, this.photo);
+            this.photUrl = url;
+            this.photo = null;
+            this.photoChanged = false;
+
+            changed = true;
+          } else if (this.photoChanged) {
+            await deleteGroupPhoto(this.groupId);
+            this.photoUrl = defaultGroupPhotoUrl;
+            this.photo = null;
+            this.photoChanged = false;
+
+            changed = true;
+          }
+
+          if (!changed) throw new Error("NO_CHANGE");
+        });
+
+        this.$notifier.success("Group updated successfully");
+      } catch (e) {
+        if (e.message === "EMPTY_NAME")
+          this.$notifier.error("Invalid group name");
+        else if (e.message === "NO_CHANGE")
+          this.$notifier.warning("Nothing to do..");
+        else {
+          handleError(e);
+        }
+      }
+    },
   },
 
   async mounted() {
     this.poller = new Poller(async () => {
       const memberIds = await getMemberIds(this.groupId);
-      this.members = await Promise.all(
-        memberIds.map(async (userId) => {
-          const user = await getUserById(userId);
-          if (!user.photoUrl) {
-            user.photoUrl = defaultUserPhotoUrl;
-          }
-
-          return user;
-        }),
+      this.members = users.value.filter((u) =>
+        memberIds.some((m) => u.userId === m),
       );
     }, 10000);
 
@@ -167,9 +215,11 @@ export default {
             <img class="icon-img" :src="getIcon('back')" />
             Members
           </button>
-          <UsersList
+          <ItemsList
             @select="addUsersGroup"
-            :excludeUsers="members"
+            :excludedUsers="members"
+            :includeUsers="true"
+            :includeGroups="false"
             :canSelectMultiple="true"
           />
         </div>
@@ -192,27 +242,19 @@ export default {
   display: flex;
   gap: 20px;
   align-items: flex-start;
-
-  max-width: 1200px; /* controlla la larghezza del layout */
-  margin: 100px auto; /* centra orizzontalmente */
   padding: 20px;
+
+  max-width: 1300px;
+  margin: 100px auto;
 }
 
-@media (max-width: 900px) {
-  .content-column {
-    flex-direction: column;
-  }
-}
 .items-list {
   width: min(720px, 100%);
   padding: 20px;
   border-radius: 22px;
 
-  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 25px 90px var(--shadow);
-
-  backdrop-filter: blur(20px);
 }
 
 .items-list {

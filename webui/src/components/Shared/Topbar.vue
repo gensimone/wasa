@@ -1,5 +1,6 @@
 <script>
 import { isDark, getIcon } from "@/state/theme";
+
 export default {
   computed: {
     toggleThemeButton() {

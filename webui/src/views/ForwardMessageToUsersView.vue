@@ -1,5 +1,7 @@
 <script>
 import { getIcon } from "@/state/theme";
+import { forwardMessage } from "@/services/conversations";
+import { handleError } from "@/utils/errors";
 import Topbar from "@/components/Shared/Topbar.vue";
 import Bottombar from "@/components/Shared/Bottombar.vue";
 import ItemsList from "@/components/Users/ItemsList.vue";
@@ -7,15 +9,30 @@ import ItemsList from "@/components/Users/ItemsList.vue";
 export default {
   components: { Topbar, Bottombar, ItemsList },
 
+  computed: {
+    messageId() {
+      return Number(this.$route.params.id);
+    },
+  },
+
   methods: {
     getIcon,
 
-    async select(user) {
-      this.$router.push({
-        name: "conversation",
-        params: { id: user.id },
-        query: { direct: true },
-      });
+    async forwardMessage(items) {
+      try {
+        const messages = await Promise.all(
+          items.map((i) => forwardMessage(i.id, !i.isGroup, this.messageId)),
+        );
+
+        // FIXME: Update message list in current conversation immediately.
+        // Use the conversation id of the previous route.
+
+        this.$notifier.success("Message forwarded");
+      } catch (e) {
+        handleError(e);
+      } finally {
+        this.$router.back();
+      }
     },
   },
 };
@@ -27,18 +44,18 @@ export default {
 
     <div class="content">
       <div class="items-list">
-        <div class="list-item" @click="$router.push('/group/create')">
-          <img :src="getIcon('plus')" class="icon-img" />
+        <div class="list-item" @click="$router.back()">
+          <img :src="getIcon('remove')" class="icon-img" />
           <div class="item-info">
-            <div class="item-name">Create a new group</div>
+            <div class="item-name">Forward message to</div>
           </div>
         </div>
 
         <ItemsList
-          @select="select"
-          :canSelectMultiple="false"
           :includeUsers="true"
-          :includeGroups="false"
+          :includeGroups="true"
+          @select="forwardMessage"
+          :canSelectMultiple="true"
         />
       </div>
     </div>

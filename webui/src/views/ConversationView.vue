@@ -34,26 +34,14 @@ export default {
     },
 
     replyToMessage(message) {
-      // Replying to e message basically put the message to reply in the same spot in
-      // which we have already put the attachment window. After that the user can choose
+      // Replying to a message basically put the message to reply in the same spot in
+      // which we already have put the attachment window. After that the user can choose
       // to delete the "message attachment", or to write a comment and then send the
       // message. The commented message must appear above the comment with a snippet
       // (if it as an image, that image must be also present). Clicking on the comment
       // snippet must change the MessageList position so that the commented message is
       // clearly visible.
       console.log("Reply to message:", message);
-    },
-
-    forwardMessage(message) {
-      // Forwaring a message must involve the selection of a user/gruop from a picker.
-      // The user can select multiple entries from the picker, in which case the message
-      // is forwarded to all them. If the user, while on the picker, decide that is
-      // doesn't want to forward the message anymore, than we must go back to the previous
-      // route (which, in this case is of course that conversation in which the user
-      // decided to forward the message).
-      // NOTE: We also need to implemente some kind of indicator on the message that
-      // clearly shows that the message was forwarded.
-      console.log("Forward message:", message);
     },
 
     showInfoMessage(message) {
@@ -68,16 +56,6 @@ export default {
       //    - one of "seen at $DATE_TIME" and "received at $DATE_TIME"
       console.log("Show info message:", message);
     },
-
-    deleteMessage(message) {
-      // Removing a message involves two things:
-      // 1) Call API to delete the message.
-      // 2) Remove the message from the userConversations or from the
-      //    groupConversations (depending from the value of direct).
-      // 3) Optional: Removing the message must trigger an animation.
-      //    NOTE: We could implement this with a Transition (enter and leave).
-      console.log("Delete message:", message);
-    },
   },
 };
 </script>
@@ -91,9 +69,7 @@ export default {
         :direct="direct"
         @react="react"
         @replyToMessage="replyToMessage"
-        @forwardMessage="forwardMessage"
         @showInfoMessage="showInfoMessage"
-        @deleteMessage="deleteMessage"
       />
     </div>
     <Bottombar />

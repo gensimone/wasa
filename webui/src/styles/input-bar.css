@@ -1,9 +1,8 @@
 .input-bar {
-  margin-bottom: 10px;
   display: flex;
   width: 100%;
   padding: 14px;
-  gap: 10px;
+  margin-bottom: 10px;
 
   border-radius: 14px;
 

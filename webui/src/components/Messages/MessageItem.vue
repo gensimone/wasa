@@ -4,7 +4,7 @@ import logger from "@/utils/logger";
 import ContextMenu from "./ContextMenu/ContextMenu.vue";
 
 import { getIcon } from "@/state/theme";
-import { user } from "@/state/user";
+import { userId } from "@/state/users";
 import { expandUrl } from "@/utils/media";
 import { getReceipts, setMessageStatusAsRead } from "@/services/messages";
 import { setImageModal } from "@/state/imageModal";
@@ -31,7 +31,7 @@ export default {
 
   computed: {
     isMine() {
-      return this.message.senderId === user.userId;
+      return this.message.senderId === userId.value;
     },
   },
 
@@ -102,7 +102,7 @@ export default {
   ],
 
   async mounted() {
-    if (this.message.senderId !== user.userId) {
+    if (this.message.senderId !== userId.value) {
       try {
         await setMessageStatusAsRead(this.message.messageId);
       } catch (e) {

@@ -1,41 +1,53 @@
 <script>
-import { defaultUserPhotoUrl } from "@/assets/default";
+import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "@/assets/default";
 import { expandUrl } from "@/utils/media";
 
 export default {
   props: {
-    user: { type: Object, required: true },
-    selected: Boolean,
+    item: {
+      name: { type: String, required: true },
+      photoUrl: { type: String, required: true },
+      id: { type: Number, required: true },
+      isGroup: { type: Boolean, required: true },
+    },
+
+    selected: { type: Boolean, required: true },
   },
 
   emits: ["select"],
 
+  computed: {
+    url() {
+      if (this.photoUrl) {
+        return this.photoUrl;
+      }
+
+      return this.isGroup ? defaultGroupPhotoUrl : defaultUserPhotoUrl;
+    },
+  },
+
   methods: {
     expandUrl,
-
-    getPhotoUrl(user) {
-      return user.photoUrl || defaultUserPhotoUrl;
-    },
   },
 };
 </script>
 
 <template>
-  <div class="user-item" :class="{ selected }" @click="$emit('select', user)">
-    <div class="user-item-photo-wrapper">
-      <img :src="expandUrl(getPhotoUrl(user))" class="user-item-photo" />
+  <div class="item" :class="{ selected }" @click="$emit('select', item)">
+    <div class="item-photo-wrapper">
+      <img :src="expandUrl(this.url)" class="item-photo" />
     </div>
 
-    <div class="user-item-info">
-      <div class="user-item-name">
-        {{ user.name }}
+    <div class="item-info">
+      <div class="item-name">
+        {{ item.name }}
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.user-item {
+.item {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -54,12 +66,12 @@ export default {
   animation: fadeInUp 0.35s ease both;
 }
 
-.user-item:hover {
+.item:hover {
   transform: translateY(-6px) scale(1.02);
   border: 1px solid var(--accent);
 }
 
-.user-item-photo-wrapper {
+.item-photo-wrapper {
   width: 75px;
   height: 75px;
   border-radius: 16px;
@@ -67,20 +79,20 @@ export default {
   flex-shrink: 0;
 }
 
-.user-item-photo {
+.item-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.user-item-info {
+.item-info {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
 }
 
-.user-item-name {
+.item-name {
   font-size: 1.05rem;
   font-weight: 800;
 

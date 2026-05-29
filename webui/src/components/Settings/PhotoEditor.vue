@@ -53,13 +53,11 @@ export default {
       <button v-else class="icon-btn invisible-placeholder" disabled></button>
     </div>
 
-    <label class="photo-editor-photo-wrapper">
-      <img
-        :src="expandUrl(photoUrl)"
-        class="avatar-big"
-        @click="setImageModal(expandUrl(photoUrl))"
-      />
-    </label>
+    <img
+      :src="expandUrl(photoUrl)"
+      class="avatar-big"
+      @click="setImageModal(expandUrl(photoUrl))"
+    />
 
     <label v-if="enableEditing" class="icon-btn">
       <img :src="getIcon('plus')" class="icon-img" />

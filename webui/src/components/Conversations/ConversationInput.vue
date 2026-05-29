@@ -102,6 +102,7 @@ export default {
   <div>
     <div v-if="attachment" class="conversation-input-attachment-preview">
       <img class="conversation-input-preview-img" :src="attachmentUrl" />
+
       <button class="icon-btn" @click="removeAttachment">
         <img :src="getIcon('trash')" class="icon-img" />
       </button>
@@ -121,6 +122,7 @@ export default {
       />
 
       <input
+        name="conversation-input-bar"
         class="input-bar"
         :value="text"
         @input="text = $event.target.value"

@@ -60,11 +60,16 @@ export async function setGroupName(groupId, rawName) {
 }
 
 export async function setGroupPhoto(groupId, photo) {
-  const response = await api.put(
-    `/groups/${groupId}/photo`,
-    { photo: photo },
-    { headers: { Authorization: user.userId } },
-  );
+  const formData = new FormData();
+
+  formData.append("photo", photo);
+
+  const response = await api.put(`/groups/${groupId}/photo`, formData, {
+    headers: {
+      Authorization: user.userId,
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
   return response.data.photoUrl;
 }

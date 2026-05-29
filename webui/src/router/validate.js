@@ -1,7 +1,26 @@
+import { getNotifier } from "@/notifier";
+import { getMessage } from "@/services/messages";
 import { getUserById } from "@/services/users";
 import { handleError } from "@/utils/errors";
 import { userConversations, groupConversations } from "@/state/conversations";
 import { getMyConversations } from "@/services/conversations";
+
+export async function isValidMessageId(id) {
+  let isValid = false;
+
+  try {
+    const message = await getMessage(id);
+    isValid = message?.messageId === id;
+  } catch (e) {
+    if (e.response?.status === 404) {
+      getNotifier().error("Message not found");
+    } else {
+      handleError(e);
+    }
+  }
+
+  return isValid;
+}
 
 export async function isValidUserId(id) {
   let isValid = userConversations.value.has(id);
@@ -41,6 +60,15 @@ export async function isValidConversationId(id) {
   } finally {
     return isValid;
   }
+}
+
+export async function isValidMessageRoute(route) {
+  const id = Number(route.params.id);
+  const validId = Number.isInteger(id) && id > 0;
+
+  if (!validId) return false;
+
+  return isValidMessageId(id);
 }
 
 export async function isValidGroupRoute(route) {

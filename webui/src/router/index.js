@@ -1,3 +1,6 @@
+import { createRouter, createWebHashHistory } from "vue-router";
+
+// Views
 import LoginView from "@/views/LoginView.vue";
 import HomeView from "@/views/HomeView.vue";
 import UserSettingsView from "@/views/UserSettingsView.vue";
@@ -5,12 +8,21 @@ import ConversationView from "@/views/ConversationView.vue";
 import AddConversationView from "@/views/AddConversationView.vue";
 import GroupCreationView from "../views/GroupCreationView.vue";
 import GroupSettingsView from "../views/GroupSettingsView.vue";
-import { isValidGroupRoute, isValidConversationRoute } from "@/router/validate";
-import { createRouter, createWebHashHistory } from "vue-router";
-import { stopPollingUser } from "@/state/user";
+import ForwardMessageToUsersView from "@/views/ForwardMessageToUsersView.vue";
+
+// Validate routes
+import {
+  isValidMessageRoute,
+  isValidGroupRoute,
+  isValidConversationRoute,
+} from "@/router/validate";
+
+// Pollers
+import { stopPollingUsers, clearUsers } from "@/state/users";
 import {
   stopPollingConversations,
-  clearConversations,
+  clearMessages,
+  clearGroups,
 } from "@/state/conversations";
 
 const router = createRouter({
@@ -46,8 +58,23 @@ const router = createRouter({
       component: ConversationView,
       meta: { requiresAuth: true },
     },
+    {
+      path: "/message/:id/forward",
+      name: "message-forward",
+      component: ForwardMessageToUsersView,
+      meta: { requiresAuth: true },
+    },
   ],
 });
+
+function cleanup() {
+  stopPollingUsers();
+  stopPollingConversations();
+
+  clearUsers();
+  clearMessages();
+  clearGroups();
+}
 
 router.beforeEach(async (to, _, next) => {
   const name = localStorage.getItem("name");
@@ -61,9 +88,8 @@ router.beforeEach(async (to, _, next) => {
   }
 
   if (requiresAuth && !name) {
-    stopPollingUser();
-    stopPollingConversations();
-    clearConversations();
+    cleanup();
+
     next("/");
     return;
   }
@@ -78,11 +104,12 @@ router.beforeEach(async (to, _, next) => {
     return;
   }
 
-  if (isLoginRoute) {
-    stopPollingUser();
-    stopPollingConversations();
-    clearConversations();
+  if (to.name === "message" || to.name === "message-forward") {
+    (await isValidMessageRoute(to)) ? next() : next("/home");
+    return;
   }
+
+  if (isLoginRoute) cleanup();
 
   next();
 });

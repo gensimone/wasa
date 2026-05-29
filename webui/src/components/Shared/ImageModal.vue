@@ -43,6 +43,6 @@ export default {
   max-width: 90%;
   max-height: 90%;
 
-  border-radius: 12px;
+  border-radius: 14px;
 }
 </style>

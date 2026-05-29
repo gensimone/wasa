@@ -20,42 +20,45 @@ export default {
 
 <template>
   <div class="setting-card">
-    <form @submit.prevent="$emit('submit')">
-      <PhotoEditor
-        :photoUrl="photoUrl"
-        :enableEditing="enableEditing"
-        :photoChanged="photoChanged"
-        :loading="loading"
-        @uploadPhoto="$emit('uploadPhoto', $event)"
-        @revertPhoto="$emit('revertPhoto')"
-        @deletePhoto="$emit('deletePhoto')"
+    <PhotoEditor
+      :photoUrl="photoUrl"
+      :enableEditing="enableEditing"
+      :photoChanged="photoChanged"
+      :loading="loading"
+      @uploadPhoto="$emit('uploadPhoto', $event)"
+      @revertPhoto="$emit('revertPhoto')"
+      @deletePhoto="$emit('deletePhoto')"
+    />
+
+    <div class="setting-card-input-box">
+      <h2>{{ title }}</h2>
+
+      <input
+        name="settings-card-input-bar"
+        class="input-bar"
+        :placeholder="text"
+        :disabled="!enableEditing"
+        @input="$emit('keyPress', $event.target.value)"
       />
+    </div>
 
-      <div class="setting-card-input-box">
-        <h2>{{ title }}</h2>
-
-        <input
-          class="input-bar"
-          :placeholder="text"
-          :disabled="!enableEditing"
-          @input="$emit('keyPress', $event.target.value)"
-        />
-      </div>
-
-      <button v-if="enableEditing" class="submit-button" :disabled="loading">
-        {{ submitButtonText }}
-      </button>
-    </form>
+    <button
+      v-if="enableEditing"
+      class="submit-button"
+      :disabled="loading"
+      @click="$emit('submit')"
+    >
+      {{ submitButtonText }}
+    </button>
   </div>
 </template>
 
 <style scoped>
 .setting-card {
-  width: min(520px, 92%);
+  width: min(600px, 92%);
   padding: 34px;
   display: flex;
   flex-direction: column;
-  gap: 30px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 22px;
@@ -67,8 +70,7 @@ export default {
 }
 
 .setting-card-input-box h2 {
-  margin-top: 35px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   font-size: 1.2rem;
   letter-spacing: 1px;
 }

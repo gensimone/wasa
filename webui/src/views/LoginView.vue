@@ -3,7 +3,7 @@ import Topbar from "@/components/Shared/Topbar.vue";
 import Bottombar from "@/components/Shared/Bottombar.vue";
 import LoginBox from "@/components/Login/LoginBox.vue";
 
-import { updateUserState, startPollingUser } from "@/state/user";
+import { setUserId, startPollingUsers } from "@/state/users";
 import { startPollingConversations } from "@/state/conversations";
 import { doLogin } from "@/services/session";
 import { handleError } from "@/utils/errors";
@@ -26,9 +26,8 @@ export default {
       try {
         const user = await doLogin(this.name);
 
-        updateUserState(user);
-
-        startPollingUser();
+        setUserId(user.userId);
+        startPollingUsers();
         startPollingConversations();
         startMessageNotifier();
 

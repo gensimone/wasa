@@ -73,20 +73,20 @@ func New(db *sql.DB) (AppDatabase, error) {
 			`PRAGMA foreign_keys = ON;`,
 
 			`CREATE TABLE users (
-                user_id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                photo_url TEXT
-            );`,
+        user_id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        photo_url TEXT
+      );`,
 
 			`CREATE TABLE groups (
-                conversation_id INTEGER PRIMARY KEY,
-                founder_id INTEGER NOT NULL,
+        conversation_id INTEGER PRIMARY KEY,
+        founder_id INTEGER NOT NULL,
 				name TEXT NOT NULL,
-                photo_url TEXT,
+        photo_url TEXT,
 				created_at TIMESTAMP,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
 				FOREIGN KEY (founder_id) REFERENCES users(user_id) ON DELETE CASCADE
-            );`,
+      );`,
 
 			`CREATE TABLE conversations (
 				conversation_id INTEGER PRIMARY KEY
@@ -94,16 +94,16 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 			`CREATE TABLE user_conversations (
 				conversation_id INTEGER NOT NULL,
-			    user_id INTEGER NOT NULL,
+			  user_id INTEGER NOT NULL,
 				PRIMARY KEY (conversation_id, user_id),
-                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE
-            );`,
+      );`,
 
 			`CREATE TABLE messages (
-                message_id INTEGER PRIMARY KEY,
-                text TEXT,
-                sender_id INTEGER NOT NULL,
+        message_id INTEGER PRIMARY KEY,
+        text TEXT,
+        sender_id INTEGER NOT NULL,
 				conversation_id INTEGER NOT NULL,
 				created_at TIMESTAMP,
 				is_forwarded BOOL DEFAULT 0,
@@ -113,28 +113,28 @@ func New(db *sql.DB) (AppDatabase, error) {
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
 				FOREIGN KEY (sender_id) REFERENCES users(user_id),
 				FOREIGN KEY (comment_to) REFERENCES messages(message_id)
-            );`,
+      );`,
 
 			`CREATE TABLE receipts (
 				message_id INTEGER NOT NULL,
 				user_id INTEGER NOT NULL,
-                status TEXT NOT NULL CHECK (status  IN ('sent', 'received', 'read')),
+        status TEXT NOT NULL CHECK (status  IN ('sent', 'received', 'read')),
 				sent_at TIMESTAMP,
 				received_at TIMESTAMP,
 				read_at TIMESTAMP,
 				PRIMARY KEY (message_id, user_id),
-                FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE
+        FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE
 				FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-            );`,
+      );`,
 
 			`CREATE TABLE reactions (
 				emoji TEXT NOT NULL,
 				message_id INTEGER NOT NULL,
 				sender_id INTEGER NOT NULL,
 				PRIMARY KEY (message_id, sender_id),
-                FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
+        FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE,
 				FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE
-            );`,
+      );`,
 		}
 		for _, stmt := range stmts {
 			if _, err := db.Exec(stmt); err != nil {

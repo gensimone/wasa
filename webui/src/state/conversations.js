@@ -1,13 +1,12 @@
 import Poller from "@/services/poller";
 import { ref } from "vue";
-import { getUserById } from "@/services/users";
 import { getMessage } from "@/services/messages";
 import { getGroup } from "@/services/groups";
 import { getMyConversations, getConversation } from "@/services/conversations";
-import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "../assets/default";
 
-export const userConversations = ref(new Map());
-export const groupConversations = ref(new Map());
+export const directMessages = ref(new Map());
+export const groupMessages = ref(new Map());
+export const groups = ref(new Map());
 
 let poller = null;
 
@@ -39,48 +38,21 @@ export async function getConversationMessages(id, direct) {
   const messages = await Promise.all(messageIds.map(fetchMessageCached));
 
   return messages;
-
-  // return messages.sort(
-  //   (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-  // )
 }
 
-async function fetchGroupConversation(id) {
-  const [messages, group] = await Promise.all([
-    getConversationMessages(id, false),
-    getGroup(id),
-  ]);
-
-  return [
-    id,
-    {
-      id: id,
-      founderId: group.founderId,
-      name: group.name,
-      photoUrl: group.photoUrl || defaultGroupPhotoUrl,
-      createdAt: group.createdAt,
-      isGroup: true,
-      messages,
-    },
-  ];
+async function fetchGroup(id) {
+  const group = await getGroup(id);
+  return [id, group];
 }
 
-async function fetchUserConversation(id) {
-  const [messages, user] = await Promise.all([
-    getConversationMessages(id, true),
-    getUserById(id),
-  ]);
+async function fetchGroupMessages(id) {
+  const messages = await getConversationMessages(id, false);
+  return [id, { messages }];
+}
 
-  return [
-    id,
-    {
-      id: user.userId,
-      name: user.name,
-      photoUrl: user.photoUrl || defaultUserPhotoUrl,
-      isGroup: false,
-      messages,
-    },
-  ];
+async function fetchDirectMessages(id) {
+  const messages = await getConversationMessages(id, true);
+  return [id, { messages }];
 }
 
 export async function fetchConversations() {
@@ -89,16 +61,16 @@ export async function fetchConversations() {
   const groupIds = fetched.filter((c) => c.isGroup).map((c) => c.id);
   const userIds = fetched.filter((c) => !c.isGroup).map((c) => c.id);
 
-  const [groups, users] = await Promise.all([
-    Promise.all(groupIds.map(fetchGroupConversation)),
-    Promise.all(userIds.map(fetchUserConversation)),
-  ]);
+  const [fetchedGroups, fetchedGroupMessages, fetchedDirectMessages] =
+    await Promise.all([
+      Promise.all(groupIds.map(fetchGroup)),
+      Promise.all(groupIds.map(fetchGroupMessages)),
+      Promise.all(userIds.map(fetchDirectMessages)),
+    ]);
 
-  // FIXME: Do not trigger update if the old messages
-  // are the same to the current ones.
-
-  groupConversations.value = new Map(groups);
-  userConversations.value = new Map(users);
+  groups.value = new Map(fetchedGroups);
+  groupMessages.value = new Map(fetchedGroupMessages);
+  directMessages.value = new Map(fetchedDirectMessages);
 }
 
 export function startPollingConversations(interval = 5000) {
@@ -118,8 +90,12 @@ export function stopPollingConversations() {
   }
 }
 
-export function clearConversations() {
-  userConversations.value.clear();
-  groupConversations.value.clear();
+export function clearMessages() {
+  directMessages.value.clear();
+  groupMessages.value.clear();
   messageCache.clear();
+}
+
+export function clearGroups() {
+  groups.value.clear();
 }

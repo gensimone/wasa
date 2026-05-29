@@ -2,7 +2,8 @@
 import Topbar from "@/components/Shared/Topbar.vue";
 import Bottombar from "@/components/Shared/Bottombar.vue";
 import ConversationsList from "@/components/Conversations/ConversationsList.vue";
-import { clearUserState } from "@/state/user";
+
+import { userId } from "@/state/users";
 
 export default {
   components: { Topbar, Bottombar, ConversationsList },
@@ -17,7 +18,7 @@ export default {
     },
 
     logout() {
-      clearUserState();
+      userId.value = null;
       this.$router.push("/");
     },
   },

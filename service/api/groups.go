@@ -206,6 +206,16 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
+	userToAdd, err := rt.db.GetUserById(*userId)
+	if errors.Is(err, sql.ErrNoRows) {
+		rt.sendResponse(w, "User not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("GetUserById: %v", err)
+		return
+	}
+
 	isMember, err := rt.db.IsMember(*userId, group.ConversationId)
 	switch {
 	case err != nil:
@@ -221,14 +231,7 @@ func (rt *_router) addToGroup(w http.ResponseWriter, r *http.Request, ps httprou
 			return
 		}
 
-		addedUser, err := rt.db.GetUserById(*userId)
-		if err != nil {
-			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-			rt.baseLogger.Errorf("GetUserById: %v", err)
-			return
-		}
-
-		rt.sendResponse(w, addedUser, http.StatusCreated)
+		rt.sendResponse(w, userToAdd, http.StatusCreated)
 	}
 }
 

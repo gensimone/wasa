@@ -1,18 +1,19 @@
 import { createApp } from "vue";
 import App from "@/App.vue";
 import router from "@/router";
-
 import notifier from "@/notifier";
 import { startMessageNotifier } from "@/notifier/messageNotifier";
-import { user, hydrateUserState, startPollingUser } from "@/state/user.js";
+import { userId, hydrateUserId, startPollingUsers } from "@/state/users.js";
 import { startPollingConversations } from "@/state/conversations.js";
 
 import "./styles/index.css";
 
-hydrateUserState();
-if (user.userId) {
-  startPollingUser();
+hydrateUserId();
+
+if (userId.value) {
+  startPollingUsers();
   startPollingConversations();
+
   startMessageNotifier();
 }
 

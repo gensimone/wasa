@@ -1,24 +1,25 @@
 import { watch } from "vue";
-import { userConversations, groupConversations } from "@/state/conversations";
+import { directMessages, groupMessages } from "@/state/conversations";
 import { getNotifier } from "@/notifier";
+import { users, userId } from "@/state/users";
 import router from "@/router";
 
-let previousUserConversations = new Map();
-let previousGroupConversations = new Map();
+let prevDirectMessages = new Map();
+let prevGroupMessages = new Map();
 
 export function startMessageNotifier() {
   watch(
-    userConversations,
+    directMessages,
     (newMap) => {
-      handleNewMessages(newMap, previousUserConversations, true);
+      handleNewMessages(newMap, prevDirectMessages, true);
     },
     { deep: true },
   );
 
   watch(
-    groupConversations,
+    groupMessages,
     (newMap) => {
-      handleNewMessages(newMap, previousGroupConversations, false);
+      handleNewMessages(newMap, prevGroupMessages, false);
     },
     { deep: true },
   );
@@ -35,35 +36,36 @@ function matchConversation(id, direct) {
 }
 
 function handleNewMessages(newMap, oldMap, direct) {
-  for (const [id, conversationData] of newMap.entries()) {
+  for (const [id, messages] of newMap.entries()) {
     if (matchConversation(id, direct)) continue;
 
-    const oldConversation = oldMap.get(id);
+    const oldMessages = oldMap.get(id);
 
-    if (!oldConversation) continue;
+    if (!oldMessages) continue;
 
-    const oldMessageIds = (oldConversation.messages || []).map(
-      (m) => m.messageId,
-    );
+    const oldMessageIds = (oldMessages.messages || []).map((m) => m.messageId);
 
-    const newMessages = (conversationData.messages || []).filter(
+    const newMessages = (messages || []).filter(
       (m) => !oldMessageIds.includes(m.messageId),
     );
 
-    newMessages.forEach((msg) => {
-      getNotifier()?.message({
-        text: msg.text,
-        id: id,
-        isGroup: !direct,
-        thumbnailUrl: conversationData.photoUrl,
-        attachmentUrl: msg.attachmentUrl,
-      });
+    newMessages.forEach((message) => {
+      if (message.senderId !== userId.value) {
+        const thumbnailUrl = users.value.get(message.senderId).photoUrl;
+        getNotifier()?.message({
+          text: message.text,
+          id: id,
+          isGroup: !direct,
+          thumbnailUrl: thumbnailUrl,
+          attachmentUrl: message.attachmentUrl,
+        });
+      }
     });
   }
 
   if (direct) {
-    previousUserConversations = new Map(newMap);
+    prevDirectMessages = new Map(newMap);
   } else {
-    previousGroupConversations = new Map(newMap);
+    prevGroupMessages = new Map(newMap);
   }
 }

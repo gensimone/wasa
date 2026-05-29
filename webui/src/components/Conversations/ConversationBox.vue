@@ -1,13 +1,18 @@
 <script>
+// Components
 import MessageList from "@/components/Messages/MessageList.vue";
 import ConversationInput from "@/components/Conversations/ConversationInput.vue";
-import { getIcon } from "@/state/theme";
-import { defaultUserPhotoUrl, defaultGroupPhotoUrl } from "@/assets/default";
-import { userConversations, groupConversations } from "@/state/conversations";
+
 import { expandUrl } from "@/utils/media";
-import { getUserById } from "@/services/users";
-import { handleError } from "@/utils/errors";
+
+import { getIcon } from "@/state/theme";
 import { setImageModal } from "@/state/imageModal";
+import { users } from "@/state/users";
+import { directMessages, groupMessages } from "@/state/conversations";
+
+import { defaultUserPhotoUrl, defaultGroupPhotoUrl } from "@/assets/default";
+
+import { deleteMessage } from "@/services/messages";
 
 export default {
   components: { MessageList, ConversationInput },
@@ -15,11 +20,6 @@ export default {
   data() {
     return {
       scrollTick: 0,
-
-      fallbackUserName: "",
-      fallbackGroupName: "",
-      fallbackUserPhotoUrl: defaultUserPhotoUrl,
-      fallbackGroupPhotoUrl: defaultGroupPhotoUrl,
     };
   },
 
@@ -28,52 +28,29 @@ export default {
     direct: { type: Boolean, required: true },
   },
 
-  emits: [
-    "react",
-    "replyToMessage",
-    "forwardMessage",
-    "showInfoMessage",
-    "deleteMessage",
-  ],
+  emits: ["react", "replyToMessage", "showInfoMessage"],
 
   computed: {
-    conversationData() {
-      return this.direct
-        ? userConversations.value.get(this.id)
-        : groupConversations.value.get(this.id);
-    },
-
     messages() {
-      return this.conversationData?.messages || [];
+      const entry = this.direct
+        ? directMessages.value.get(this.id)
+        : groupMessages.value.get(this.id);
+
+      return entry?.messges || [];
     },
 
     name() {
-      return (
-        this.conversationData?.name ||
-        (this.direct ? this.fallbackUserName : this.fallbackGroupName)
-      );
+      const entry = this.direct
+        ? users.get(this.id)?.name
+        : groups.get(this.id)?.name;
+
+      return entry || "";
     },
 
     photoUrl() {
-      return (
-        this.conversationData?.photoUrl ||
-        (this.direct ? this.fallbackUserPhotoUrl : this.fallbackGroupPhotoUrl)
-      );
-    },
-  },
-
-  watch: {
-    conversationData: {
-      immediate: true,
-      handler(val) {
-        if (
-          (!val?.name || !val?.photoUrl) &&
-          this.direct &&
-          this.fallbackUserName === ""
-        ) {
-          this.ensureUserData();
-        }
-      },
+      return this.direct
+        ? users.get(this.id)?.photoUrl || defaultUserPhotoUrl
+        : groups.get(this.id)?.photoUrl || defaultGroupPhotoUrl;
     },
   },
 
@@ -89,15 +66,33 @@ export default {
       });
     },
 
-    async ensureUserData() {
-      try {
-        const userFetched = await getUserById(this.id);
-        this.fallbackUserName = userFetched.name;
-        this.fallbackUserPhotoUrl = userFetched.photoUrl;
-      } catch (e) {
-        handleError(e);
-        this.$router.push("/home");
-      }
+    forwardMessage(message) {
+      this.$router.push({
+        name: "message-forward",
+        params: { id: message.messageId },
+      });
+    },
+
+    async deleteMessage(message) {
+      // try {
+      //   await deleteMessage(message.messageId);
+      //   if (groupConversations.value.has(message.conversationId)) {
+      //     groupConversations.value.get(message.conversationId).messages =
+      //       groupConversations.value
+      //         .get(message.conversationId)
+      //         .messages.filter((m) => m.messageId != message.messageId);
+      //   } else {
+      //     const memberIds = await getMemberIds(message.conversationId);
+      //     let memberId = memberIds[0];
+      //     if (memberId === user.userId) memberId = memberIds[1];
+      //     directConversations.value.get(memberId).messages =
+      //       directConversations.value
+      //         .get(memberId)
+      //         .messages.filter((m) => m.messageId != message.messageId);
+      //   }
+      // } catch (e) {
+      //   handleError(e);
+      // }
     },
   },
 };
@@ -130,9 +125,9 @@ export default {
       :scrollTick="scrollTick"
       @react="$emit('react', $event)"
       @replyToMessage="$emit('replyToMessage', $event)"
-      @forwardMessage="$emit('forwardMessage', $event)"
+      @forwardMessage="forwardMessage"
       @showInfoMessage="$emit('showInfoMessage', $event)"
-      @deleteMessage="$emit('deleteMessage', $event)"
+      @deleteMessage="deleteMessage"
     />
 
     <ConversationInput

@@ -45,6 +45,7 @@ export default {
     </div>
 
     <input
+      name="members-search-input-bar"
       class="input-bar"
       placeholder="Search.."
       @input="query = $event.target.value"
@@ -65,7 +66,7 @@ export default {
 .members-list {
   width: min(720px, 100%);
   padding: 20px;
-  border-radius: 22px;
+  border-radius: 14px;
 
   background: var(--surface);
   border: 1px solid var(--border);

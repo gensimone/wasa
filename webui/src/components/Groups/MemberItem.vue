@@ -1,7 +1,7 @@
 <script>
 import { expandUrl } from "@/utils/media";
 import { getIcon } from "@/state/theme";
-import { user } from "@/state/user";
+import { userId } from "@/state/users";
 
 export default {
   props: {
@@ -11,7 +11,7 @@ export default {
 
   data() {
     return {
-      user,
+      userId: userId.value,
     };
   },
 
@@ -28,7 +28,7 @@ export default {
     getIcon,
 
     selectUser() {
-      if (this.member.userId !== user.userId) {
+      if (this.member.userId !== userId) {
         this.$emit("selectUser", this.member);
       }
     },
@@ -55,10 +55,7 @@ export default {
 
     <div class="member-item-badge" v-if="isFounder">Founder</div>
 
-    <div
-      class="member-item-actions"
-      v-if="!isFounder && user.userId === founderId"
-    >
+    <div class="member-item-actions" v-if="!isFounder && userId === founderId">
       <button class="icon-btn" @click="removeUser">
         <img :src="getIcon('minus')" class="icon-img" />
       </button>

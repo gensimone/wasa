@@ -20,6 +20,7 @@ export default {
 
       <form @submit.prevent="$emit('submit')">
         <input
+          name="login"
           class="input-bar"
           :value="name"
           @input="$emit('update:name', $event.target.value)"
