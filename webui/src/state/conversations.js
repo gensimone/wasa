@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { getMessage } from "@/services/messages";
 import { getGroup } from "@/services/groups";
 import { getMyConversations, getConversation } from "@/services/conversations";
+import { defaultGroupPhotoUrl } from "@/assets/default";
 
 export const directMessages = ref(new Map());
 export const groupMessages = ref(new Map());
@@ -42,17 +43,23 @@ export async function getConversationMessages(id, direct) {
 
 async function fetchGroup(id) {
   const group = await getGroup(id);
-  return [id, group];
+  return [
+    id,
+    {
+      ...group,
+      photoUrl: group.photoUrl || defaultGroupPhotoUrl,
+    },
+  ];
 }
 
 async function fetchGroupMessages(id) {
   const messages = await getConversationMessages(id, false);
-  return [id, { messages }];
+  return [id, messages];
 }
 
 async function fetchDirectMessages(id) {
   const messages = await getConversationMessages(id, true);
-  return [id, { messages }];
+  return [id, messages];
 }
 
 export async function fetchConversations() {

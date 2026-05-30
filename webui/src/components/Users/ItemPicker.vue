@@ -124,4 +124,45 @@ export default {
   color: var(--text);
   text-transform: uppercase;
 }
+
+.item-picker {
+  width: min(600px, 100%);
+
+  display: flex;
+  flex-direction: column;
+
+  max-height: 70vh;
+  min-height: 0;
+}
+
+.input-bar {
+  flex-shrink: 0;
+}
+
+.item-picker-list {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 6px;
+}
+
+.item-picker-sidebar {
+  flex-shrink: 0;
+
+  max-height: 40%;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.submit-button {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
 </style>

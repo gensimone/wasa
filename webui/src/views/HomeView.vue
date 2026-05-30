@@ -3,7 +3,7 @@ import Topbar from "@/components/Shared/Topbar.vue";
 import Bottombar from "@/components/Shared/Bottombar.vue";
 import ConversationsList from "@/components/Conversations/ConversationsList.vue";
 
-import { userId } from "@/state/users";
+import { clearUserState, stopPollingUser } from "@/state/user";
 
 export default {
   components: { Topbar, Bottombar, ConversationsList },
@@ -18,7 +18,8 @@ export default {
     },
 
     logout() {
-      userId.value = null;
+      stopPollingUser();
+      clearUserState();
       this.$router.push("/");
     },
   },

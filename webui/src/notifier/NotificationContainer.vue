@@ -19,6 +19,13 @@ export default {
     add(notification) {
       const text = notification.text?.trim();
 
+      const lastNotification = this.notifications.at(-1);
+      const isDuplicate =
+        lastNotification?.text === text &&
+        lastNotification?.type === notification.type;
+
+      if (isDuplicate) return;
+
       const notificationId = Date.now() + Math.random();
 
       this.notifications.push({

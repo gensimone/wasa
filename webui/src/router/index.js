@@ -77,17 +77,17 @@ function cleanup() {
 }
 
 router.beforeEach(async (to, _, next) => {
-  const name = localStorage.getItem("name");
+  const userId = localStorage.getItem("userId");
 
   const isLoginRoute = to.path === "/";
   const requiresAuth = to.meta.requiresAuth;
 
-  if (isLoginRoute && name) {
+  if (isLoginRoute && userId) {
     next("/home");
     return;
   }
 
-  if (requiresAuth && !name) {
+  if (requiresAuth && !userId) {
     cleanup();
 
     next("/");

@@ -1,17 +1,11 @@
 <script>
-// Components
 import MessageList from "@/components/Messages/MessageList.vue";
 import ConversationInput from "@/components/Conversations/ConversationInput.vue";
-
 import { expandUrl } from "@/utils/media";
-
 import { getIcon } from "@/state/theme";
 import { setImageModal } from "@/state/imageModal";
 import { users } from "@/state/users";
-import { directMessages, groupMessages } from "@/state/conversations";
-
-import { defaultUserPhotoUrl, defaultGroupPhotoUrl } from "@/assets/default";
-
+import { groups, directMessages, groupMessages } from "@/state/conversations";
 import { deleteMessage } from "@/services/messages";
 
 export default {
@@ -31,26 +25,41 @@ export default {
   emits: ["react", "replyToMessage", "showInfoMessage"],
 
   computed: {
+    groups() {
+      return groups.value;
+    },
+
     messages() {
-      const entry = this.direct
+      const messages = this.direct
         ? directMessages.value.get(this.id)
         : groupMessages.value.get(this.id);
 
-      return entry?.messges || [];
+      return messages || [];
     },
 
     name() {
-      const entry = this.direct
-        ? users.get(this.id)?.name
-        : groups.get(this.id)?.name;
+      const name = this.direct
+        ? users.value.get(this.id)?.name
+        : groups.value.get(this.id)?.name;
 
-      return entry || "";
+      return name || "";
     },
 
     photoUrl() {
       return this.direct
-        ? users.get(this.id)?.photoUrl || defaultUserPhotoUrl
-        : groups.get(this.id)?.photoUrl || defaultGroupPhotoUrl;
+        ? users.value.get(this.id)?.photoUrl
+        : groups.value.get(this.id)?.photoUrl;
+    },
+  },
+
+  watch: {
+    groups: {
+      handler(groups) {
+        if (!this.direct && !groups.has(this.id)) {
+          this.$router.push("/home");
+        }
+      },
+      deep: true,
     },
   },
 
@@ -74,25 +83,26 @@ export default {
     },
 
     async deleteMessage(message) {
-      // try {
-      //   await deleteMessage(message.messageId);
-      //   if (groupConversations.value.has(message.conversationId)) {
-      //     groupConversations.value.get(message.conversationId).messages =
-      //       groupConversations.value
-      //         .get(message.conversationId)
-      //         .messages.filter((m) => m.messageId != message.messageId);
-      //   } else {
-      //     const memberIds = await getMemberIds(message.conversationId);
-      //     let memberId = memberIds[0];
-      //     if (memberId === user.userId) memberId = memberIds[1];
-      //     directConversations.value.get(memberId).messages =
-      //       directConversations.value
-      //         .get(memberId)
-      //         .messages.filter((m) => m.messageId != message.messageId);
-      //   }
-      // } catch (e) {
-      //   handleError(e);
-      // }
+      try {
+        await deleteMessage(message.messageId);
+        if (this.direct) {
+          directMessages.value.set(
+            this.id,
+            directMessages.value
+              .get(this.id)
+              .filter((m) => m.messageId !== message.messageId),
+          );
+        } else {
+          groupMessages.value.set(
+            this.id,
+            groupMessages.value
+              .get(this.id)
+              .filter((m) => m.messageId !== message.messageId),
+          );
+        }
+      } catch (e) {
+        handleError(e);
+      }
     },
   },
 };

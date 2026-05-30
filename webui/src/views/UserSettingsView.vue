@@ -1,14 +1,13 @@
 <script>
-import SettingsCard from "@/components/Settings/SettingsCard.vue";
-import Topbar from "@/components/Shared/Topbar.vue";
-import Bottombar from "@/components/Shared/Bottombar.vue";
 import { user, updateUserState } from "@/state/user";
-
 import { defaultUserPhotoUrl } from "@/assets/default";
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users";
 import { handleError } from "@/utils/errors";
 import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
+import SettingsCard from "@/components/Settings/SettingsCard.vue";
+import Topbar from "@/components/Shared/Topbar.vue";
+import Bottombar from "@/components/Shared/Bottombar.vue";
 
 export default {
   components: { SettingsCard, Topbar, Bottombar },

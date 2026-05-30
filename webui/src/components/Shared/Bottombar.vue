@@ -1,11 +1,11 @@
 <script>
-import { users, userId } from "@/state/users";
+import { user } from "@/state/user";
 
 export default {
   computed: {
     footerText() {
-      if (userId.value) {
-        return `Logged as ${users.get(userId.value).name}`;
+      if (user.userId) {
+        return `Logged as ${user.name}`;
       }
 
       return "Made by Simone Gentili";

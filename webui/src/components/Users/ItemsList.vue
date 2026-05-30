@@ -1,7 +1,8 @@
 <script>
 import ItemPicker from "@/components/Users/ItemPicker.vue";
 import { groups } from "@/state/conversations";
-import { users, userId } from "@/state/user";
+import { users } from "@/state/users";
+import { user } from "@/state/user";
 
 export default {
   components: { ItemPicker },
@@ -19,7 +20,7 @@ export default {
   computed: {
     items() {
       const fetchedUsers = [...users.value.values()]
-        .filter((u) => u.userId != userId.value)
+        .filter((u) => u.userId != user.userId)
         .filter((u) => !this.excludedUsers?.some((e) => e.userId === u.userId))
         .map((u) => ({ ...u, id: u.userId, isGroup: false }));
 
@@ -33,10 +34,10 @@ export default {
         .map((g) => ({ ...g, id: g.conversationId, isGroup: true }));
 
       if (this.includeUsers && this.includeGroups)
-        this.items = [...fetchedUsers, ...fetchedGroups];
-      else if (this.includeUsers) this.items = fetchedUsers;
-      else if (this.includeGroups) this.items = fetchedGroups;
-      else this.items = [];
+        return [...fetchedUsers, ...fetchedGroups];
+      else if (this.includeUsers) return fetchedUsers;
+      else if (this.includeGroups) return fetchedGroups;
+      else return [];
     },
   },
 };
@@ -63,5 +64,20 @@ export default {
   box-shadow: 0 25px 90px var(--shadow);
 
   backdrop-filter: blur(20px);
+}
+
+.users-list {
+  width: min(720px, 100%);
+  padding: 20px;
+  border-radius: 14px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 25px 90px var(--shadow);
+
+  backdrop-filter: blur(20px);
+
+  max-height: 70vh; /* oppure un valore fisso tipo 400px */
+  overflow-y: auto; /* abilita scroll verticale */
 }
 </style>

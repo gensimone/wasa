@@ -2,7 +2,7 @@
 import { getIcon } from "@/state/theme";
 import { handleError } from "@/utils/errors";
 import { sendMessage } from "@/services/conversations";
-import { userConversations, groupConversations } from "@/state/conversations";
+import { directMessages, groupMessages } from "@/state/conversations";
 
 export default {
   props: {
@@ -39,18 +39,13 @@ export default {
         );
 
         if (this.direct) {
-          const conversationData = userConversations.value.get(this.id);
-          if (conversationData) {
-            conversationData.messages.push(message);
+          if (directMessages.value.has(this.id)) {
+            directMessages.value.get(this.id).push(message);
           } else {
-            // We want to see the message immediately,
-            // without waiting for the next poll.
-            userConversations.value.set(this.id, {
-              messages: [message],
-            });
+            directMessages.value.set(this.id, [message]);
           }
         } else {
-          groupConversations.value.get(this.id).messages.push(message);
+          groupMessages.value.get(this.id).push(message);
         }
 
         this.$emit("triggerScrolldown");

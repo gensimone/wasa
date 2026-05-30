@@ -1,5 +1,5 @@
 import api from "@/services/axios";
-import { user } from "@/state/user";
+import { userId } from "@/state/user";
 
 export async function commentMessage(messageId, text, photo) {
   const formData = new FormData();
@@ -13,7 +13,7 @@ export async function commentMessage(messageId, text, photo) {
 
   const response = await api.post(`/comments/${messageId}`, formData, {
     headers: {
-      Authorization: user.userId,
+      Authorization: userId.value,
       "Content-Type": "multipart/form-data",
     },
   });
@@ -23,6 +23,6 @@ export async function commentMessage(messageId, text, photo) {
 
 export async function uncommentMessage(messageId) {
   return await api.delete(`/comments/${messageId}`, {
-    headers: { Authorization: user.userId },
+    headers: { Authorization: userId.value },
   });
 }

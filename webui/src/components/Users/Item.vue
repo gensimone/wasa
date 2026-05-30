@@ -1,5 +1,4 @@
 <script>
-import { defaultGroupPhotoUrl, defaultUserPhotoUrl } from "@/assets/default";
 import { expandUrl } from "@/utils/media";
 
 export default {
@@ -16,16 +15,6 @@ export default {
 
   emits: ["select"],
 
-  computed: {
-    url() {
-      if (this.photoUrl) {
-        return this.photoUrl;
-      }
-
-      return this.isGroup ? defaultGroupPhotoUrl : defaultUserPhotoUrl;
-    },
-  },
-
   methods: {
     expandUrl,
   },
@@ -35,7 +24,7 @@ export default {
 <template>
   <div class="item" :class="{ selected }" @click="$emit('select', item)">
     <div class="item-photo-wrapper">
-      <img :src="expandUrl(this.url)" class="item-photo" />
+      <img :src="expandUrl(item.photoUrl)" class="item-photo" />
     </div>
 
     <div class="item-info">

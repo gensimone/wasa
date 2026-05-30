@@ -1,8 +1,9 @@
-import { watch } from "vue";
-import { directMessages, groupMessages } from "@/state/conversations";
-import { getNotifier } from "@/notifier";
-import { users, userId } from "@/state/users";
 import router from "@/router";
+import { watch } from "vue";
+import { getNotifier } from "@/notifier";
+import { directMessages, groupMessages } from "@/state/conversations";
+import { users } from "@/state/users";
+import { user } from "@/state/user";
 
 let prevDirectMessages = new Map();
 let prevGroupMessages = new Map();
@@ -43,14 +44,14 @@ function handleNewMessages(newMap, oldMap, direct) {
 
     if (!oldMessages) continue;
 
-    const oldMessageIds = (oldMessages.messages || []).map((m) => m.messageId);
+    const oldMessageIds = oldMessages.map((m) => m.messageId);
 
     const newMessages = (messages || []).filter(
       (m) => !oldMessageIds.includes(m.messageId),
     );
 
     newMessages.forEach((message) => {
-      if (message.senderId !== userId.value) {
+      if (message.senderId !== user.userId) {
         const thumbnailUrl = users.value.get(message.senderId).photoUrl;
         getNotifier()?.message({
           text: message.text,

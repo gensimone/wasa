@@ -1,5 +1,5 @@
 <script>
-import { userId } from "@/state/users";
+import { user } from "@/state/user";
 import { getIcon } from "@/state/theme";
 
 export default {
@@ -9,7 +9,7 @@ export default {
 
   computed: {
     isMine() {
-      return this.message.senderId === userId.value;
+      return this.message.senderId === user.userId;
     },
   },
 

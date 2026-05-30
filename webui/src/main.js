@@ -3,14 +3,15 @@ import App from "@/App.vue";
 import router from "@/router";
 import notifier from "@/notifier";
 import { startMessageNotifier } from "@/notifier/messageNotifier";
-import { userId, hydrateUserId, startPollingUsers } from "@/state/users.js";
+import { startPollingUsers } from "@/state/users.js";
 import { startPollingConversations } from "@/state/conversations.js";
-
+import { user, hydrateUserState, startPollingUser } from "@/state/user";
 import "./styles/index.css";
 
-hydrateUserId();
+hydrateUserState();
 
-if (userId.value) {
+if (user.userId) {
+  startPollingUser();
   startPollingUsers();
   startPollingConversations();
 

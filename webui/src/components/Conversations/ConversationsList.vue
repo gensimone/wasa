@@ -1,6 +1,7 @@
 <script>
 import { getIcon } from "@/state/theme";
-import { groupConversations, userConversations } from "@/state/conversations";
+import { users } from "@/state/users";
+import { groupMessages, directMessages, groups } from "@/state/conversations";
 import ConversationItem from "@/components/Conversations/ConversationItem.vue";
 
 export default {
@@ -13,11 +14,31 @@ export default {
   },
 
   computed: {
-    conversationsList() {
-      return [
-        ...Array.from(groupConversations.value.values()),
-        ...Array.from(userConversations.value.values()),
-      ];
+    conversations() {
+      let conversations = [];
+      for (const [id, messages] of directMessages.value) {
+        const user = users.value.get(id);
+        conversations.push({
+          id: id,
+          name: user.name,
+          photoUrl: user.photoUrl,
+          lastMessage: messages?.at(-1),
+          isGroup: false,
+        });
+      }
+
+      for (const [id, messages] of groupMessages.value) {
+        const group = groups.value.get(id);
+        conversations.push({
+          id: id,
+          name: group.name,
+          photoUrl: group.photoUrl,
+          lastMessage: messages?.at(-1),
+          isGroup: true,
+        });
+      }
+
+      return conversations;
     },
   },
 };
@@ -34,7 +55,7 @@ export default {
     </div>
 
     <ConversationItem
-      v-for="c in conversationsList"
+      v-for="c in conversations"
       :key="`${c.isGroup ? 'g' : 'u'}-${c.id}`"
       :conversation="c"
       @select="$emit('select', c)"

@@ -2,7 +2,8 @@ import { getNotifier } from "@/notifier";
 import { getMessage } from "@/services/messages";
 import { getUserById } from "@/services/users";
 import { handleError } from "@/utils/errors";
-import { userConversations, groupConversations } from "@/state/conversations";
+import { groupMessages } from "@/state/conversations";
+import { users } from "@/state/users";
 import { getMyConversations } from "@/services/conversations";
 
 export async function isValidMessageId(id) {
@@ -23,7 +24,7 @@ export async function isValidMessageId(id) {
 }
 
 export async function isValidUserId(id) {
-  let isValid = userConversations.value.has(id);
+  let isValid = users.value.has(id);
 
   if (!isValid) {
     // We must make sure the user exists.
@@ -43,11 +44,11 @@ export async function isValidUserId(id) {
 }
 
 export async function isValidConversationId(id) {
-  let isValid = groupConversations.value.has(id);
+  let isValid = groupMessages.value.has(id);
 
-  if (groupConversations.value.size !== 0) return isValid;
+  if (groupMessages.value.size !== 0) return isValid;
 
-  // groupConversations may not have been loaded yet.
+  // groupMessages may not have been loaded yet.
   try {
     const fetched = (await getMyConversations()) || [];
     isValid = fetched

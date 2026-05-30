@@ -2,9 +2,9 @@
 import Poller from "@/services/poller";
 import logger from "@/utils/logger";
 import ContextMenu from "./ContextMenu/ContextMenu.vue";
-
+import { getTime, getCheckIcon } from "@/utils/messages";
 import { getIcon } from "@/state/theme";
-import { userId } from "@/state/users";
+import { user } from "@/state/user";
 import { expandUrl } from "@/utils/media";
 import { getReceipts, setMessageStatusAsRead } from "@/services/messages";
 import { setImageModal } from "@/state/imageModal";
@@ -31,7 +31,7 @@ export default {
 
   computed: {
     isMine() {
-      return this.message.senderId === userId.value;
+      return this.message.senderId === user.userId;
     },
   },
 
@@ -39,38 +39,7 @@ export default {
     expandUrl,
     getIcon,
     setImageModal,
-
-    getTime(sentAt) {
-      const date = new Date(sentAt);
-
-      const hh = String(date.getHours()).padStart(2, "0");
-      const mm = String(date.getMinutes()).padStart(2, "0");
-
-      return `${hh}:${mm}`;
-    },
-
-    updateCheckIcon(receipts) {
-      if (!receipts) {
-        this.poller?.stopPolling();
-        return;
-      }
-
-      const statuses = receipts.map((r) => r.status);
-
-      const hasSent = statuses.includes("sent");
-      const hasReceived = statuses.includes("received");
-      const allRead =
-        statuses.length > 0 && statuses.every((s) => s === "read");
-
-      if (hasSent) {
-        this.checkIcon = "check-sent";
-      } else if (hasReceived) {
-        this.checkIcon = "check-received";
-      } else if (allRead) {
-        this.checkIcon = "check-read";
-        this.poller?.stopPolling();
-      }
-    },
+    getTime,
 
     onRightClick(e) {
       e.preventDefault();
@@ -102,7 +71,7 @@ export default {
   ],
 
   async mounted() {
-    if (this.message.senderId !== userId.value) {
+    if (this.message.senderId !== user.userId) {
       try {
         await setMessageStatusAsRead(this.message.messageId);
       } catch (e) {
@@ -112,10 +81,15 @@ export default {
       }
     }
 
-    this.poller = new Poller(async () => {
+    this.poller = new Poller();
+
+    this.poller.callback = async () => {
       const receipts = await getReceipts(this.message.messageId);
-      this.updateCheckIcon(receipts);
-    });
+      const icon = getCheckIcon(receipts);
+      if (!icon || icon === "check-read") this.poller.stopPolling();
+
+      this.checkIcon = icon;
+    };
 
     this.poller.startPolling();
   },
@@ -128,6 +102,13 @@ export default {
 <template>
   <div class="message-item" :class="{ mine: isMine }">
     <div class="message-item-bubble" @contextmenu="onRightClick">
+      <img
+        v-if="message.isForwarded"
+        class="message-item-forward-icon"
+        :src="getIcon('forward')"
+        alt="forwarded"
+      />
+
       <div v-if="message.text" class="message-item-text">
         {{ message.text }}
       </div>
@@ -181,6 +162,8 @@ export default {
 }
 
 .message-item-bubble {
+  position: relative;
+
   max-width: 70%;
   padding: 10px 14px;
 
@@ -193,6 +176,18 @@ export default {
 .message-item.mine .message-item-bubble {
   background: var(--accent);
   border: 1px solid var(--accent-strong);
+}
+
+.message-item-forward-icon {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+
+  width: 20px;
+  height: 20px;
+
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .message-item-meta {
@@ -219,6 +214,7 @@ export default {
 }
 
 .message-item-text {
+  padding-left: 16px;
   font-size: 0.95rem;
   line-height: 1.35;
   word-wrap: break-word;

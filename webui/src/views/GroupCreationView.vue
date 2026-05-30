@@ -4,7 +4,7 @@ import { handleError } from "@/utils/errors";
 import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
 import { defaultGroupPhotoUrl } from "@/assets/default";
-import { groupConversations } from "@/state/conversations";
+import { groups } from "@/state/conversations";
 import { user } from "@/state/user";
 import SettingsCard from "@/components/Settings/SettingsCard.vue";
 import Topbar from "@/components/Shared/Topbar.vue";
@@ -28,11 +28,9 @@ export default {
     async createGroup() {
       try {
         await this.submit(async (name) => {
-          const isNotValid = Array.from(groupConversations.value.values()).some(
-            (g) => {
-              return g.founderId === user.userId && g.name === name;
-            },
-          );
+          const isNotValid = Array.from(groups.value.values()).some((g) => {
+            return g.founderId === user.userId && g.name === name;
+          });
 
           if (isNotValid) {
             this.$notifier.error("Invalid group name.");
@@ -41,10 +39,7 @@ export default {
 
           const group = await createGroup(name, this.photo);
 
-          groupConversations.value.set(group.conversationId, {
-            ...group,
-            isGroup: true,
-          });
+          groups.value.set(group.conversationId, group);
 
           this.$router.push({
             name: "conversation",

@@ -9,7 +9,8 @@ import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
 import { defaultGroupPhotoUrl } from "@/assets/default";
 import { handleError } from "@/utils/errors";
-import { userId, users } from "@/state/users";
+import { users } from "@/state/users";
+import { user } from "@/state/user";
 import { groups } from "@/state/conversations";
 
 import {
@@ -27,24 +28,28 @@ export default {
   components: { Bottombar, Topbar, SettingsCard, MemberList, ItemsList },
 
   computed: {
+    groups() {
+      return groups.value;
+    },
+
     groupId() {
       return Number(this.$route.params.id);
     },
 
     founderId() {
-      return groups.value.get(this.groupId)?.founderId;
+      return this.groups.get(this.groupId)?.founderId;
     },
 
     isFounder() {
-      return this.founderId === userId.value;
+      return this.founderId === user.userId;
     },
 
     groupName() {
-      return groups.value.get(this.groupId)?.name;
+      return this.groups.get(this.groupId)?.name;
     },
 
     groupPhotoUrl() {
-      return groups.value.get(this.groupId)?.photoUrl || defaultGroupPhotoUrl;
+      return this.groups.get(this.groupId)?.photoUrl;
     },
   },
 
@@ -63,6 +68,15 @@ export default {
       handler(newName) {
         this.text = newName || "";
       },
+    },
+
+    groups: {
+      handler(groups) {
+        if (!groups.has(this.groupId)) {
+          this.$router.push("/home");
+        }
+      },
+      deep: true,
     },
   },
 
@@ -173,9 +187,10 @@ export default {
   async mounted() {
     this.poller = new Poller(async () => {
       const memberIds = await getMemberIds(this.groupId);
-      this.members = users.value.filter((u) =>
-        memberIds.some((m) => u.userId === m),
-      );
+      this.members = users.value
+        .values()
+        .filter((u) => memberIds.some((m) => u.userId === m))
+        .toArray();
     }, 10000);
 
     this.poller.startPolling();

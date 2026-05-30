@@ -17,7 +17,7 @@ export function applyTheme(value) {
 }
 
 export function getIcon(name) {
-  const dir = isDark.value ? "light" : "dark"; // Inverted
+  const dir = isDark.value ? "light" : "dark";
   const ext = name?.endsWith(".svg") ? "" : ".svg";
 
   return `/icons/${dir}/${name}${ext}`;

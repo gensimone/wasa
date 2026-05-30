@@ -1,23 +1,65 @@
 <script>
+import Poller from "@/services/poller";
 import { expandUrl } from "@/utils/media";
+import { user } from "@/state/user";
+import { getTime, getCheckIcon } from "@/utils/messages";
+import { getIcon } from "@/state/theme";
+import { getReceipts } from "@/services/messages";
 
 export default {
   props: {
-    conversation: { type: Object, required: true },
+    conversation: {
+      id: { type: Number }, // User or group id.
+      name: { type: String, default: "" }, // User or group name.
+      photoUrl: { type: String, default: "" }, // User of group photo url.
+      lastMessage: { type: Object }, // Conversation last message.
+      isGroup: { type: Boolean }, // Is it a group or user?
+    },
+  },
+
+  data() {
+    return {
+      checkIcon: "check-sent",
+    };
   },
 
   emits: ["select"],
 
   computed: {
-    lastMessage() {
-      return this.conversation?.messages?.at?.(-1);
+    isMine() {
+      return this.conversation.lastMessage.senderId === user.userId;
     },
   },
 
-  methods: { expandUrl },
+  methods: {
+    expandUrl,
+    getTime,
+    getIcon,
+  },
+
+  async mounted() {
+    if (!this.isMine) return;
+
+    this.poller = new Poller();
+
+    this.poller.callback = async () => {
+      const receipts = await getReceipts(
+        this.conversation.lastMessage.messageId,
+      );
+      const icon = getCheckIcon(receipts);
+      if (!icon || icon === "check-read") this.poller.stopPolling();
+
+      this.checkIcon = icon;
+    };
+
+    this.poller.startPolling();
+  },
+
+  beforeUnmount() {
+    this.poller?.stopPolling();
+  },
 };
 </script>
-
 <template>
   <div class="conversation-item" @click="$emit('select', conversation)">
     <div class="conversation-item-photo-wrapper">
@@ -28,23 +70,43 @@ export default {
     </div>
 
     <div class="conversation-item-info">
-      <div class="conversation-item-name">
-        {{ conversation.name }}
+      <div class="conversation-item-header">
+        <div class="conversation-item-name">
+          {{ conversation.name }}
+        </div>
+
+        <div class="conversation-item-right">
+          <div
+            v-if="conversation.lastMessage?.attachmentUrl"
+            class="conversation-item-attachment-inline"
+          >
+            <img
+              :src="expandUrl(conversation.lastMessage.attachmentUrl)"
+              class="conversation-item-photo"
+            />
+          </div>
+
+          <div v-if="conversation.lastMessage" class="conversation-item-time">
+            {{ getTime(conversation.lastMessage.createdAt) }}
+          </div>
+        </div>
       </div>
 
-      <div v-if="lastMessage" class="conversation-item-last-message">
-        {{ lastMessage.text }}
-      </div>
-    </div>
+      <div class="conversation-item-text-box">
+        <img
+          v-if="isMine"
+          class="message-item-check-icon"
+          :src="getIcon(checkIcon)"
+          alt=""
+        />
 
-    <div
-      v-if="lastMessage?.attachmentUrl"
-      class="conversation-item-photo-wrapper"
-    >
-      <img
-        :src="expandUrl(lastMessage.attachmentUrl)"
-        class="conversation-item-photo"
-      />
+        <div
+          v-if="conversation.lastMessage"
+          class="conversation-item-last-message"
+        >
+          {{ conversation.lastMessage.text }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -67,6 +129,13 @@ export default {
   overflow: hidden;
 
   animation: fadeInUp 0.35s ease both;
+}
+
+.conversation-item-text-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 
 .conversation-item:hover {
@@ -95,6 +164,13 @@ export default {
   min-width: 0;
 }
 
+.conversation-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
 .conversation-item-name {
   font-size: 1.05rem;
   font-weight: 800;
@@ -106,13 +182,50 @@ export default {
   text-overflow: ellipsis;
 }
 
+.conversation-item-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.conversation-item-attachment-inline {
+  width: 50px;
+  height: 50px;
+
+  border-radius: 12px;
+  overflow: hidden;
+
+  flex-shrink: 0;
+}
+
+.conversation-item-attachment-inline img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.conversation-item-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+
+  white-space: nowrap;
+}
+
 .conversation-item-last-message {
   margin-top: 4px;
+
   font-size: 0.92rem;
   color: var(--text-muted);
 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.message-item-check-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.9;
 }
 </style>
