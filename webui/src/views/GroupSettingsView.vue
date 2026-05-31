@@ -22,7 +22,6 @@ import {
   leaveGroup,
   deleteGroup,
 } from "@/services/groups";
-
 import { getIcon } from "@/state/theme";
 
 export default {
