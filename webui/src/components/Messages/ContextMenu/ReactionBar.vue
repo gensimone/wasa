@@ -4,11 +4,11 @@ export default {
     message: { type: Object, required: true },
   },
 
-  emits: ["react"],
+  emits: ["reactToMessage"],
 
   methods: {
-    react(emoji) {
-      this.$emit("react", {
+    reactToMessage(emoji) {
+      this.$emit("reactToMessage", {
         message: this.message,
         emoji: emoji,
       });
@@ -19,19 +19,19 @@ export default {
 
 <template>
   <div class="reaction-bar">
-    <button @click="react('angry')">
+    <button @click="reactToMessage('angry')">
       <img class="reaction-btn" src="/icons/reactions/angry.svg" />
     </button>
-    <button @click="react('laugh')">
+    <button @click="reactToMessage('laugh')">
       <img class="reaction-btn" src="/icons/reactions/laugh.svg" />
     </button>
-    <button @click="react('like')">
+    <button @click="reactToMessage('like')">
       <img class="reaction-btn" src="/icons/reactions/like.svg" />
     </button>
-    <button @click="react('love')">
+    <button @click="reactToMessage('love')">
       <img class="reaction-btn" src="/icons/reactions/love.svg" />
     </button>
-    <button @click="react('sad')">
+    <button @click="reactToMessage('sad')">
       <img class="reaction-btn" src="/icons/reactions/sad.svg" />
     </button>
   </div>

@@ -1,16 +1,18 @@
 <script>
-import Poller from "@/services/poller";
 import logger from "@/utils/logger";
-import ContextMenu from "./ContextMenu/ContextMenu.vue";
-import { getTime, getCheckIcon } from "@/utils/messages";
+import ContextMenu from "@/components/Messages/ContextMenu/ContextMenu.vue";
+import MessageReactions from "@/components/Messages/MessageReactions.vue";
+import MessageCheckIcon from "@/components/Messages/MessageCheckIcon.vue";
+
+import { getTime } from "@/utils/messages";
 import { getIcon } from "@/state/theme";
 import { user } from "@/state/user";
 import { expandUrl } from "@/utils/media";
-import { getReceipts, setMessageStatusAsRead } from "@/services/messages";
+import { setMessageStatusAsRead } from "@/services/messages";
 import { setImageModal } from "@/state/imageModal";
 
 export default {
-  components: { ContextMenu },
+  components: { ContextMenu, MessageReactions, MessageCheckIcon },
 
   props: {
     message: { type: Object, required: true },
@@ -18,8 +20,6 @@ export default {
 
   data() {
     return {
-      poller: null,
-      checkIcon: "check-sent",
       menu: {
         visible: false,
         canClose: false,
@@ -63,7 +63,7 @@ export default {
   },
 
   emits: [
-    "react",
+    "reactToMessage",
     "replyToMessage",
     "forwardMessage",
     "showInfoMessage",
@@ -80,22 +80,6 @@ export default {
         return;
       }
     }
-
-    this.poller = new Poller();
-
-    this.poller.callback = async () => {
-      const receipts = await getReceipts(this.message.messageId);
-      const icon = getCheckIcon(receipts);
-      if (!icon || icon === "check-read") this.poller.stopPolling();
-
-      this.checkIcon = icon;
-    };
-
-    this.poller.startPolling();
-  },
-
-  beforeUnmount() {
-    this.poller?.stopPolling();
   },
 };
 </script>
@@ -125,12 +109,10 @@ export default {
           {{ getTime(message.createdAt) }}
         </span>
       </div>
-      <img
-        v-if="isMine"
-        class="message-item-check-icon"
-        :src="getIcon(checkIcon)"
-        alt=""
-      />
+
+      <MessageCheckIcon v-if="isMine" :messageId="message.messageId" />
+
+      <MessageReactions :messageId="message.messageId" />
 
       <Transition name="context">
         <ContextMenu
@@ -140,7 +122,7 @@ export default {
           :x="menu.x"
           :y="menu.y"
           @close="closeMenu"
-          @react="$emit('react', $event)"
+          @reactToMessage="$emit('reactToMessage', $event)"
           @replyToMessage="$emit('replyToMessage', $event)"
           @forwardMessage="$emit('forwardMessage', $event)"
           @showInfoMessage="$emit('showInfoMessage', $event)"
@@ -154,7 +136,7 @@ export default {
 <style scoped>
 .message-item {
   display: flex;
-  margin: 6px 20px;
+  margin: 15px 20px;
 }
 
 .message-item.mine {
@@ -221,12 +203,6 @@ export default {
   white-space: pre-wrap;
   padding-right: 40px;
   color: var(--text);
-}
-
-.message-item-check-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.9;
 }
 
 .context-enter-active,

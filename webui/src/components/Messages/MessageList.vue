@@ -46,7 +46,7 @@ export default {
   },
 
   emits: [
-    "react",
+    "reactToMessage",
     "replyToMessage",
     "forwardMessage",
     "showInfoMessage",
@@ -65,7 +65,7 @@ export default {
       v-for="m in messages"
       :key="m.messageId"
       :message="m"
-      @react="$emit('react', $event)"
+      @reactToMessage="$emit('reactToMessage', $event)"
       @replyToMessage="$emit('replyToMessage', $event)"
       @forwardMessage="$emit('forwardMessage', $event)"
       @showInfoMessage="$emit('showInfoMessage', $event)"

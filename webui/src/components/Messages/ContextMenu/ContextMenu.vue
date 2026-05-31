@@ -15,7 +15,7 @@ export default {
   emits: [
     "close",
 
-    "react",
+    "reactToMessage",
     "replyToMessage",
     "forwardMessage",
     "showInfoMessage",
@@ -54,7 +54,10 @@ export default {
     class="context-menu"
     :style="{ top: y + 'px', left: x + 'px' }"
   >
-    <ReactionBar :message="message" @react="$emit('react', $event)" />
+    <ReactionBar
+      :message="message"
+      @reactToMessage="$emit('reactToMessage', $event)"
+    />
     <MessageMenu
       :message="message"
       @replyToMessage="$emit('replyToMessage', $event)"

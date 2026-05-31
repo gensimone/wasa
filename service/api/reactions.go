@@ -45,9 +45,10 @@ func (rt *_router) addReaction(
 		return
 	default:
 		if reaction.Emoji == *emoji {
-			rt.sendResponse(w, "The same emoji was provied", http.StatusBadRequest)
+			rt.sendResponse(w, reaction, http.StatusCreated)
 			return
 		}
+
 		_, err = rt.db.UpdateReaction(*emoji, message.MessageId, user.UserId)
 		if err != nil {
 			rt.sendResponse(w, "Internal Server Error", http.StatusNotFound)

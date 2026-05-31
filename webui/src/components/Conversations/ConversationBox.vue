@@ -8,6 +8,8 @@ import { setImageModal } from "@/state/imageModal";
 import { users } from "@/state/users";
 import { groups, directMessages, groupMessages } from "@/state/conversations";
 import { deleteMessage } from "@/services/messages";
+import { addReaction } from "@/services/reactions";
+import { handleError } from "@/utils/errors";
 
 export default {
   components: { MessageList, ConversationInput },
@@ -23,7 +25,7 @@ export default {
     direct: { type: Boolean, required: true },
   },
 
-  emits: ["react", "replyToMessage", "showInfoMessage"],
+  emits: ["replyToMessage", "showInfoMessage"],
 
   computed: {
     groups() {
@@ -74,6 +76,17 @@ export default {
         name: "group",
         params: { id: this.id },
       });
+    },
+
+    async reactToMessage(reactionData) {
+      const message = reactionData.message;
+      const emoji = reactionData.emoji;
+
+      try {
+        await addReaction(message.messageId, emoji);
+      } catch (e) {
+        handleError(e);
+      }
     },
 
     forwardMessage(message) {
@@ -134,7 +147,7 @@ export default {
     <MessageList
       :messages="messages"
       :scrollTick="scrollTick"
-      @react="$emit('react', $event)"
+      @reactToMessage="reactToMessage"
       @replyToMessage="$emit('replyToMessage', $event)"
       @forwardMessage="forwardMessage"
       @showInfoMessage="$emit('showInfoMessage', $event)"
