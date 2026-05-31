@@ -48,11 +48,47 @@ func (rt *_router) deleteMessage(
 		return
 	}
 
-	_, err = rt.db.DeleteMessage(message.MessageId)
+	res, err := rt.db.DeleteMessage(message.MessageId)
 	if err != nil {
 		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
 		rt.baseLogger.Errorf("DeleteMessage: %v", err)
 		return
+	}
+	err = rt.checkRowsAffected(w, 1, res)
+	if err != nil {
+		return
+	}
+
+	// If the deleted message is the last message in the conversation, delete the
+	// conversation for both users (groups do not count).
+	isGroup, err := rt.db.IsGroup(message.ConversationId)
+	if err != nil {
+		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+		rt.baseLogger.Errorf("IsGroup: %v", err)
+		return
+	}
+
+	if !isGroup {
+		messageIds, err := rt.db.GetMessageIds(message.ConversationId)
+		if err != nil {
+			rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+			rt.baseLogger.Errorf("GetMessageIds: %v", err)
+			return
+		}
+
+		if len(messageIds) == 0 {
+			res, err = rt.db.DeleteConversation(message.ConversationId)
+			if err != nil {
+				rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
+				rt.baseLogger.Errorf("DeleteConversation: %v", err)
+				return
+			}
+
+			err = rt.checkRowsAffected(w, 1, res)
+			if err != nil {
+				return
+			}
+		}
 	}
 
 	rt.sendResponse(w, nil, http.StatusNoContent)

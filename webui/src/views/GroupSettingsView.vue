@@ -12,7 +12,6 @@ import { handleError } from "@/utils/errors";
 import { users } from "@/state/users";
 import { user } from "@/state/user";
 import { groups } from "@/state/conversations";
-
 import {
   addToGroup,
   getMemberIds,
@@ -20,6 +19,8 @@ import {
   setGroupName,
   setGroupPhoto,
   deleteGroupPhoto,
+  leaveGroup,
+  deleteGroup,
 } from "@/services/groups";
 
 import { getIcon } from "@/state/theme";
@@ -98,15 +99,31 @@ export default {
   methods: {
     getIcon,
 
-    // TODO: Implement the following functions:
-    // - leaveGroup()  (any member)
-    // - removeGroup() (founder only)
+    async deleteGroup() {
+      try {
+        await deleteGroup(this.groupId);
+        this.$notifier.success(`Group "${this.groupName}" deleted`);
+        this.$router.push("/home");
+      } catch (e) {
+        handleError(e);
+      }
+    },
+
+    async leaveGroup() {
+      try {
+        await leaveGroup(this.groupId);
+        this.$notifier.success(`Group "${this.groupName}" left`);
+        this.$router.push("/home");
+      } catch (e) {
+        handleError(e);
+      }
+    },
 
     async addMemberToGroup(user) {
       try {
         const newMember = await addToGroup(this.groupId, user.id);
         this.$notifier.success(`User ${newMember.name} added`);
-        return newMember;
+        return user;
       } catch (e) {
         handleError(e);
       }
@@ -191,7 +208,7 @@ export default {
         .values()
         .filter((u) => memberIds.some((m) => u.userId === m))
         .toArray();
-    }, 10000);
+    }, 5000);
 
     this.poller.startPolling();
   },
@@ -206,20 +223,34 @@ export default {
   <div class="app">
     <Topbar :actions="[{ icon: 'back', onClick: () => $router.back() }]" />
     <div class="content-column">
-      <SettingsCard
-        :enableEditing="isFounder"
-        :photoUrl="photoUrl"
-        :photoChanged="photoChanged"
-        :text="text"
-        title="Group name"
-        submitButtonText="Update"
-        :loading="loading"
-        @uploadPhoto="uploadPhoto"
-        @revertPhoto="revertPhoto"
-        @deletePhoto="deletePhoto"
-        @keyPress="setText"
-        @submit="updateGroup"
-      />
+      <div class="group-settings">
+        <SettingsCard
+          style="display: flex"
+          :enableEditing="isFounder"
+          :photoUrl="photoUrl"
+          :photoChanged="photoChanged"
+          :text="text"
+          title="Group name"
+          submitButtonText="Update"
+          :loading="loading"
+          @uploadPhoto="uploadPhoto"
+          @revertPhoto="revertPhoto"
+          @deletePhoto="deletePhoto"
+          @keyPress="setText"
+          @submit="updateGroup"
+        />
+
+        <button class="submit-button" @click="leaveGroup">
+          <img class="icon-img" :src="getIcon('leave')" />
+          Leave
+        </button>
+
+        <button v-if="isFounder" class="submit-button" @click="deleteGroup">
+          <img class="icon-img" :src="getIcon('trash')" />
+          Delete
+        </button>
+      </div>
+
       <div class="items-list">
         <div v-if="inAddToGroup">
           <button
@@ -255,7 +286,7 @@ export default {
 <style scoped>
 .content-column {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   align-items: flex-start;
   padding: 20px;
 
@@ -263,9 +294,13 @@ export default {
   margin: 100px auto;
 }
 
+.group-settings {
+  width: min(600px, 50%);
+}
+
 .items-list {
-  width: min(720px, 100%);
-  padding: 20px;
+  width: min(720px, 50%);
+  padding: 10px;
   border-radius: 22px;
 
   border: 1px solid var(--border);

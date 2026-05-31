@@ -8,18 +8,47 @@ import { user } from "@/state/user";
 let prevDirectMessages = new Map();
 let prevGroupMessages = new Map();
 
+let stopDirectMessagesWatch = null;
+let stopGroupMessagesWatch = null;
+
+let dmFirstBoot = true;
+let gmFirstBoot = true;
+
+export function stopMessageNotifier() {
+  stopDirectMessagesWatch?.();
+  stopGroupMessagesWatch?.();
+
+  stopDirectMessagesWatch = null;
+  stopGroupMessagesWatch = null;
+
+  dmFirstBoot = false;
+  gmFirstBoot = false;
+}
+
 export function startMessageNotifier() {
-  watch(
+  stopDirectMessagesWatch = watch(
     directMessages,
     (newMap) => {
+      if (dmFirstBoot) {
+        prevDirectMessages = new Map(newMap);
+        dmFirstBoot = false;
+        return;
+      }
+
       handleNewMessages(newMap, prevDirectMessages, true);
     },
     { deep: true },
   );
 
-  watch(
+  stopGroupMessagesWatch = watch(
     groupMessages,
     (newMap) => {
+      if (gmFirstBoot) {
+        prevGroupMessages = new Map(newMap);
+        gmFirstBoot = false;
+        return;
+      }
+
       handleNewMessages(newMap, prevGroupMessages, false);
     },
     { deep: true },
@@ -40,14 +69,10 @@ function handleNewMessages(newMap, oldMap, direct) {
   for (const [id, messages] of newMap.entries()) {
     if (matchConversation(id, direct)) continue;
 
-    const oldMessages = oldMap.get(id);
-
-    if (!oldMessages) continue;
-
-    const oldMessageIds = oldMessages.map((m) => m.messageId);
+    const oldMessageIds = oldMap.get(id)?.map((m) => m.messageId);
 
     const newMessages = (messages || []).filter(
-      (m) => !oldMessageIds.includes(m.messageId),
+      (m) => !oldMessageIds?.includes(m.messageId),
     );
 
     newMessages.forEach((message) => {

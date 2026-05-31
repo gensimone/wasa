@@ -1,6 +1,7 @@
 <script>
 import MessageList from "@/components/Messages/MessageList.vue";
 import ConversationInput from "@/components/Conversations/ConversationInput.vue";
+import { defaultUserPhotoUrl, defaultGroupPhotoUrl } from "@/assets/default";
 import { expandUrl } from "@/utils/media";
 import { getIcon } from "@/state/theme";
 import { setImageModal } from "@/state/imageModal";
@@ -47,8 +48,8 @@ export default {
 
     photoUrl() {
       return this.direct
-        ? users.value.get(this.id)?.photoUrl
-        : groups.value.get(this.id)?.photoUrl;
+        ? users.value.get(this.id)?.photoUrl || defaultUserPhotoUrl
+        : groups.value.get(this.id)?.photoUrl || defaultGroupPhotoUrl;
     },
   },
 

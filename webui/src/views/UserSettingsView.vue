@@ -1,10 +1,17 @@
 <script>
-import { user, updateUserState } from "@/state/user";
+import {
+  user,
+  updateUserState,
+  clearUserState,
+  stopPollingUser,
+} from "@/state/user";
 import { defaultUserPhotoUrl } from "@/assets/default";
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users";
 import { handleError } from "@/utils/errors";
 import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
+import { getIcon } from "@/state/theme";
+import { deleteUser } from "@/services/users";
 import SettingsCard from "@/components/Settings/SettingsCard.vue";
 import Topbar from "@/components/Shared/Topbar.vue";
 import Bottombar from "@/components/Shared/Bottombar.vue";
@@ -43,6 +50,19 @@ export default {
   },
 
   methods: {
+    getIcon,
+
+    async deleteUser() {
+      try {
+        await deleteUser();
+        stopPollingUser();
+        clearUserState();
+        this.$router.push("/");
+      } catch (e) {
+        handleError(e);
+      }
+    },
+
     async updateProfile() {
       try {
         await this.submit(async (name) => {
@@ -87,21 +107,40 @@ export default {
   <div class="app">
     <Topbar :actions="[{ icon: 'back', onClick: () => $router.back() }]" />
     <div class="content-center">
-      <SettingsCard
-        :photoUrl="photoUrl"
-        :enableEditing="true"
-        :photoChanged="photoChanged"
-        :text="text"
-        title="Username"
-        submitButtonText="Update"
-        :loading="loading"
-        @uploadPhoto="uploadPhoto"
-        @revertPhoto="revertPhoto"
-        @deletePhoto="deletePhoto"
-        @keyPress="setText"
-        @submit="updateProfile"
-      />
+      <div class="user-settings">
+        <SettingsCard
+          :photoUrl="photoUrl"
+          :enableEditing="true"
+          :photoChanged="photoChanged"
+          :text="text"
+          title="Username"
+          submitButtonText="Update"
+          :loading="loading"
+          @uploadPhoto="uploadPhoto"
+          @revertPhoto="revertPhoto"
+          @deletePhoto="deletePhoto"
+          @keyPress="setText"
+          @submit="updateProfile"
+        />
+        <button class="submit-button" @click="deleteUser">
+          <img class="icon-img" :src="getIcon('trash')" />
+          Delete
+        </button>
+      </div>
     </div>
     <Bottombar />
   </div>
 </template>
+
+<style scoped>
+.content-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-settings {
+  width: min(600px, 50%);
+}
+</style>

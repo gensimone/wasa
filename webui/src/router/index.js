@@ -1,6 +1,4 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-
-// Views
 import LoginView from "@/views/LoginView.vue";
 import HomeView from "@/views/HomeView.vue";
 import UserSettingsView from "@/views/UserSettingsView.vue";
@@ -9,15 +7,12 @@ import AddConversationView from "@/views/AddConversationView.vue";
 import GroupCreationView from "../views/GroupCreationView.vue";
 import GroupSettingsView from "../views/GroupSettingsView.vue";
 import ForwardMessageToUsersView from "@/views/ForwardMessageToUsersView.vue";
-
-// Validate routes
+import { stopMessageNotifier } from "@/notifier/messageNotifier";
 import {
   isValidMessageRoute,
   isValidGroupRoute,
   isValidConversationRoute,
 } from "@/router/validate";
-
-// Pollers
 import { stopPollingUsers, clearUsers } from "@/state/users";
 import {
   stopPollingConversations,
@@ -70,6 +65,7 @@ const router = createRouter({
 function cleanup() {
   stopPollingUsers();
   stopPollingConversations();
+  stopMessageNotifier();
 
   clearUsers();
   clearMessages();

@@ -27,7 +27,7 @@ export default {
 
   computed: {
     isMine() {
-      return this.conversation.lastMessage.senderId === user.userId;
+      return this.conversation.lastMessage?.senderId === user.userId;
     },
   },
 
@@ -75,18 +75,18 @@ export default {
           {{ conversation.name }}
         </div>
 
-        <div class="conversation-item-right">
+        <div v-if="conversation.lastMessage" class="conversation-item-right">
           <div
-            v-if="conversation.lastMessage?.attachmentUrl"
+            v-if="conversation.lastMessage.attachmentUrl"
             class="conversation-item-attachment-inline"
           >
             <img
-              :src="expandUrl(conversation.lastMessage.attachmentUrl)"
+              :src="expandUrl(conversation.lastMessage?.attachmentUrl)"
               class="conversation-item-photo"
             />
           </div>
 
-          <div v-if="conversation.lastMessage" class="conversation-item-time">
+          <div class="conversation-item-time">
             {{ getTime(conversation.lastMessage.createdAt) }}
           </div>
         </div>

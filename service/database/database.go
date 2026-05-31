@@ -69,9 +69,6 @@ func New(db *sql.DB) (AppDatabase, error) {
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='users';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		stmts := []string{
-			// Enables foreign key constraints.
-			`PRAGMA foreign_keys = ON;`,
-
 			`CREATE TABLE users (
         user_id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,

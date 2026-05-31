@@ -55,7 +55,7 @@ export default {
 
 <style scoped>
 .setting-card {
-  width: min(600px, 92%);
+  width: min(600px, 100%);
   padding: 34px;
   display: flex;
   flex-direction: column;
