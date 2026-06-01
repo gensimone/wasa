@@ -29,8 +29,6 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/conversations/:id", rt.authRequest(rt.getConversation))
 	rt.router.POST("/conversations/:id/message", rt.authRequest(rt.sendMessage))
 	rt.router.POST("/conversations/:id/fmessage", rt.authRequest(rt.forwardMessage))
-	// Deprecated.
-	// rt.router.GET("/conversations/:id/last", rt.authRequest(rt.getLastMessage))
 
 	// Reactions.
 	rt.router.POST("/reactions/:messageId", rt.authRequest(rt.addReaction))
@@ -50,7 +48,6 @@ func (rt *_router) Handler() http.Handler {
 	// Users.
 	rt.router.GET("/users", rt.authRequest(rt.getUsers))
 	rt.router.GET("/users/:userId", rt.authRequest(rt.getUserById))
-	rt.router.DELETE("/users/:userId", rt.authRequest(rt.deleteUser))
 	rt.router.PUT("/users/:userId/name", rt.authRequest(rt.setMyUserName))
 	rt.router.PUT("/users/:userId/photo", rt.authRequest(rt.setMyPhoto))
 	rt.router.DELETE("/users/:userId/photo", rt.authRequest(rt.deleteMyPhoto))

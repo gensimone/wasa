@@ -22,7 +22,7 @@ export default {
       const fetchedUsers = [...users.value.values()]
         .filter((u) => u.userId != user.userId)
         .filter((u) => !this.excludedUsers?.some((e) => e.userId === u.userId))
-        .map((u) => ({ ...u, id: u.userId, isGroup: false }));
+        .map((u) => ({ ...u, id: u.userId, isDirect: true }));
 
       const fetchedGroups = [...groups.value.values()]
         .filter(
@@ -31,7 +31,7 @@ export default {
               (e) => e.conversationId === g.conversationId,
             ),
         )
-        .map((g) => ({ ...g, id: g.conversationId, isGroup: true }));
+        .map((g) => ({ ...g, id: g.conversationId, isDirect: false }));
 
       if (this.includeUsers && this.includeGroups)
         return [...fetchedUsers, ...fetchedGroups];

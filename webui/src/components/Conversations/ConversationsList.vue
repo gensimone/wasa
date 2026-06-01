@@ -16,27 +16,29 @@ export default {
   computed: {
     conversations() {
       let conversations = [];
-      for (const [id, messages] of directMessages.value) {
-        const user = users.value.get(id);
-        conversations.push({
-          id: id,
-          name: user.name,
-          photoUrl: user.photoUrl,
-          lastMessage: messages?.at(-1),
-          isGroup: false,
-        });
-      }
 
-      for (const [id, messages] of groupMessages.value) {
-        const group = groups.value.get(id);
-        conversations.push({
-          id: id,
-          name: group.name,
-          photoUrl: group.photoUrl,
-          lastMessage: messages?.at(-1),
-          isGroup: true,
-        });
-      }
+      const addConversations = (messagesMap, itemsMap, isDirect) => {
+        for (const [id, messages] of messagesMap.value) {
+          const item = itemsMap.value.get(id);
+          conversations.push({
+            id: id,
+            name: item.name,
+            photoUrl: item.photoUrl,
+            lastMessage: messages?.at(-1),
+            isDirect,
+          });
+        }
+      };
+
+      addConversations(directMessages, users, true);
+      addConversations(groupMessages, groups, false);
+
+      conversations.sort((a, b) => {
+        const aDate = a.lastMessage?.createdAt ?? "";
+        const bDate = b.lastMessage?.createdAt ?? "";
+
+        return bDate.localeCompare(aDate);
+      });
 
       return conversations;
     },
@@ -56,7 +58,7 @@ export default {
 
     <ConversationItem
       v-for="c in conversations"
-      :key="`${c.isGroup ? 'g' : 'u'}-${c.id}`"
+      :key="`${c.isDirect ? 'd' : 'g'}-${c.id}`"
       :conversation="c"
       @select="$emit('select', c)"
     />

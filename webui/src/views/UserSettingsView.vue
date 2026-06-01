@@ -1,17 +1,11 @@
 <script>
-import {
-  user,
-  updateUserState,
-  clearUserState,
-  stopPollingUser,
-} from "@/state/user";
+import { user, updateUserState } from "@/state/user";
 import { defaultUserPhotoUrl } from "@/assets/default";
 import { setMyUserName, setMyPhoto, deleteMyPhoto } from "@/services/users";
 import { handleError } from "@/utils/errors";
 import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
 import { getIcon } from "@/state/theme";
-import { deleteUser } from "@/services/users";
 import SettingsCard from "@/components/Settings/SettingsCard.vue";
 import Topbar from "@/components/Shared/Topbar.vue";
 import Bottombar from "@/components/Shared/Bottombar.vue";
@@ -51,17 +45,6 @@ export default {
 
   methods: {
     getIcon,
-
-    async deleteUser() {
-      try {
-        await deleteUser();
-        stopPollingUser();
-        clearUserState();
-        this.$router.push("/");
-      } catch (e) {
-        handleError(e);
-      }
-    },
 
     async updateProfile() {
       try {
@@ -122,10 +105,6 @@ export default {
           @keyPress="setText"
           @submit="updateProfile"
         />
-        <button class="submit-button" @click="deleteUser">
-          <img class="icon-img" :src="getIcon('trash')" />
-          Delete
-        </button>
       </div>
     </div>
     <Bottombar />

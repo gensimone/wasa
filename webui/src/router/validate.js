@@ -52,7 +52,7 @@ export async function isValidConversationId(id) {
   try {
     const fetched = (await getMyConversations()) || [];
     isValid = fetched
-      .filter((c) => c.isGroup)
+      .filter((c) => !c.isDirect)
       .map((c) => c.id)
       .includes(id);
   } catch (e) {

@@ -17,7 +17,7 @@ export default {
     thumbnailUrl: { type: String, required: false },
     attachmentUrl: { type: String, required: false },
     id: { type: Number, required: false },
-    isGroup: { type: Boolean, required: false },
+    isDirect: { type: Boolean, required: false },
   },
 
   data() {
@@ -94,7 +94,7 @@ export default {
         this.$router.push({
           name: "conversation",
           params: { id: this.id },
-          query: { direct: !this.isGroup },
+          query: { direct: this.isDirect },
         });
         this.close();
         imageModal.visible = false;

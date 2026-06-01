@@ -23,6 +23,7 @@ import {
   deleteGroup,
 } from "@/services/groups";
 import { getIcon } from "@/state/theme";
+import { groupMessages } from "../state/conversations";
 
 export default {
   components: { Bottombar, Topbar, SettingsCard, MemberList, ItemsList },
@@ -101,6 +102,7 @@ export default {
     async deleteGroup() {
       try {
         await deleteGroup(this.groupId);
+        groupMessages.value.delete(this.groupId);
         this.$notifier.success(`Group "${this.groupName}" deleted`);
         this.$router.push("/home");
       } catch (e) {
@@ -111,6 +113,7 @@ export default {
     async leaveGroup() {
       try {
         await leaveGroup(this.groupId);
+        groupMessages.value.delete(this.groupId);
         this.$notifier.success(`Group "${this.groupName}" left`);
         this.$router.push("/home");
       } catch (e) {

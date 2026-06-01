@@ -162,12 +162,3 @@ func (db *appdbimpl) GetUserByName(name string) (*User, error) {
 
 	return &user, nil
 }
-
-// Deletes the user specified by the user id.
-func (db *appdbimpl) DeleteUser(userId int64) (sql.Result, error) {
-	return db.c.Exec(
-		`DELETE FROM users
-		WHERE user_id = ?`,
-		userId,
-	)
-}

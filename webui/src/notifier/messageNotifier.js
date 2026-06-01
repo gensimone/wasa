@@ -81,7 +81,7 @@ function handleNewMessages(newMap, oldMap, direct) {
         getNotifier()?.message({
           text: message.text,
           id: id,
-          isGroup: !direct,
+          isDirect: direct,
           thumbnailUrl: thumbnailUrl,
           attachmentUrl: message.attachmentUrl,
         });

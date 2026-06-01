@@ -21,7 +21,7 @@ export default {
     async forwardMessage(items) {
       try {
         const messages = await Promise.all(
-          items.map((i) => forwardMessage(i.id, !i.isGroup, this.messageId)),
+          items.map((i) => forwardMessage(i.id, i.isDirect, this.messageId)),
         );
 
         // FIXME: Update message list in current conversation immediately.

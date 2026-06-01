@@ -2,6 +2,7 @@
 import Poller from "@/services/poller";
 import MessageReaction from "@/components/Messages/MessageReaction.vue";
 import { getReactions } from "@/services/reactions";
+import logger from "@/utils/logger";
 
 export default {
   components: { MessageReaction },
@@ -13,6 +14,7 @@ export default {
   data() {
     return {
       reactions: [],
+      poller: null,
     };
   },
 
@@ -29,20 +31,33 @@ export default {
 
       return [...reducedReactions.values()];
     },
+
+    async fetchReactions() {
+      try {
+        const reactions = (await getReactions(this.messageId)) || [];
+        this.reactions = this.reduceEmojies(reactions);
+      } catch (e) {
+        if (e.response?.status === 404) {
+          // The message has been deleted
+          console.log("Message deleted!");
+          this.poller?.stopPolling();
+          this.reactions = [];
+        } else {
+          logger.error(e);
+        }
+      }
+    },
   },
 
   async mounted() {
-    this.reactionsPoller = new Poller(async () => {
-      const reactions = (await getReactions(this.messageId)) || [];
+    this.poller = new Poller();
+    this.poller.callback = this.fetchReactions;
 
-      this.reactions = this.reduceEmojies(reactions);
-    });
-
-    this.reactionsPoller.startPolling();
+    this.poller.startPolling();
   },
 
   beforeUnmount() {
-    this.reactionsPoller?.stopPolling();
+    this.poller?.stopPolling();
   },
 };
 </script>

@@ -38,7 +38,7 @@ export default {
         thumbnailUrl: notification.thumbnailUrl || null,
         attachmentUrl: notification.attachmentUrl || null,
         id: notification.id || null,
-        isGroup: notification.isGroup || null,
+        isDirect: notification.isDirect || null,
       });
     },
 
@@ -58,7 +58,7 @@ export default {
       :key="n.notificationId"
       :text="n.text"
       :id="n.id"
-      :isGroup="n.isGroup"
+      :isDirect="n.isDirect"
       :attachmentUrl="n.attachmentUrl"
       :thumbnailUrl="n.thumbnailUrl"
       :type="n.type"

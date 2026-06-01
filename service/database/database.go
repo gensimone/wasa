@@ -15,7 +15,6 @@ type AppDatabase interface {
 	GetUserById(int64) (*User, error)
 	IsUserById(int64) (bool, error)
 	GetUserByName(string) (*User, error)
-	DeleteUser(int64) (sql.Result, error)
 
 	// Groups.
 	SetGroupName(int64, string) (sql.Result, error)

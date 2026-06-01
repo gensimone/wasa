@@ -389,8 +389,8 @@ paths:
                           description: Conversation or User id
                           type: integer
                           format: int64
-                        isGroup:
-                          description: Is it a group?
+                        isDirect:
+                          description: Is it a direct conversation?
                           type: boolean
         '400':
           $ref: "#/components/responses/BadRequest"
@@ -529,44 +529,6 @@ paths:
       responses:
         '201':
           description: Created
-          content:
-            application/json:
-              example:
-                type: object
-              schema:
-                $ref: "#/components/schemas/Message"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-
-  /conversations/{id}/last:
-    parameters:
-      - name: id
-        in: path
-        description: Conversation id
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: direct
-        in: query
-        description: Is it a direct message?
-        required: true
-        schema:
-          type: boolean
-    get:
-      tags: ["conversations"]
-      summary: Get the last message of conversation
-      description: Get the last message of conversation
-      operationId: getLastMessage
-      responses:
-        '200':
-          description: Successful
           content:
             application/json:
               example:
@@ -886,22 +848,6 @@ paths:
                 type: object
               schema:
                 $ref: "#/components/schemas/User"
-        '400':
-          $ref: "#/components/responses/BadRequest"
-        '401':
-          $ref: "#/components/responses/Unauthorized"
-        '404':
-          $ref: "#/components/responses/NotFound"
-        '500':
-          $ref: "#/components/responses/InternalServerError"
-    delete:
-      tags: ["users"]
-      summary: Delete user
-      description: Delete user
-      operationId: deleteUser
-      responses:
-        '204':
-          description: No Content
         '400':
           $ref: "#/components/responses/BadRequest"
         '401':

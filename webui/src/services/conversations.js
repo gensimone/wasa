@@ -57,12 +57,3 @@ export async function forwardMessage(id, direct, messageId) {
 
   return response.data;
 }
-
-// Not needed?
-// export async function getLastMessage(conversationId) {
-//     const response = await api.get(`/conversations/${conversationId}/last`,
-//         { headers: { Authorization: user.userId } }
-//     )
-//
-//     return response.data
-// }

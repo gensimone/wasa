@@ -13,7 +13,7 @@ export default {
       name: { type: String, default: "" }, // User or group name.
       photoUrl: { type: String, default: "" }, // User of group photo url.
       lastMessage: { type: Object }, // Conversation last message.
-      isGroup: { type: Boolean }, // Is it a group or user?
+      isDirect: { type: Boolean }, // Is it direct or not ?
     },
   },
 

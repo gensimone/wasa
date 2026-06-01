@@ -12,7 +12,7 @@ export const groups = ref(new Map());
 let poller = null;
 
 const CACHE_TTL = 30_000;
-const messageCache = new Map();
+export const messageCache = new Map();
 
 async function fetchMessageCached(id) {
   const cached = messageCache.get(id);
@@ -65,14 +65,14 @@ async function fetchDirectMessages(id) {
 export async function fetchConversations() {
   const fetched = (await getMyConversations()) || [];
 
-  const groupIds = fetched.filter((c) => c.isGroup).map((c) => c.id);
-  const userIds = fetched.filter((c) => !c.isGroup).map((c) => c.id);
+  const groupIds = fetched.filter((c) => !c.isDirect).map((c) => c.id);
+  const directIds = fetched.filter((c) => c.isDirect).map((c) => c.id);
 
   const [fetchedGroups, fetchedGroupMessages, fetchedDirectMessages] =
     await Promise.all([
       Promise.all(groupIds.map(fetchGroup)),
       Promise.all(groupIds.map(fetchGroupMessages)),
-      Promise.all(userIds.map(fetchDirectMessages)),
+      Promise.all(directIds.map(fetchDirectMessages)),
     ]);
 
   groups.value = new Map(fetchedGroups);

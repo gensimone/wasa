@@ -7,7 +7,7 @@ export default {
       name: { type: String, required: true },
       photoUrl: { type: String, required: true },
       id: { type: Number, required: true },
-      isGroup: { type: Boolean, required: true },
+      isDirect: { type: Boolean, required: true },
     },
 
     selected: { type: Boolean, required: true },

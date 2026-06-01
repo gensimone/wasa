@@ -39,7 +39,7 @@ export default {
 
       if (this.isSelected(item)) {
         this.selectedItems = this.selectedItems.filter(
-          (i) => i.id !== item.id || i.isGroup !== item.isGroup,
+          (i) => i.id !== item.id || i.isDirect !== item.isDirect,
         );
       } else {
         this.selectedItems.push(item);
@@ -52,7 +52,7 @@ export default {
 
     isSelected(item) {
       return this.selectedItems.some(
-        (i) => i.id === item.id && i.isGroup === item.isGroup,
+        (i) => i.id === item.id && i.isDirect === item.isDirect,
       );
     },
   },
@@ -70,12 +70,12 @@ export default {
     <div class="item-picker-list">
       <Item
         v-for="item in itemsToShow"
-        :key="item.isGroup ? `g-${item.id}` : `u-${item.id}`"
+        :key="item.isDirect ? `d-${item.id}` : `g-${item.id}`"
         :item="{
           name: item.name,
           photoUrl: item.photoUrl,
           id: item.id,
-          isGroup: item.isGroup,
+          isDirect: item.isDirect,
         }"
         :selected="isSelected(item)"
         @select="onSelect"
@@ -92,12 +92,12 @@ export default {
 
       <Item
         v-for="item in selectedItems"
-        :key="item.isGroup ? `g-${item.id}` : `u-${item.id}`"
+        :key="item.isDirect ? `d-${item.id}` : `g-${item.id}`"
         :item="{
           name: item.name,
           photoUrl: item.photoUrl,
           id: item.id,
-          isGroup: item.isGroup,
+          isDirect: item.isDirect,
         }"
         :selected="isSelected(item)"
         @select="onSelect"

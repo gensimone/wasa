@@ -46,32 +46,6 @@ func (rt *_router) getUserById(w http.ResponseWriter, _ *http.Request, ps httpro
 	}
 }
 
-// operationId: deleteUser
-func (rt *_router) deleteUser(w http.ResponseWriter, _ *http.Request, ps httprouter.Params, user database.User) {
-	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)
-	if err != nil {
-		rt.sendResponse(w, "Parameter userId must be an int64", http.StatusBadRequest)
-		return
-	}
-
-	if userId != user.UserId {
-		rt.sendResponse(
-			w,
-			"Parameter userId must be equal to the provided authentication id",
-			http.StatusBadRequest,
-		)
-		return
-	}
-	_, err = rt.db.DeleteUser(user.UserId)
-	if err != nil {
-		rt.sendResponse(w, "Internal Server Error", http.StatusInternalServerError)
-		rt.baseLogger.Errorf("DeleteUser: %v", err)
-		return
-	}
-
-	rt.sendResponse(w, nil, http.StatusNoContent)
-}
-
 // operationId: setMyUserName
 func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, user database.User) {
 	userId, err := strconv.ParseInt(ps.ByName("userId"), 10, 64)

@@ -13,7 +13,7 @@ export default {
       this.$router.push({
         name: "conversation",
         params: { id: conversation.id },
-        query: { direct: !conversation.isGroup },
+        query: { direct: conversation.isDirect },
       });
     },
 

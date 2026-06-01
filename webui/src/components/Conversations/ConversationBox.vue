@@ -6,7 +6,12 @@ import { expandUrl } from "@/utils/media";
 import { getIcon } from "@/state/theme";
 import { setImageModal } from "@/state/imageModal";
 import { users } from "@/state/users";
-import { groups, directMessages, groupMessages } from "@/state/conversations";
+import {
+  messageCache,
+  groups,
+  directMessages,
+  groupMessages,
+} from "@/state/conversations";
 import { deleteMessage } from "@/services/messages";
 import { addReaction } from "@/services/reactions";
 import { handleError } from "@/utils/errors";
@@ -99,6 +104,11 @@ export default {
     async deleteMessage(message) {
       try {
         await deleteMessage(message.messageId);
+
+        // This prevent other messages with the same ID
+        // to be fetched from the message cache.
+        messageCache.delete(message.messageId);
+
         if (this.direct) {
           directMessages.value.set(
             this.id,
