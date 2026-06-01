@@ -5,7 +5,7 @@ export default {
   components: { PhotoEditor },
 
   props: {
-    photoUrl: { type: String, required: true },
+    photoUrl: { type: String, required: false },
     photoChanged: { type: Boolean, required: true },
     title: { type: String, required: true },
     loading: { type: Boolean, required: true },

@@ -71,12 +71,7 @@ export default {
       <Item
         v-for="item in itemsToShow"
         :key="item.isDirect ? `d-${item.id}` : `g-${item.id}`"
-        :item="{
-          name: item.name,
-          photoUrl: item.photoUrl,
-          id: item.id,
-          isDirect: item.isDirect,
-        }"
+        :item="item"
         :selected="isSelected(item)"
         @select="onSelect"
       />

@@ -77,7 +77,9 @@ export default {
           this.$notifier.error("Invalid user name");
         else if (e.message === "NO_CHANGE")
           this.$notifier.warning("Nothing to do..");
-        else {
+        else if (e.response?.status === 409) {
+          this.$notifier.error("Username not available.");
+        } else {
           handleError(e);
         }
       }

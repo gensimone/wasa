@@ -131,7 +131,7 @@ export default {
       }
     },
 
-    async addUsersGroup(users) {
+    async addUsersToGroup(users) {
       // Avoid UI flickering by sorting members by ID.
       const addedMembers = await Promise.all(users.map(this.addMemberToGroup));
 
@@ -264,7 +264,7 @@ export default {
             Members
           </button>
           <ItemsList
-            @select="addUsersGroup"
+            @select="addUsersToGroup"
             :excludedUsers="members"
             :includeUsers="true"
             :includeGroups="false"

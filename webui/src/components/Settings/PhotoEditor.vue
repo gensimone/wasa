@@ -6,7 +6,7 @@ import { setImageModal } from "@/state/imageModal";
 
 export default {
   props: {
-    photoUrl: { type: String, required: true },
+    photoUrl: { type: String, required: false },
     photoChanged: { type: Boolean, required: true },
     loading: { type: Boolean, required: true },
     enableEditing: { type: Boolean, required: true },

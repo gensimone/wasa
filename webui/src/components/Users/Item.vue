@@ -3,13 +3,7 @@ import { expandUrl } from "@/utils/media";
 
 export default {
   props: {
-    item: {
-      name: { type: String, required: true },
-      photoUrl: { type: String, required: true },
-      id: { type: Number, required: true },
-      isDirect: { type: Boolean, required: true },
-    },
-
+    item: { type: Object, required: true },
     selected: { type: Boolean, required: true },
   },
 

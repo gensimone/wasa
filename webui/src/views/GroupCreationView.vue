@@ -4,7 +4,7 @@ import { handleError } from "@/utils/errors";
 import { usePhotoManager } from "@/composables/usePhotoManager";
 import { useSettingsForm } from "@/composables/useSettingsForm";
 import { defaultGroupPhotoUrl } from "@/assets/default";
-import { groups } from "@/state/conversations";
+import { groups, groupMessages } from "@/state/conversations";
 import { user } from "@/state/user";
 import SettingsCard from "@/components/Settings/SettingsCard.vue";
 import Topbar from "@/components/Shared/Topbar.vue";
@@ -39,7 +39,12 @@ export default {
 
           const group = await createGroup(name, this.photo);
 
-          groups.value.set(group.conversationId, group);
+          groups.value.set(group.conversationId, {
+            ...group,
+            photoUrl: group.photoUrl || defaultGroupPhotoUrl,
+          });
+
+          groupMessages.value.set(group.conversationId, []);
 
           this.$router.push({
             name: "conversation",
