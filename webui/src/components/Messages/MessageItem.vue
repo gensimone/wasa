@@ -1,5 +1,6 @@
 <script>
 import logger from "@/utils/logger";
+import Poller from "@/services/poller";
 import ContextMenu from "@/components/Messages/ContextMenu/ContextMenu.vue";
 import MessageReactions from "@/components/Messages/MessageReactions.vue";
 import MessageCheckIcon from "@/components/Messages/MessageCheckIcon.vue";
@@ -8,8 +9,12 @@ import { getTime } from "@/utils/messages";
 import { getIcon } from "@/state/theme";
 import { user } from "@/state/user";
 import { expandUrl } from "@/utils/media";
+import { addReaction, getReactions } from "@/services/reactions";
 import { setMessageStatusAsRead } from "@/services/messages";
 import { setImageModal } from "@/state/imageModal";
+import { handleError } from "@/utils/errors";
+import { getCheckIcon } from "@/utils/messages";
+import { getReceipts } from "@/services/messages";
 
 export default {
   components: { ContextMenu, MessageReactions, MessageCheckIcon },
@@ -18,8 +23,23 @@ export default {
     message: { type: Object, required: true },
   },
 
+  emits: [
+    "replyToMessage",
+    "forwardMessage",
+    "deleteMessage",
+    "showInfoMessage",
+  ],
+
   data() {
     return {
+      checkIcon: null,
+
+      reactionsPoller: null,
+      receiptsPoller: null,
+
+      reactions: [],
+      receipts: [],
+
       menu: {
         visible: false,
         canClose: false,
@@ -41,8 +61,20 @@ export default {
     setImageModal,
     getTime,
 
+    async reactToMessage(reactionData) {
+      const message = reactionData.message;
+      const emoji = reactionData.emoji;
+
+      try {
+        await addReaction(message.messageId, emoji);
+      } catch (e) {
+        handleError(e);
+      }
+    },
+
     onRightClick(e) {
       e.preventDefault();
+
       this.menu = {
         visible: true,
         canClose: false,
@@ -51,6 +83,31 @@ export default {
       };
 
       this.$nextTick(() => {
+        const menuEl = document.querySelector(".context-menu");
+
+        if (!menuEl) return;
+
+        const { offsetWidth, offsetHeight } = menuEl;
+
+        let x = e.clientX;
+        let y = e.clientY;
+
+        const margin = 8;
+
+        if (y + offsetHeight > window.innerHeight - margin) {
+          y = e.clientY - offsetHeight;
+        }
+
+        if (x + offsetWidth > window.innerWidth - margin) {
+          x = e.clientX - offsetWidth;
+        }
+
+        x = Math.max(margin, x);
+        y = Math.max(margin, y);
+
+        this.menu.x = x;
+        this.menu.y = y;
+
         setTimeout(() => {
           this.menu.canClose = true;
         }, 0);
@@ -60,17 +117,42 @@ export default {
     closeMenu() {
       this.menu.visible = false;
     },
+
+    async fetchReactions() {
+      try {
+        this.reactions = (await getReactions(this.message.messageId)) || [];
+      } catch (e) {
+        if (e.response?.status === 404) {
+          // The message has been deleted
+          this.reactionsPoller?.stopPolling();
+          this.reactions = [];
+        } else {
+          handleError(e);
+        }
+      }
+    },
+
+    async fetchReceipts() {
+      this.receipts = await getReceipts(this.message.messageId);
+      const icon = getCheckIcon(this.receipts);
+      if (!icon || icon === "check-read") this.receiptsPoller.stopPolling();
+
+      this.checkIcon = icon;
+    },
+
+    showInfoMessage() {
+      this.$emit("showInfoMessage", {
+        receipts: this.receipts,
+        reactions: this.reactions,
+      });
+    },
   },
 
-  emits: [
-    "reactToMessage",
-    "replyToMessage",
-    "forwardMessage",
-    "showInfoMessage",
-    "deleteMessage",
-  ],
-
   async mounted() {
+    this.reactionsPoller = new Poller();
+    this.reactionsPoller.callback = this.fetchReactions;
+    this.reactionsPoller.startPolling();
+
     if (this.message.senderId !== user.userId) {
       try {
         await setMessageStatusAsRead(this.message.messageId);
@@ -80,6 +162,15 @@ export default {
         return;
       }
     }
+
+    this.receiptsPoller = new Poller();
+    this.receiptsPoller.callback = this.fetchReceipts;
+    this.receiptsPoller.startPolling();
+  },
+
+  beforeUnmount() {
+    this.reactionsPoller?.stopPolling();
+    this.receiptsPoller?.stopPolling();
   },
 };
 </script>
@@ -110,25 +201,23 @@ export default {
         </span>
       </div>
 
-      <MessageCheckIcon v-if="isMine" :messageId="message.messageId" />
+      <MessageCheckIcon v-if="isMine" :checkIcon="checkIcon" />
 
-      <MessageReactions :messageId="message.messageId" />
+      <MessageReactions :reactions="reactions" />
 
-      <Transition name="context">
-        <ContextMenu
-          v-if="menu.visible"
-          :message="message"
-          :canClose="menu.canClose"
-          :x="menu.x"
-          :y="menu.y"
-          @close="closeMenu"
-          @reactToMessage="$emit('reactToMessage', $event)"
-          @replyToMessage="$emit('replyToMessage', $event)"
-          @forwardMessage="$emit('forwardMessage', $event)"
-          @showInfoMessage="$emit('showInfoMessage', $event)"
-          @deleteMessage="$emit('deleteMessage', $event)"
-        />
-      </Transition>
+      <ContextMenu
+        v-if="menu.visible"
+        :message="message"
+        :canClose="menu.canClose"
+        :x="menu.x"
+        :y="menu.y"
+        @close="closeMenu"
+        @reactToMessage="reactToMessage"
+        @showInfoMessage="showInfoMessage"
+        @replyToMessage="$emit('replyToMessage', $event)"
+        @forwardMessage="$emit('forwardMessage', $event)"
+        @deleteMessage="$emit('deleteMessage', $event)"
+      />
     </div>
   </div>
 </template>
@@ -203,31 +292,5 @@ export default {
   white-space: pre-wrap;
   padding-right: 40px;
   color: var(--text);
-}
-
-.context-enter-active,
-.context-leave-active {
-  transition: all 180ms ease;
-  transform-origin: top;
-}
-
-.context-enter-from {
-  opacity: 0;
-  transform: translateY(-8px) scale(0.98);
-}
-
-.context-enter-to {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.context-leave-from {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.context-leave-to {
-  opacity: 0;
-  transform: translateY(-6px) scale(0.98);
 }
 </style>

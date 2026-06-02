@@ -1,4 +1,7 @@
 <script>
+import { getIcon } from "@/state/theme";
+import { deleteReaction } from "@/services/reactions";
+import { handleError } from "vue";
 export default {
   props: {
     message: { type: Object, required: true },
@@ -7,12 +10,22 @@ export default {
   emits: ["reactToMessage"],
 
   methods: {
+    getIcon,
+
     reactToMessage(emoji) {
       this.$emit("reactToMessage", {
         message: this.message,
         emoji: emoji,
       });
     },
+
+    deleteReaction() {
+      try {
+        await deleteReaction(this.messageId)
+      } catch (e) {
+        handleError(e)
+      }
+    }
   },
 };
 </script>
@@ -33,6 +46,9 @@ export default {
     </button>
     <button @click="reactToMessage('sad')">
       <img class="reaction-btn" src="/icons/reactions/sad.svg" />
+    </button>
+    <button @click="deleteReaction">
+      <img class="icon-btn" :src="getIcon('remove')" />
     </button>
   </div>
 </template>

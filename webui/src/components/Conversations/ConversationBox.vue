@@ -13,7 +13,6 @@ import {
   groupMessages,
 } from "@/state/conversations";
 import { deleteMessage } from "@/services/messages";
-import { addReaction } from "@/services/reactions";
 import { handleError } from "@/utils/errors";
 
 export default {
@@ -29,8 +28,6 @@ export default {
     id: { type: Number, required: true },
     direct: { type: Boolean, required: true },
   },
-
-  emits: ["replyToMessage", "showInfoMessage"],
 
   computed: {
     groups() {
@@ -83,17 +80,6 @@ export default {
       });
     },
 
-    async reactToMessage(reactionData) {
-      const message = reactionData.message;
-      const emoji = reactionData.emoji;
-
-      try {
-        await addReaction(message.messageId, emoji);
-      } catch (e) {
-        handleError(e);
-      }
-    },
-
     forwardMessage(message) {
       this.$router.push({
         name: "message-forward",
@@ -128,6 +114,8 @@ export default {
         handleError(e);
       }
     },
+
+    replyToMessage() {},
   },
 };
 </script>
@@ -157,10 +145,8 @@ export default {
     <MessageList
       :messages="messages"
       :scrollTick="scrollTick"
-      @reactToMessage="reactToMessage"
-      @replyToMessage="$emit('replyToMessage', $event)"
+      @replyToMessage="replyToMessage"
       @forwardMessage="forwardMessage"
-      @showInfoMessage="$emit('showInfoMessage', $event)"
       @deleteMessage="deleteMessage"
     />
 

@@ -32,7 +32,7 @@ export default {
   align-items: center;
   justify-content: center;
 
-  margin-left: -6px;
+  margin-left: -15px;
 
   border-radius: 999px;
 

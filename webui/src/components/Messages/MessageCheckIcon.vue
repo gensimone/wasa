@@ -1,41 +1,13 @@
 <script>
-import Poller from "@/services/poller";
 import { getIcon } from "@/state/theme";
-import { getCheckIcon } from "@/utils/messages";
-import { getReceipts } from "@/services/messages";
 
 export default {
   props: {
-    messageId: { type: Number, required: true },
-  },
-
-  data() {
-    return {
-      poller: null,
-      checkIcon: "check-sent",
-    };
+    checkIcon: { type: String },
   },
 
   methods: {
     getIcon,
-  },
-
-  mounted() {
-    this.poller = new Poller();
-
-    this.poller.callback = async () => {
-      const receipts = await getReceipts(this.messageId);
-      const icon = getCheckIcon(receipts);
-      if (!icon || icon === "check-read") this.poller.stopPolling();
-
-      this.checkIcon = icon;
-    };
-
-    this.poller.startPolling();
-  },
-
-  beforeUnmount() {
-    this.poller?.stopPolling();
   },
 };
 </script>
