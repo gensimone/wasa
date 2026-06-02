@@ -1,19 +1,24 @@
 import api from "@/services/axios";
-import { userId } from "@/state/user";
+import { user } from "@/state/user";
 
-export async function commentMessage(messageId, text, photo) {
+export async function commentMessage(
+  messageId,
+  text,
+  attachment,
+  mediaType = "image",
+) {
   const formData = new FormData();
 
-  formData.append("text", text);
+  if (text) formData.append("text", text);
 
-  if (photo) {
-    formData.append("file", photo);
-    formData.append("mediaType", "photo");
+  if (attachment) {
+    formData.append("file", attachment);
+    formData.append("mediaType", mediaType);
   }
 
   const response = await api.post(`/comments/${messageId}`, formData, {
     headers: {
-      Authorization: userId.value,
+      Authorization: user.userId,
       "Content-Type": "multipart/form-data",
     },
   });
@@ -23,6 +28,6 @@ export async function commentMessage(messageId, text, photo) {
 
 export async function uncommentMessage(messageId) {
   return await api.delete(`/comments/${messageId}`, {
-    headers: { Authorization: userId.value },
+    headers: { Authorization: user.userId },
   });
 }

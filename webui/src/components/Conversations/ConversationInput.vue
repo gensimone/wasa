@@ -1,13 +1,23 @@
 <script>
+import { expandUrl } from "@/utils/media";
 import { getIcon } from "@/state/theme";
 import { handleError } from "@/utils/errors";
 import { sendMessage } from "@/services/conversations";
+import { commentMessage } from "@/services/comments";
 import { directMessages, groupMessages } from "@/state/conversations";
 
 export default {
   props: {
     id: { type: Number, required: true },
     direct: { type: Boolean, required: true },
+
+    message: { type: Object, required: false },
+  },
+
+  watch: {
+    message(v) {
+      this.messageToComment = v;
+    },
   },
 
   data() {
@@ -16,27 +26,39 @@ export default {
       attachment: null,
       attachmentUrl: null,
       sending: false,
+
+      messageToComment: null,
     };
   },
 
   emits: ["triggerScrolldown"],
 
   methods: {
+    expandUrl,
     getIcon,
 
-    async sendMessage() {
+    async handleSendMessage() {
       const cleanText = this.text?.trim();
       if (!cleanText && !this.attachment) return;
 
-      this.sending = true;
-
       try {
-        const message = await sendMessage(
-          this.id,
-          this.direct,
-          this.text,
-          this.attachment,
-        );
+        let message;
+
+        if (this.messageToComment) {
+          message = await commentMessage(
+            this.messageToComment.messageId,
+            this.text,
+            this.attachment,
+          );
+          this.messageToComment = null;
+        } else {
+          message = await sendMessage(
+            this.id,
+            this.direct,
+            this.text,
+            this.attachment,
+          );
+        }
 
         if (this.direct) {
           if (directMessages.value.has(this.id)) {
@@ -55,9 +77,14 @@ export default {
           this.removeAttachment();
         }
       } catch (e) {
+        // The message to comment has been deleted.
+        if (e.response?.status === 404 && this.messageToComment) {
+          this.messageToComment = null;
+        }
+
         handleError(e);
       } finally {
-        this.sending = false;
+        this.sending = true;
       }
     },
 
@@ -95,6 +122,18 @@ export default {
 
 <template>
   <div>
+    <div v-if="messageToComment" class="conversation-input-comment-preview">
+      <div v-if="messageToComment.attachmentUrl">
+        <img
+          class="conversation-input-preview-img"
+          :src="expandUrl(messageToComment.attachmentUrl)"
+        />
+      </div>
+      <div v-if="messageToComment.text">
+        {{ messageToComment.text }}
+      </div>
+    </div>
+
     <div v-if="attachment" class="conversation-input-attachment-preview">
       <img class="conversation-input-preview-img" :src="attachmentUrl" />
 
@@ -122,10 +161,10 @@ export default {
         :value="text"
         @input="text = $event.target.value"
         placeholder="Type a message..."
-        @keydown.enter.prevent="sendMessage"
+        @keydown.enter.prevent="handleSendMessage"
       />
 
-      <button class="icon-btn" :disabled="sending" @click="sendMessage">
+      <button class="icon-btn" :disabled="sending" @click="handleSendMessage">
         <img :src="getIcon('send')" class="icon-img" />
       </button>
     </div>

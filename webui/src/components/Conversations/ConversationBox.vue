@@ -21,6 +21,7 @@ export default {
   data() {
     return {
       scrollTick: 0,
+      messageToComment: null,
     };
   },
 
@@ -115,7 +116,9 @@ export default {
       }
     },
 
-    replyToMessage() {},
+    replyToMessage(message) {
+      this.messageToComment = message;
+    },
   },
 };
 </script>
@@ -145,6 +148,8 @@ export default {
     <MessageList
       :messages="messages"
       :scrollTick="scrollTick"
+      :direct="direct"
+      :id="id"
       @replyToMessage="replyToMessage"
       @forwardMessage="forwardMessage"
       @deleteMessage="deleteMessage"
@@ -152,6 +157,7 @@ export default {
 
     <ConversationInput
       @triggerScrolldown="scrollTick++"
+      :message="messageToComment"
       :direct="direct"
       :id="id"
     />

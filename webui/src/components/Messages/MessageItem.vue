@@ -2,33 +2,35 @@
 import logger from "@/utils/logger";
 import Poller from "@/services/poller";
 import ContextMenu from "@/components/Messages/ContextMenu/ContextMenu.vue";
+import MessageInfo from "@/components/Messages/MessageInfo.vue";
 import MessageReactions from "@/components/Messages/MessageReactions.vue";
 import MessageCheckIcon from "@/components/Messages/MessageCheckIcon.vue";
-
 import { getTime } from "@/utils/messages";
 import { getIcon } from "@/state/theme";
+import { directMessages, groupMessages } from "@/state/conversations";
 import { user } from "@/state/user";
 import { expandUrl } from "@/utils/media";
-import { addReaction, getReactions } from "@/services/reactions";
 import { setMessageStatusAsRead } from "@/services/messages";
 import { setImageModal } from "@/state/imageModal";
 import { handleError } from "@/utils/errors";
 import { getCheckIcon } from "@/utils/messages";
 import { getReceipts } from "@/services/messages";
+import {
+  addReaction,
+  getReactions,
+  deleteReaction,
+} from "@/services/reactions";
 
 export default {
-  components: { ContextMenu, MessageReactions, MessageCheckIcon },
+  components: { ContextMenu, MessageReactions, MessageCheckIcon, MessageInfo },
 
   props: {
     message: { type: Object, required: true },
+    id: { type: Number, required: true },
+    direct: { type: Boolean, required: true },
   },
 
-  emits: [
-    "replyToMessage",
-    "forwardMessage",
-    "deleteMessage",
-    "showInfoMessage",
-  ],
+  emits: ["replyToMessage", "forwardMessage", "deleteMessage", "jumpToMessage"],
 
   data() {
     return {
@@ -39,6 +41,8 @@ export default {
 
       reactions: [],
       receipts: [],
+
+      showInfoMessage: false,
 
       menu: {
         visible: false,
@@ -53,6 +57,20 @@ export default {
     isMine() {
       return this.message.senderId === user.userId;
     },
+
+    commentedMessage() {
+      if (!this.message.commentTo) return null;
+
+      const messages = this.direct
+        ? directMessages.value.get(this.id)
+        : groupMessages.value.get(this.id);
+
+      const commentedMessage = messages.find(
+        (m) => m.messageId === this.message.commentTo,
+      );
+
+      return commentedMessage;
+    },
   },
 
   methods: {
@@ -66,7 +84,11 @@ export default {
       const emoji = reactionData.emoji;
 
       try {
-        await addReaction(message.messageId, emoji);
+        const reaction = await addReaction(message.messageId, emoji);
+        this.reactions = [
+          reaction,
+          ...this.reactions.filter((r) => r.senderId !== user.userId),
+        ];
       } catch (e) {
         handleError(e);
       }
@@ -140,11 +162,17 @@ export default {
       this.checkIcon = icon;
     },
 
-    showInfoMessage() {
-      this.$emit("showInfoMessage", {
-        receipts: this.receipts,
-        reactions: this.reactions,
-      });
+    async deleteReaction() {
+      try {
+        await deleteReaction(this.message.messageId);
+        this.reactions = this.reactions.filter(
+          (r) => r.senderId !== user.userId,
+        );
+      } catch (e) {
+        if (e.response?.status !== 404) {
+          handleError(e);
+        }
+      }
     },
   },
 
@@ -175,8 +203,29 @@ export default {
 };
 </script>
 <template>
-  <div class="message-item" :class="{ mine: isMine }">
+  <div
+    class="message-item"
+    :class="{ mine: isMine }"
+    :id="`message-${message.messageId}`"
+  >
     <div class="message-item-bubble" @contextmenu="onRightClick">
+      <div
+        v-if="commentedMessage"
+        class="message-item-comment-preview"
+        @click="$emit('jumpToMessage', commentedMessage)"
+      >
+        <div v-if="commentedMessage.text" class="message-item-comment-text">
+          {{ commentedMessage.text }}
+        </div>
+
+        <div
+          v-if="commentedMessage.attachmentUrl"
+          class="message-item-comment-attachment"
+        >
+          <img :src="expandUrl(commentedMessage.attachmentUrl)" />
+        </div>
+      </div>
+
       <img
         v-if="message.isForwarded"
         class="message-item-forward-icon"
@@ -213,13 +262,20 @@ export default {
         :y="menu.y"
         @close="closeMenu"
         @reactToMessage="reactToMessage"
-        @showInfoMessage="showInfoMessage"
+        @showInfoMessage="showInfoMessage = true"
         @replyToMessage="$emit('replyToMessage', $event)"
         @forwardMessage="$emit('forwardMessage', $event)"
         @deleteMessage="$emit('deleteMessage', $event)"
       />
     </div>
   </div>
+  <MessageInfo
+    v-if="showInfoMessage"
+    :receipts="receipts"
+    :reactions="reactions"
+    @closeMessageInfo="showInfoMessage = false"
+    @deleteReaction="deleteReaction"
+  />
 </template>
 
 <style scoped>
@@ -292,5 +348,60 @@ export default {
   white-space: pre-wrap;
   padding-right: 40px;
   color: var(--text);
+}
+
+.message-item-comment-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  border-left: 3px solid var(--accent-strong);
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.message-item-comment-text {
+  flex: 1;
+
+  font-size: 0.8rem;
+  opacity: 0.7;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--text);
+}
+
+.message-item-comment-attachment img {
+  width: 48px;
+  height: 48px;
+
+  object-fit: cover;
+  border-radius: 6px;
+
+  flex-shrink: 0;
+}
+
+.message-highlight {
+  animation: message-highlight 1.5s ease;
+}
+
+@keyframes message-highlight {
+  0% {
+    background: var(--accent);
+  }
+
+  40% {
+    background: var(--accent-strong);
+  }
+
+  100% {
+    background: inherit;
+  }
 }
 </style>

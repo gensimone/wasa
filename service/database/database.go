@@ -108,7 +108,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 				media_type TEXT,
 				FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
 				FOREIGN KEY (sender_id) REFERENCES users(user_id),
-				FOREIGN KEY (comment_to) REFERENCES messages(message_id)
+				FOREIGN KEY (comment_to) REFERENCES messages(message_id) ON DELETE SET NULL
       );`,
 
 			`CREATE TABLE receipts (

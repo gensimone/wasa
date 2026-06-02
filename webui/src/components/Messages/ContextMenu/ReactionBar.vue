@@ -37,9 +37,6 @@ export default {
     <button @click="reactToMessage('sad')">
       <img class="reaction-btn" src="/icons/reactions/sad.svg" />
     </button>
-    <button @click="deleteReaction">
-      <img class="icon-btn" :src="getIcon('remove')" />
-    </button>
   </div>
 </template>
 

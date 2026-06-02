@@ -8,6 +8,8 @@ export default {
   props: {
     messages: { type: Array, required: true },
     scrollTick: { type: Number, required: true },
+    id: { type: Number, required: true },
+    direct: { type: Boolean, required: true },
   },
 
   watch: {
@@ -53,10 +55,21 @@ export default {
       });
     },
 
-    showInfoMessage(messageInfo) {
-      this.receipts = messageInfo.receipts;
-      this.reactions = messageInfo.reactions;
-      this.inShowInfoMessage = true;
+    jumpToMessage(message) {
+      const el = document.getElementById(`message-${message.messageId}`);
+
+      if (!el) return;
+
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      el.classList.add("message-highlight");
+
+      setTimeout(() => {
+        el.classList.remove("message-highlight");
+      }, 1500);
     },
   },
 
@@ -69,22 +82,17 @@ export default {
 </script>
 
 <template>
-  <div v-if="inShowInfoMessage" class="message-list">
-    <MessageInfo
-      @closeMessageInfo="inShowInfoMessage = false"
-      :receipts="receipts"
-      :reactions="reactions"
-    />
-  </div>
-  <div v-else class="message-list" ref="container">
+  <div class="message-list" ref="container">
     <MessageItem
       v-for="m in messages"
       :key="m.messageId"
       :message="m"
+      :direct="direct"
+      :id="id"
       @replyToMessage="$emit('replyToMessage', $event)"
       @forwardMessage="$emit('forwardMessage', $event)"
       @deleteMessage="$emit('deleteMessage', $event)"
-      @showInfoMessage="showInfoMessage"
+      @jumpToMessage="jumpToMessage"
     />
     <div ref="bottom"></div>
   </div>
