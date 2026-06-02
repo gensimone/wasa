@@ -1,7 +1,5 @@
 <script>
 import { getIcon } from "@/state/theme";
-import { deleteReaction } from "@/services/reactions";
-import { handleError } from "vue";
 export default {
   props: {
     message: { type: Object, required: true },
@@ -18,14 +16,6 @@ export default {
         emoji: emoji,
       });
     },
-
-    deleteReaction() {
-      try {
-        await deleteReaction(this.messageId)
-      } catch (e) {
-        handleError(e)
-      }
-    }
   },
 };
 </script>
