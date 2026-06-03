@@ -1,13 +1,26 @@
-FROM golang:1.25.1
+FROM golang:1.25.1 AS builder
 
-WORKDIR /src/
+WORKDIR /build
 
-COPY . .
+COPY go.mod  .
+COPY go.sum  .
+COPY vendor  ./vendor
 
-RUN go build -o ./webapi ./cmd/webapi
+RUN go mod verify
+
+COPY cmd     ./cmd
+COPY service ./service
+
+RUN go build -mod=vendor -o webapi ./cmd/webapi
+
+# ------------------------------------------- #
+
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+COPY --from=builder /build/webapi .
 
 EXPOSE 3000
 
-VOLUME /data
-
-CMD ["/src/webapi"]
+CMD ["./webapi"]
