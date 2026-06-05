@@ -1,0 +1,26 @@
+FROM node:20.19.5 AS builder
+
+WORKDIR /app/webui
+
+COPY webui/package.json .
+COPY webui/yarn.lock    .
+COPY webui/.yarnrc.yml  .
+COPY webui/.yarn        .
+
+RUN yarn install
+
+COPY webui/src ./src
+COPY webui/public ./public
+COPY webui/index.html webui/vite.config.js ./
+
+RUN yarn build
+
+# ----------------------------------------- #
+
+FROM nginx:stable
+
+COPY --from=builder /app/webui/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
