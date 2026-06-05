@@ -28,10 +28,10 @@ type WebAPIConfiguration struct {
 	Debug bool
 
 	// Paths used internally to serve/save media files.
-	RootMedia string `conf:"default:/tmp/wasatext/media"`
-	Media     string `conf:"default:/media"`
+	RootMedia string `conf:"default:uploads/images"`
+	Media     string `conf:"default:/images"`
 
-	DB string `conf:"default:/tmp/wasatext/db/wasatext.db"`
+	DB string `conf:"default:db/wasatext.db"`
 }
 
 // loadConfiguration creates a WebAPIConfiguration starting from flags, environment variables and configuration file.
