@@ -1038,7 +1038,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-vue@npm:^9.25.0":
+"eslint-plugin-vue@npm:9.25.0":
   version: 9.25.0
   resolution: "eslint-plugin-vue@npm:9.25.0"
   dependencies:
@@ -1090,7 +1090,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^9.2.0":
+"eslint@npm:9.2.0":
   version: 9.2.0
   resolution: "eslint@npm:9.2.0"
   dependencies:
@@ -2164,8 +2164,8 @@ __metadata:
   dependencies:
     "@vitejs/plugin-vue": "npm:^6.0.3"
     axios: "npm:^1.13.2"
-    eslint: "npm:^9.2.0"
-    eslint-plugin-vue: "npm:^9.25.0"
+    eslint: "npm:9.2.0"
+    eslint-plugin-vue: "npm:9.25.0"
     vite: "npm:^7.3.0"
     vue: "npm:^3.5.26"
     vue-router: "npm:^4.6.3"
