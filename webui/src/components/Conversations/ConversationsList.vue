@@ -9,10 +9,6 @@ export default {
 
   emits: ["select"],
 
-  methods: {
-    getIcon,
-  },
-
   computed: {
     conversations() {
       let conversations = [];
@@ -43,6 +39,10 @@ export default {
       return conversations;
     },
   },
+
+  methods: {
+    getIcon,
+  },
 };
 </script>
 
@@ -52,14 +52,18 @@ export default {
       <h2>Conversations</h2>
 
       <button class="icon-btn" @click="$router.push('/conversation/add')">
-        <img :src="getIcon('plus')" class="icon-img" />
+        <img :src="getIcon('plus')" class="icon-img">
       </button>
     </div>
 
     <ConversationItem
       v-for="c in conversations"
+      :id="c.id"
       :key="`${c.isDirect ? 'd' : 'g'}-${c.id}`"
-      :conversation="c"
+      :name="c.name"
+      :photo-url="c.photoUrl"
+      :last-message="c.lastMessage"
+      :is-direct="c.isDirect"
       @select="$emit('select', c)"
     />
   </div>

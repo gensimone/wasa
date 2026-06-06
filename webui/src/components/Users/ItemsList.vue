@@ -46,7 +46,7 @@ export default {
 <template>
   <div class="users-list">
     <ItemPicker
-      :canSelectMultiple="canSelectMultiple"
+      :can-select-multiple="canSelectMultiple"
       :items="items"
       @select="$emit('select', $event)"
     />

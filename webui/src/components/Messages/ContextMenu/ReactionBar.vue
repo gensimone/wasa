@@ -23,19 +23,19 @@ export default {
 <template>
   <div class="reaction-bar">
     <button @click="reactToMessage('angry')">
-      <img class="reaction-btn" src="/icons/reactions/angry.svg" />
+      <img class="reaction-btn" src="/icons/reactions/angry.svg">
     </button>
     <button @click="reactToMessage('laugh')">
-      <img class="reaction-btn" src="/icons/reactions/laugh.svg" />
+      <img class="reaction-btn" src="/icons/reactions/laugh.svg">
     </button>
     <button @click="reactToMessage('like')">
-      <img class="reaction-btn" src="/icons/reactions/like.svg" />
+      <img class="reaction-btn" src="/icons/reactions/like.svg">
     </button>
     <button @click="reactToMessage('love')">
-      <img class="reaction-btn" src="/icons/reactions/love.svg" />
+      <img class="reaction-btn" src="/icons/reactions/love.svg">
     </button>
     <button @click="reactToMessage('sad')">
-      <img class="reaction-btn" src="/icons/reactions/sad.svg" />
+      <img class="reaction-btn" src="/icons/reactions/sad.svg">
     </button>
   </div>
 </template>

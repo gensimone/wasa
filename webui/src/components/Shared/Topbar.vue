@@ -2,15 +2,15 @@
 import { isDark, getIcon } from "@/state/theme";
 
 export default {
-  computed: {
-    toggleThemeButton() {
-      return isDark.value ? "sun" : "moon";
-    },
-  },
 
   props: {
     actions: { type: Array, default: () => [] },
     links: { type: Array, default: () => [] },
+  },
+  computed: {
+    toggleThemeButton() {
+      return isDark.value ? "sun" : "moon";
+    },
   },
 
   methods: {
@@ -36,7 +36,7 @@ export default {
         :href="l.link"
         target="_blank"
       >
-        <img :src="getIcon(l.icon)" class="icon-img" />
+        <img :src="getIcon(l.icon)" class="icon-img">
       </a>
       <button
         v-for="(a, i) in actions"
@@ -44,10 +44,10 @@ export default {
         class="icon-btn"
         @click="a.onClick"
       >
-        <img :src="getIcon(a.icon)" class="icon-img" />
+        <img :src="getIcon(a.icon)" class="icon-img">
       </button>
       <button class="icon-btn" @click="toggleTheme">
-        <img :src="getIcon(toggleThemeButton)" class="icon-img" />
+        <img :src="getIcon(toggleThemeButton)" class="icon-img">
       </button>
     </div>
   </header>

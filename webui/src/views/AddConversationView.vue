@@ -28,17 +28,17 @@ export default {
     <div class="content">
       <div class="items-list">
         <div class="list-item" @click="$router.push('/group/create')">
-          <img :src="getIcon('plus')" class="icon-img" />
+          <img :src="getIcon('plus')" class="icon-img">
           <div class="item-info">
             <div class="item-name">Create a new group</div>
           </div>
         </div>
 
         <ItemsList
+          :can-select-multiple="false"
+          :include-users="true"
+          :include-groups="false"
           @select="select"
-          :canSelectMultiple="false"
-          :includeUsers="true"
-          :includeGroups="false"
         />
       </div>
     </div>

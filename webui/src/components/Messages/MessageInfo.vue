@@ -5,8 +5,6 @@ import { expandUrl } from "@/utils/media";
 import { getIcon } from "@/state/theme";
 
 export default {
-  name: "MessageInfo",
-
   props: {
     receipts: {
       type: Array,
@@ -80,7 +78,7 @@ export default {
               <img
                 class="message-info-avatar"
                 :src="expandUrl(messageInfoGetUserPhotoUrl(r.senderId))"
-              />
+              >
               <span class="message-info-name">
                 {{ messageInfoGetUserName(r.senderId) }}
               </span>
@@ -91,14 +89,14 @@ export default {
               class="message-info-delete-reaction"
               @click="$emit('deleteReaction')"
             >
-              <img :src="getIcon('remove')" class="icon-img" />
+              <img :src="getIcon('remove')" class="icon-img">
             </button>
 
             <div class="message-info-right">
               <img
                 class="message-info-emoji"
                 :src="`/icons/reactions/${r.emoji}.svg`"
-              />
+              >
             </div>
           </div>
 
@@ -119,7 +117,7 @@ export default {
               <img
                 class="message-info-avatar"
                 :src="expandUrl(messageInfoGetUserPhotoUrl(r.userId))"
-              />
+              >
               <span class="message-info-name">
                 {{ messageInfoGetUserName(r.userId) }}
               </span>

@@ -55,12 +55,12 @@ export default {
   <TransitionGroup name="toast" tag="div" class="toast-container">
     <Notification
       v-for="n in notifications"
+      :id="n.id"
       :key="n.notificationId"
       :text="n.text"
-      :id="n.id"
-      :isDirect="n.isDirect"
-      :attachmentUrl="n.attachmentUrl"
-      :thumbnailUrl="n.thumbnailUrl"
+      :is-direct="n.isDirect"
+      :attachment-url="n.attachmentUrl"
+      :thumbnail-url="n.thumbnailUrl"
       :type="n.type"
       :duration="n.duration"
       @close="remove(n.notificationId)"

@@ -14,12 +14,6 @@ export default {
 
   emits: ["revertPhoto", "deletePhoto", "uploadPhoto"],
 
-  methods: {
-    expandUrl,
-    getIcon,
-    setImageModal,
-  },
-
   computed: {
     isDefault() {
       return (
@@ -27,6 +21,12 @@ export default {
         this.photoUrl === defaultGroupPhotoUrl
       );
     },
+  },
+
+  methods: {
+    expandUrl,
+    getIcon,
+    setImageModal,
   },
 };
 </script>
@@ -40,7 +40,7 @@ export default {
         :disabled="loading"
         @click="$emit('revertPhoto')"
       >
-        <img :src="getIcon('revert')" class="icon-img" />
+        <img :src="getIcon('revert')" class="icon-img">
       </button>
       <button
         v-else-if="!isDefault"
@@ -48,27 +48,27 @@ export default {
         :disabled="loading"
         @click="$emit('deletePhoto')"
       >
-        <img :src="getIcon('trash')" class="icon-img" />
+        <img :src="getIcon('trash')" class="icon-img">
       </button>
-      <button v-else class="icon-btn invisible-placeholder" disabled></button>
+      <button v-else class="icon-btn invisible-placeholder" disabled />
     </div>
 
     <img
       :src="expandUrl(photoUrl)"
       class="avatar-big"
       @click="setImageModal(expandUrl(photoUrl))"
-    />
+    >
 
     <label v-if="enableEditing" class="icon-btn">
-      <img :src="getIcon('plus')" class="icon-img" />
+      <img :src="getIcon('plus')" class="icon-img">
 
       <input
         type="file"
         accept="image/*"
         hidden
-        @change="$emit('uploadPhoto', $event)"
         :disabled="!enableEditing"
-      />
+        @change="$emit('uploadPhoto', $event)"
+      >
     </label>
   </div>
 </template>

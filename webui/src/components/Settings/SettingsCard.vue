@@ -21,13 +21,13 @@ export default {
 <template>
   <div class="setting-card">
     <PhotoEditor
-      :photoUrl="photoUrl"
-      :enableEditing="enableEditing"
-      :photoChanged="photoChanged"
+      :photo-url="photoUrl"
+      :enable-editing="enableEditing"
+      :photo-changed="photoChanged"
       :loading="loading"
-      @uploadPhoto="$emit('uploadPhoto', $event)"
-      @revertPhoto="$emit('revertPhoto')"
-      @deletePhoto="$emit('deletePhoto')"
+      @upload-photo="$emit('uploadPhoto', $event)"
+      @revert-photo="$emit('revertPhoto')"
+      @delete-photo="$emit('deletePhoto')"
     />
 
     <div class="setting-card-input-box">
@@ -39,7 +39,7 @@ export default {
         :placeholder="text"
         :disabled="!enableEditing"
         @input="$emit('keyPress', $event.target.value)"
-      />
+      >
     </div>
 
     <button

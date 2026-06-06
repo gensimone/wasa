@@ -69,17 +69,17 @@ export default {
     <Topbar :actions="[{ icon: 'back', onClick: () => $router.back() }]" />
     <div class="content-center">
       <SettingsCard
-        :photoUrl="photoUrl"
-        :enableEditing="true"
-        :photoChanged="photoChanged"
+        :photo-url="photoUrl"
+        :enable-editing="true"
+        :photo-changed="photoChanged"
         :text="text"
         title="Group name"
-        submitButtonText="Create group"
+        submit-button-text="Create group"
         :loading="loading"
-        @uploadPhoto="uploadPhoto"
-        @revertPhoto="revertPhoto"
-        @deletePhoto="deletePhoto"
-        @keyPress="setText"
+        @upload-photo="uploadPhoto"
+        @revert-photo="revertPhoto"
+        @delete-photo="deletePhoto"
+        @key-press="setText"
         @submit="createGroup"
       />
     </div>

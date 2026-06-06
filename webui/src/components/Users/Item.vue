@@ -18,7 +18,7 @@ export default {
 <template>
   <div class="item" :class="{ selected }" @click="$emit('select', item)">
     <div class="item-photo-wrapper">
-      <img :src="expandUrl(item.photoUrl)" class="item-photo" />
+      <img :src="expandUrl(item.photoUrl)" class="item-photo">
     </div>
 
     <div class="item-info">

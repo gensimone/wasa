@@ -45,17 +45,17 @@ export default {
     <div class="content">
       <div class="items-list">
         <div class="list-item" @click="$router.back()">
-          <img :src="getIcon('remove')" class="icon-img" />
+          <img :src="getIcon('remove')" class="icon-img">
           <div class="item-info">
             <div class="item-name">Forward message to</div>
           </div>
         </div>
 
         <ItemsList
-          :includeUsers="true"
-          :includeGroups="true"
+          :include-users="true"
+          :include-groups="true"
+          :can-select-multiple="true"
           @select="forwardMessage"
-          :canSelectMultiple="true"
         />
       </div>
     </div>

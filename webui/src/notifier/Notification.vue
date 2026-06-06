@@ -20,6 +20,8 @@ export default {
     isDirect: { type: Boolean, required: false },
   },
 
+  emits: ["close"],
+
   data() {
     return {
       progress: 100,
@@ -45,8 +47,6 @@ export default {
   beforeUnmount() {
     this.clearTimers();
   },
-
-  emits: ["close"],
 
   methods: {
     expandUrl,
@@ -124,7 +124,7 @@ export default {
     @mouseleave="resumeTimer"
     @click="handleClick()"
   >
-    <img :src="photoUrl" class="notification-thumbnail" />
+    <img :src="photoUrl" class="notification-thumbnail">
 
     <div class="notification-content">
       <div class="notification-message">
@@ -135,7 +135,7 @@ export default {
         v-if="attachmentUrl"
         :src="expandUrl(attachmentUrl)"
         class="notification-attachment"
-      />
+      >
     </div>
 
     <div class="progress" :style="{ width: progress + '%' }" />

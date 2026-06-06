@@ -11,7 +11,7 @@ export default {
 <template>
   <div class="login-box">
     <h3 class="login-box-title">
-      Web Application And Software Architecture <br />
+      Web Application And Software Architecture <br>
       Project
     </h3>
 
@@ -23,11 +23,11 @@ export default {
           name="login"
           class="input-bar"
           :value="name"
-          @input="$emit('update:name', $event.target.value)"
           type="text"
           placeholder="Username"
           required
-        />
+          @input="$emit('update:name', $event.target.value)"
+        >
 
         <button class="submit-button" type="submit" :disabled="loading">
           {{ loading ? "Logging in..." : "Login" }}

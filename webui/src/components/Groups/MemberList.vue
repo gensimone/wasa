@@ -5,21 +5,17 @@ import { getIcon } from "@/state/theme";
 export default {
   components: { MemberItem },
 
-  data() {
-    return {
-      query: "",
-    };
-  },
-
   props: {
     members: { type: Array, required: true },
-    founderId: { required: true },
+    founderId: { type: Number, required: true },
   },
 
   emits: ["removeUser", "goInAddToGroup", "selectUser"],
 
-  methods: {
-    getIcon,
+  data() {
+    return {
+      query: "",
+    };
   },
 
   computed: {
@@ -31,6 +27,10 @@ export default {
       );
     },
   },
+
+  methods: {
+    getIcon,
+  },
 };
 </script>
 
@@ -40,7 +40,7 @@ export default {
       <h2>Members</h2>
 
       <button class="icon-btn" @click="$emit('goInAddToGroup')">
-        <img :src="getIcon('plus')" class="icon-img" />
+        <img :src="getIcon('plus')" class="icon-img">
       </button>
     </div>
 
@@ -49,15 +49,15 @@ export default {
       class="input-bar"
       placeholder="Search.."
       @input="query = $event.target.value"
-    />
+    >
 
     <MemberItem
       v-for="m in membersToShow"
       :key="m.userId"
       :member="m"
-      @removeUser="$emit('removeUser', $event)"
-      :founderId="founderId"
-      @selectUser="$emit('selectUser', $event)"
+      :founder-id="founderId"
+      @remove-user="$emit('removeUser', $event)"
+      @select-user="$emit('selectUser', $event)"
     />
   </div>
 </template>

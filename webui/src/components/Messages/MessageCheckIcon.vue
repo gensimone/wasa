@@ -13,7 +13,7 @@ export default {
 </script>
 
 <template>
-  <img class="message-item-check-icon" :src="getIcon(checkIcon)" alt="" />
+  <img class="message-item-check-icon" :src="getIcon(checkIcon)" alt="">
 </template>
 
 <style scoped>

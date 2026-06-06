@@ -56,14 +56,14 @@ export default {
   >
     <ReactionBar
       :message="message"
-      @reactToMessage="$emit('reactToMessage', $event)"
+      @react-to-message="$emit('reactToMessage', $event)"
     />
     <MessageMenu
       :message="message"
-      @replyToMessage="$emit('replyToMessage', $event)"
-      @forwardMessage="$emit('forwardMessage', $event)"
-      @showInfoMessage="$emit('showInfoMessage', $event)"
-      @deleteMessage="$emit('deleteMessage', $event)"
+      @reply-to-message="$emit('replyToMessage', $event)"
+      @forward-message="$emit('forwardMessage', $event)"
+      @show-info-message="$emit('showInfoMessage', $event)"
+      @delete-message="$emit('deleteMessage', $event)"
     />
   </div>
 </template>

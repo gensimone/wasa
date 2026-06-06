@@ -14,11 +14,7 @@ export default {
     message: { type: Object, required: false },
   },
 
-  watch: {
-    message(v) {
-      this.messageToComment = v;
-    },
-  },
+  emits: ["triggerScrolldown"],
 
   data() {
     return {
@@ -31,7 +27,15 @@ export default {
     };
   },
 
-  emits: ["triggerScrolldown"],
+  watch: {
+    message(v) {
+      this.messageToComment = v;
+    },
+  },
+
+  beforeUnmount() {
+    this.revokeAttachment();
+  },
 
   methods: {
     expandUrl,
@@ -117,10 +121,6 @@ export default {
       this.messageToComment = null;
     },
   },
-
-  beforeUnmount() {
-    this.revokeAttachment();
-  },
 };
 </script>
 
@@ -132,29 +132,29 @@ export default {
         <img
           class="conversation-input-preview-img"
           :src="expandUrl(messageToComment.attachmentUrl)"
-        />
+        >
       </div>
       <div v-if="messageToComment.text">
         {{ messageToComment.text }}
       </div>
 
       <button class="icon-btn" @click="abortComment">
-        <img :src="getIcon('trash')" class="icon-img" />
+        <img :src="getIcon('trash')" class="icon-img">
       </button>
     </div>
 
     <div v-if="attachment" class="conversation-input-data-preview">
       <div class="preview-label">Attachment</div>
-      <img class="conversation-input-preview-img" :src="attachmentUrl" />
+      <img class="conversation-input-preview-img" :src="attachmentUrl">
 
       <button class="icon-btn" @click="removeAttachment">
-        <img :src="getIcon('trash')" class="icon-img" />
+        <img :src="getIcon('trash')" class="icon-img">
       </button>
     </div>
 
     <div class="conversation-input">
       <button class="icon-btn" @click="$refs.fileInput.click()">
-        <img :src="getIcon('upload')" class="icon-img" />
+        <img :src="getIcon('upload')" class="icon-img">
       </button>
 
       <input
@@ -163,19 +163,19 @@ export default {
         accept="image/*"
         style="display: none"
         @change="addAttachment($event)"
-      />
+      >
 
       <input
         name="conversation-input-bar"
         class="input-bar"
         :value="text"
-        @input="text = $event.target.value"
         placeholder="Type a message..."
+        @input="text = $event.target.value"
         @keydown.enter.prevent="handleSendMessage"
-      />
+      >
 
       <button class="icon-btn" :disabled="sending" @click="handleSendMessage">
-        <img :src="getIcon('send')" class="icon-img" />
+        <img :src="getIcon('send')" class="icon-img">
       </button>
     </div>
   </div>

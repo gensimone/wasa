@@ -8,14 +8,14 @@ import { getReceipts } from "@/services/messages";
 
 export default {
   props: {
-    conversation: {
-      id: { type: Number }, // User or group id.
-      name: { type: String, default: "" }, // User or group name.
-      photoUrl: { type: String, default: "" }, // User of group photo url.
-      lastMessage: { type: Object }, // Conversation last message.
-      isDirect: { type: Boolean }, // Is it direct or not ?
-    },
+    id: { type: Number, required: true },
+    name: { type: String, default: "", required: true },
+    photoUrl: { type: String, default: "", required: true },
+    lastMessage: { type: Object, required: false },
+    isDirect: { type: Boolean, required: true },
   },
+
+  emits: ["select"],
 
   data() {
     return {
@@ -23,18 +23,10 @@ export default {
     };
   },
 
-  emits: ["select"],
-
   computed: {
     isMine() {
       return this.conversation.lastMessage?.senderId === user.userId;
     },
-  },
-
-  methods: {
-    expandUrl,
-    getTime,
-    getIcon,
   },
 
   async mounted() {
@@ -57,6 +49,12 @@ export default {
 
   beforeUnmount() {
     this.poller?.stopPolling();
+  },
+
+  methods: {
+    expandUrl,
+    getTime,
+    getIcon,
   },
 };
 </script>

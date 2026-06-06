@@ -20,9 +20,9 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.PUT("/groups/:groupId/name", rt.authRequest(rt.setGroupName))
 	rt.router.PUT("/groups/:groupId/photo", rt.authRequest(rt.setGroupPhoto))
 	rt.router.DELETE("/groups/:groupId/photo", rt.authRequest(rt.deleteGroupPhoto))
+	rt.router.GET("/groups/:groupId/members", rt.authRequest(rt.getMemberIds))
 	rt.router.DELETE("/groups/:groupId/user", rt.authRequest(rt.leaveGroup))
 	rt.router.DELETE("/groups/:groupId/user/:userId", rt.authRequest(rt.removeUser))
-	rt.router.GET("/groups/:groupId/members", rt.authRequest(rt.getMemberIds))
 
 	// Conversations.
 	rt.router.GET("/conversations", rt.authRequest(rt.getMyConversations))

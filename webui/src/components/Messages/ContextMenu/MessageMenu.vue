@@ -7,6 +7,13 @@ export default {
     message: { type: Object, required: true },
   },
 
+  emits: [
+    "replyToMessage",
+    "forwardMessage",
+    "showInfoMessage",
+    "deleteMessage",
+  ],
+
   computed: {
     isMine() {
       return this.message.senderId === user.userId;
@@ -16,13 +23,6 @@ export default {
   methods: {
     getIcon,
   },
-
-  emits: [
-    "replyToMessage",
-    "forwardMessage",
-    "showInfoMessage",
-    "deleteMessage",
-  ],
 };
 </script>
 
@@ -30,28 +30,28 @@ export default {
   <div class="menu">
     <div class="item" @click="$emit('replyToMessage', message)">
       <span class="icon">
-        <img class="icon" :src="getIcon('reply')" alt="Reply" />
+        <img class="icon" :src="getIcon('reply')" alt="Reply">
       </span>
       <span class="label">Reply</span>
     </div>
 
     <div class="item" @click="$emit('forwardMessage', message)">
       <span class="icon">
-        <img class="icon" :src="getIcon('forward')" alt="Forward" />
+        <img class="icon" :src="getIcon('forward')" alt="Forward">
       </span>
       <span class="label">Forward</span>
     </div>
 
     <div class="item" @click="$emit('showInfoMessage', message)">
       <span class="icon">
-        <img class="icon" :src="getIcon('info')" alt="Info" />
+        <img class="icon" :src="getIcon('info')" alt="Info">
       </span>
       <span class="label">Info</span>
     </div>
 
     <div v-if="isMine" class="item" @click="$emit('deleteMessage', message)">
       <span class="icon">
-        <img class="icon" :src="getIcon('trash')" alt="Delete" />
+        <img class="icon" :src="getIcon('trash')" alt="Delete">
       </span>
       <span class="label">Delete</span>
     </div>

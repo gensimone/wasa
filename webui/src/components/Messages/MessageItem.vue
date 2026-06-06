@@ -73,6 +73,31 @@ export default {
     },
   },
 
+  async mounted() {
+    this.reactionsPoller = new Poller();
+    this.reactionsPoller.callback = this.fetchReactions;
+    this.reactionsPoller.startPolling();
+
+    if (this.message.senderId !== user.userId) {
+      try {
+        await setMessageStatusAsRead(this.message.messageId);
+      } catch (e) {
+        logger.error(e);
+      } finally {
+        return;
+      }
+    }
+
+    this.receiptsPoller = new Poller();
+    this.receiptsPoller.callback = this.fetchReceipts;
+    this.receiptsPoller.startPolling();
+  },
+
+  beforeUnmount() {
+    this.reactionsPoller?.stopPolling();
+    this.receiptsPoller?.stopPolling();
+  },
+
   methods: {
     expandUrl,
     getIcon,
@@ -175,38 +200,13 @@ export default {
       }
     },
   },
-
-  async mounted() {
-    this.reactionsPoller = new Poller();
-    this.reactionsPoller.callback = this.fetchReactions;
-    this.reactionsPoller.startPolling();
-
-    if (this.message.senderId !== user.userId) {
-      try {
-        await setMessageStatusAsRead(this.message.messageId);
-      } catch (e) {
-        logger.error(e);
-      } finally {
-        return;
-      }
-    }
-
-    this.receiptsPoller = new Poller();
-    this.receiptsPoller.callback = this.fetchReceipts;
-    this.receiptsPoller.startPolling();
-  },
-
-  beforeUnmount() {
-    this.reactionsPoller?.stopPolling();
-    this.receiptsPoller?.stopPolling();
-  },
 };
 </script>
 <template>
   <div
+    :id="`message-${message.messageId}`"
     class="message-item"
     :class="{ mine: isMine }"
-    :id="`message-${message.messageId}`"
   >
     <div class="message-item-bubble" @contextmenu="onRightClick">
       <div
@@ -222,7 +222,7 @@ export default {
           v-if="commentedMessage.attachmentUrl"
           class="message-item-comment-attachment"
         >
-          <img :src="expandUrl(commentedMessage.attachmentUrl)" />
+          <img :src="expandUrl(commentedMessage.attachmentUrl)">
         </div>
       </div>
 
@@ -231,7 +231,7 @@ export default {
         class="message-item-forward-icon"
         :src="getIcon('forward')"
         alt="forwarded"
-      />
+      >
 
       <div v-if="message.text" class="message-item-text">
         {{ message.text }}
@@ -242,7 +242,7 @@ export default {
         :src="expandUrl(message.attachmentUrl)"
         class="message-item-image"
         @click="setImageModal(expandUrl(message.attachmentUrl))"
-      />
+      >
 
       <div class="message-item-meta">
         <span class="message-item-time">
@@ -250,22 +250,22 @@ export default {
         </span>
       </div>
 
-      <MessageCheckIcon v-if="isMine" :checkIcon="checkIcon" />
+      <MessageCheckIcon v-if="isMine" :check-icon="checkIcon" />
 
       <MessageReactions :reactions="reactions" />
 
       <ContextMenu
         v-if="menu.visible"
         :message="message"
-        :canClose="menu.canClose"
+        :can-close="menu.canClose"
         :x="menu.x"
         :y="menu.y"
         @close="closeMenu"
-        @reactToMessage="reactToMessage"
-        @showInfoMessage="showInfoMessage = true"
-        @replyToMessage="$emit('replyToMessage', $event)"
-        @forwardMessage="$emit('forwardMessage', $event)"
-        @deleteMessage="$emit('deleteMessage', $event)"
+        @react-to-message="reactToMessage"
+        @show-info-message="showInfoMessage = true"
+        @reply-to-message="$emit('replyToMessage', $event)"
+        @forward-message="$emit('forwardMessage', $event)"
+        @delete-message="$emit('deleteMessage', $event)"
       />
     </div>
   </div>
@@ -273,8 +273,8 @@ export default {
     v-if="showInfoMessage"
     :receipts="receipts"
     :reactions="reactions"
-    @closeMessageInfo="showInfoMessage = false"
-    @deleteReaction="deleteReaction"
+    @close-message-info="showInfoMessage = false"
+    @delete-reaction="deleteReaction"
   />
 </template>
 

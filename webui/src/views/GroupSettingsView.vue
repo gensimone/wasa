@@ -28,6 +28,21 @@ import { groupMessages } from "../state/conversations";
 export default {
   components: { Bottombar, Topbar, SettingsCard, MemberList, ItemsList },
 
+  data() {
+    const photo = usePhotoManager(defaultGroupPhotoUrl, defaultGroupPhotoUrl);
+
+    const form = useSettingsForm();
+
+    return {
+      ...photo,
+      ...form,
+
+      poller: null,
+      members: [],
+      inAddToGroup: false,
+    };
+  },
+
   computed: {
     groups() {
       return groups.value;
@@ -81,19 +96,20 @@ export default {
     },
   },
 
-  data() {
-    const photo = usePhotoManager(defaultGroupPhotoUrl, defaultGroupPhotoUrl);
+  async mounted() {
+    this.poller = new Poller(async () => {
+      const memberIds = await getMemberIds(this.groupId);
+      this.members = users.value
+        .values()
+        .filter((u) => memberIds.some((m) => u.userId === m))
+        .toArray();
+    }, 5000);
 
-    const form = useSettingsForm();
+    this.poller.startPolling();
+  },
 
-    return {
-      ...photo,
-      ...form,
-
-      poller: null,
-      members: [],
-      inAddToGroup: false,
-    };
+  unmounted() {
+    this.poller?.stopPolling();
   },
 
   methods: {
@@ -202,22 +218,6 @@ export default {
       }
     },
   },
-
-  async mounted() {
-    this.poller = new Poller(async () => {
-      const memberIds = await getMemberIds(this.groupId);
-      this.members = users.value
-        .values()
-        .filter((u) => memberIds.some((m) => u.userId === m))
-        .toArray();
-    }, 5000);
-
-    this.poller.startPolling();
-  },
-
-  unmounted() {
-    this.poller?.stopPolling();
-  },
 };
 </script>
 
@@ -228,27 +228,27 @@ export default {
       <div class="group-settings">
         <SettingsCard
           style="display: flex"
-          :enableEditing="isFounder"
-          :photoUrl="photoUrl"
-          :photoChanged="photoChanged"
+          :enable-editing="isFounder"
+          :photo-url="photoUrl"
+          :photo-changed="photoChanged"
           :text="text"
           title="Group name"
-          submitButtonText="Update"
+          submit-button-text="Update"
           :loading="loading"
-          @uploadPhoto="uploadPhoto"
-          @revertPhoto="revertPhoto"
-          @deletePhoto="deletePhoto"
-          @keyPress="setText"
+          @upload-photo="uploadPhoto"
+          @revert-photo="revertPhoto"
+          @delete-photo="deletePhoto"
+          @key-press="setText"
           @submit="updateGroup"
         />
 
         <button class="submit-button" @click="leaveGroup">
-          <img class="icon-img" :src="getIcon('leave')" />
+          <img class="icon-img" :src="getIcon('leave')">
           Leave
         </button>
 
         <button v-if="isFounder" class="submit-button" @click="deleteGroup">
-          <img class="icon-img" :src="getIcon('trash')" />
+          <img class="icon-img" :src="getIcon('trash')">
           Delete
         </button>
       </div>
@@ -260,24 +260,24 @@ export default {
             style="margin-bottom: 10px"
             @click="inAddToGroup = false"
           >
-            <img class="icon-img" :src="getIcon('back')" />
+            <img class="icon-img" :src="getIcon('back')">
             Members
           </button>
           <ItemsList
+            :excluded-users="members"
+            :include-users="true"
+            :include-groups="false"
+            :can-select-multiple="true"
             @select="addUsersToGroup"
-            :excludedUsers="members"
-            :includeUsers="true"
-            :includeGroups="false"
-            :canSelectMultiple="true"
           />
         </div>
         <div v-else>
           <MemberList
             :members="members"
-            @goInAddToGroup="inAddToGroup = true"
-            @removeUser="removeUser"
-            :founderId="founderId"
-            @selectUser="startConversation"
+            :founder-id="founderId"
+            @go-in-add-to-group="inAddToGroup = true"
+            @remove-user="removeUser"
+            @select-user="startConversation"
           />
         </div>
       </div>

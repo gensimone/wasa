@@ -22,7 +22,7 @@ export default {
 
 <template>
   <div v-if="visible" class="image-modal" @click="close()">
-    <img :src="photoUrl" class="image-modal-content" />
+    <img :src="photoUrl" class="image-modal-content">
   </div>
 </template>
 

@@ -66,7 +66,7 @@ export default {
       class="input-bar"
       placeholder="Search.."
       @input="query = $event.target.value"
-    />
+    >
     <div class="item-picker-list">
       <Item
         v-for="item in itemsToShow"
@@ -81,7 +81,7 @@ export default {
       v-if="canSelectMultiple && !query.trim().length"
       class="item-picker-sidebar"
     >
-      <div v-if="this.selectedItems.length" class="selected-title">
+      <div v-if="selectedItems.length" class="selected-title">
         Selected
       </div>
 

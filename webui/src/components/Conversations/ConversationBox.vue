@@ -18,16 +18,16 @@ import { handleError } from "@/utils/errors";
 export default {
   components: { MessageList, ConversationInput },
 
+  props: {
+    id: { type: Number, required: true },
+    direct: { type: Boolean, required: true },
+  },
+
   data() {
     return {
       scrollTick: 0,
       messageToComment: null,
     };
-  },
-
-  props: {
-    id: { type: Number, required: true },
-    direct: { type: Boolean, required: true },
   },
 
   computed: {
@@ -146,20 +146,20 @@ export default {
     </div>
 
     <MessageList
-      :messages="messages"
-      :scrollTick="scrollTick"
-      :direct="direct"
       :id="id"
-      @replyToMessage="replyToMessage"
-      @forwardMessage="forwardMessage"
-      @deleteMessage="deleteMessage"
+      :messages="messages"
+      :scroll-tick="scrollTick"
+      :direct="direct"
+      @reply-to-message="replyToMessage"
+      @forward-message="forwardMessage"
+      @delete-message="deleteMessage"
     />
 
     <ConversationInput
-      @triggerScrolldown="scrollTick++"
+      :id="id"
       :message="messageToComment"
       :direct="direct"
-      :id="id"
+      @trigger-scrolldown="scrollTick++"
     />
   </div>
 </template>

@@ -35,9 +35,9 @@ export default {
   <div v-if="reactions.length" class="message-item-reactions">
     <MessageReaction
       v-for="(r, index) in reactionsToShow"
+      :key="index"
       :emoji="r.emoji"
       :count="r.count"
-      :key="index"
       :style="{ zIndex: reactions.length - index }"
     />
   </div>

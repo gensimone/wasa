@@ -15,7 +15,7 @@ export default {
 
 <template>
   <div class="message-item-reaction">
-    <img :src="getIconFromEmoji(emoji)" class="message-item-emoji" />
+    <img :src="getIconFromEmoji(emoji)" class="message-item-emoji">
     <span v-if="count > 1" class="message-item-reaction-count">
       {{ count }}
     </span>

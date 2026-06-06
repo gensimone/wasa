@@ -6,8 +6,10 @@ import { user } from "@/state/user";
 export default {
   props: {
     member: { type: Object, required: true },
-    founderId: { required: true },
+    founderId: { type: Number, required: true },
   },
+
+  emits: ["removeUser", "selectUser"],
 
   data() {
     return {
@@ -20,8 +22,6 @@ export default {
       return this.member.userId === this.founderId;
     },
   },
-
-  emits: ["removeUser", "selectUser"],
 
   methods: {
     expandUrl,
@@ -44,7 +44,7 @@ export default {
 <template>
   <div class="member-item" @click="selectUser()">
     <div class="member-item-photo-wrapper">
-      <img :src="expandUrl(member.photoUrl)" class="member-item-photo" />
+      <img :src="expandUrl(member.photoUrl)" class="member-item-photo">
     </div>
 
     <div class="member-item-info">
@@ -53,14 +53,14 @@ export default {
       </div>
     </div>
 
-    <div class="member-item-badge" v-if="isFounder">Founder</div>
+    <div v-if="isFounder" class="member-item-badge">Founder</div>
 
     <div
-      class="member-item-actions"
       v-if="!isFounder && user.userId === founderId"
+      class="member-item-actions"
     >
       <button class="icon-btn" @click="removeUser">
-        <img :src="getIcon('minus')" class="icon-img" />
+        <img :src="getIcon('minus')" class="icon-img">
       </button>
     </div>
   </div>

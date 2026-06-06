@@ -94,17 +94,17 @@ export default {
     <div class="content-center">
       <div class="user-settings">
         <SettingsCard
-          :photoUrl="photoUrl"
-          :enableEditing="true"
-          :photoChanged="photoChanged"
+          :photo-url="photoUrl"
+          :enable-editing="true"
+          :photo-changed="photoChanged"
           :text="text"
           title="Username"
-          submitButtonText="Update"
+          submit-button-text="Update"
           :loading="loading"
-          @uploadPhoto="uploadPhoto"
-          @revertPhoto="revertPhoto"
-          @deletePhoto="deletePhoto"
-          @keyPress="setText"
+          @upload-photo="uploadPhoto"
+          @revert-photo="revertPhoto"
+          @delete-photo="deletePhoto"
+          @key-press="setText"
           @submit="updateProfile"
         />
       </div>

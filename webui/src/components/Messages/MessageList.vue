@@ -1,9 +1,8 @@
 <script>
 import MessageItem from "@/components/Messages/MessageItem.vue";
-import MessageInfo from "@/components/Messages/MessageInfo.vue";
 
 export default {
-  components: { MessageItem, MessageInfo },
+  components: { MessageItem },
 
   props: {
     messages: { type: Array, required: true },
@@ -12,11 +11,7 @@ export default {
     direct: { type: Boolean, required: true },
   },
 
-  watch: {
-    scrollTick() {
-      this.scrollToBottomIfNeeded();
-    },
-  },
+  emits: ["replyToMessage", "forwardMessage", "deleteMessage"],
 
   data() {
     return {
@@ -24,6 +19,16 @@ export default {
       receipts: [],
       reactions: [],
     };
+  },
+
+  watch: {
+    scrollTick() {
+      this.scrollToBottomIfNeeded();
+    },
+  },
+
+  mounted() {
+    this.scrollToBottomInstant();
   },
 
   methods: {
@@ -72,29 +77,23 @@ export default {
       }, 1500);
     },
   },
-
-  emits: ["replyToMessage", "forwardMessage", "deleteMessage"],
-
-  mounted() {
-    this.scrollToBottomInstant();
-  },
 };
 </script>
 
 <template>
-  <div class="message-list" ref="container">
+  <div ref="container" class="message-list">
     <MessageItem
       v-for="m in messages"
+      :id="id"
       :key="m.messageId"
       :message="m"
       :direct="direct"
-      :id="id"
-      @replyToMessage="$emit('replyToMessage', $event)"
-      @forwardMessage="$emit('forwardMessage', $event)"
-      @deleteMessage="$emit('deleteMessage', $event)"
-      @jumpToMessage="jumpToMessage"
+      @reply-to-message="$emit('replyToMessage', $event)"
+      @forward-message="$emit('forwardMessage', $event)"
+      @delete-message="$emit('deleteMessage', $event)"
+      @jump-to-message="jumpToMessage"
     />
-    <div ref="bottom"></div>
+    <div ref="bottom" />
   </div>
 </template>
 
