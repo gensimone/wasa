@@ -1,11 +1,20 @@
 services:
-  webapi:
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile-webapi
+      dockerfile: Dockerfile.backend
     ports:
       - "3000:3000"
 
     volumes:
       - ./db:/db
       - ./uploads:/uploads
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
