@@ -14,7 +14,7 @@ export default {
     message: { type: Object, required: false },
   },
 
-  emits: ["triggerScrolldown"],
+  emits: ["triggerScrolldown", "abortReplyToMessage"],
 
   data() {
     return {
@@ -119,6 +119,7 @@ export default {
 
     abortComment() {
       this.messageToComment = null;
+      this.$emit('abortReplyToMessage')
     },
   },
 };
@@ -186,6 +187,7 @@ export default {
   display: flex;
   gap: 10px;
   align-items: center;
+  padding: 10px;
 }
 
 .conversation-input-data-preview {
@@ -199,11 +201,10 @@ export default {
   width: min(720px, 100%);
 
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
 
-  color: rgba(255, 255, 255, 0.75);
   font-size: 13px;
   line-height: 1.4;
 
@@ -214,8 +215,6 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
 }
 
 .conversation-input-preview-img {
@@ -224,7 +223,7 @@ export default {
   border-radius: 10px;
   flex-shrink: 0;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
 }
 
 .conversation-input-data-preview .icon-btn {
@@ -238,19 +237,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-
-  transition:
-    transform 0.15s ease,
-    background 0.15s ease;
-}
-
-.conversation-input-comment-preview .icon-btn:hover {
-  transform: scale(1.05);
-  background: rgba(0, 0, 0, 0.5);
 }
 
 .input-bar {
@@ -258,20 +244,17 @@ export default {
   padding: 10px 12px;
 
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 
   outline: none;
-  transition:
-    border 0.15s ease,
-    background 0.15s ease;
 }
 
 .input-bar:focus {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .preview-label {

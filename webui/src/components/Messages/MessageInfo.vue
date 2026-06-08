@@ -229,6 +229,7 @@ export default {
   justify-self: end;
   border-radius: 20px;
   border: 1px solid var(--border);
+  background: var(--surface);
   margin-right: 7px;
 }
 

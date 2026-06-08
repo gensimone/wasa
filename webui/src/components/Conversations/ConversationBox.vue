@@ -130,7 +130,7 @@ export default {
         class="conversation-box-photo"
         :src="expandUrl(photoUrl)"
         @click="setImageModal(expandUrl(photoUrl))"
-      />
+      >
       <div class="conversation-box-name">
         {{ name }}
       </div>
@@ -140,7 +140,7 @@ export default {
           class="conversation-box-info-btn"
           @click="openGroupSettings"
         >
-          <img :src="getIcon('info')" class="icon-img" />
+          <img :src="getIcon('info')" class="icon-img">
         </button>
       </div>
     </div>
@@ -160,6 +160,7 @@ export default {
       :message="messageToComment"
       :direct="direct"
       @trigger-scrolldown="scrollTick++"
+      @abort-reply-to-message="messageToComment = null"
     />
   </div>
 </template>

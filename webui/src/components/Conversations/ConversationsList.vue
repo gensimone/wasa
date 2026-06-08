@@ -60,10 +60,7 @@ export default {
       v-for="c in conversations"
       :id="c.id"
       :key="`${c.isDirect ? 'd' : 'g'}-${c.id}`"
-      :name="c.name"
-      :photo-url="c.photoUrl"
-      :last-message="c.lastMessage"
-      :is-direct="c.isDirect"
+      :conversation="c"
       @select="$emit('select', c)"
     />
   </div>

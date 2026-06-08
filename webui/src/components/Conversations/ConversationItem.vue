@@ -8,11 +8,7 @@ import { getReceipts } from "@/services/messages";
 
 export default {
   props: {
-    id: { type: Number, required: true },
-    name: { type: String, default: "", required: true },
-    photoUrl: { type: String, default: "", required: true },
-    lastMessage: { type: Object, required: false },
-    isDirect: { type: Boolean, required: true },
+    conversation: { type: Object, required: true }
   },
 
   emits: ["select"],
@@ -20,6 +16,7 @@ export default {
   data() {
     return {
       checkIcon: "check-sent",
+      poller: null,
     };
   },
 
@@ -64,7 +61,7 @@ export default {
       <img
         :src="expandUrl(conversation.photoUrl)"
         class="conversation-item-photo"
-      />
+      >
     </div>
 
     <div class="conversation-item-info">
@@ -81,7 +78,7 @@ export default {
             <img
               :src="expandUrl(conversation.lastMessage?.attachmentUrl)"
               class="conversation-item-photo"
-            />
+            >
           </div>
 
           <div class="conversation-item-time">
@@ -96,7 +93,7 @@ export default {
           class="message-item-check-icon"
           :src="getIcon(checkIcon)"
           alt=""
-        />
+        >
 
         <div
           v-if="conversation.lastMessage"
