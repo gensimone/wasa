@@ -32,7 +32,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/ardanlabs/conf"
@@ -83,14 +82,14 @@ func run() error {
 	logger.Infof("Application initializing")
 
 	// Create necessary directories for attachments, photos and db.
-	logger.Info("Creating necessary directories")
-	for _, dir := range []string{cfg.RootMedia, filepath.Dir(cfg.DB)} {
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			logger.WithError(err).Errorf("Error creating directory: %s", dir)
-			return fmt.Errorf("Creating directory %s: %w", dir, err)
-		}
-	}
+	// logger.Info("Creating necessary directories")
+	// for _, dir := range []string{cfg.RootMedia, filepath.Dir(cfg.DB)} {
+	// 	err = os.MkdirAll(dir, 0755)
+	// 	if err != nil {
+	// 		logger.WithError(err).Errorf("Error creating directory: %s", dir)
+	// 		return fmt.Errorf("Creating directory %s: %w", dir, err)
+	// 	}
+	// }
 
 	// Start Database.
 	logger.Println("Initializing database support")
