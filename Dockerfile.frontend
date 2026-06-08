@@ -5,13 +5,14 @@ WORKDIR /app/webui
 COPY webui/package.json .
 COPY webui/yarn.lock    .
 COPY webui/.yarnrc.yml  .
-COPY webui/.yarn        .
+COPY webui/.yarn        ./.yarn
 
 RUN yarn install
 
-COPY webui/src ./src
-COPY webui/public ./public
-COPY webui/index.html webui/vite.config.js ./
+COPY webui/index.html     .
+COPY webui/vite.config.js .
+COPY webui/src            ./src
+COPY webui/public         ./public
 
 RUN yarn build
 
