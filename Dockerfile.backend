@@ -23,4 +23,6 @@ COPY --from=builder /build/webapi .
 
 EXPOSE 3000
 
+VOLUME ["/app/db", "/app/uploads/images"]
+
 CMD ["./webapi"]
