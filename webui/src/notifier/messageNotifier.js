@@ -11,8 +11,8 @@ let prevGroupMessages = new Map();
 let stopDirectMessagesWatch = null;
 let stopGroupMessagesWatch = null;
 
-let dmFirstBoot = true;
-let gmFirstBoot = true;
+let dmFirstBoot = false;
+let gmFirstBoot = false;
 
 export function stopMessageNotifier() {
   stopDirectMessagesWatch?.();
@@ -20,12 +20,12 @@ export function stopMessageNotifier() {
 
   stopDirectMessagesWatch = null;
   stopGroupMessagesWatch = null;
-
-  dmFirstBoot = false;
-  gmFirstBoot = false;
 }
 
 export function startMessageNotifier() {
+  dmFirstBoot = true;
+  gmFirstBoot = true;
+
   stopDirectMessagesWatch = watch(
     directMessages,
     (newMap) => {
