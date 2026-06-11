@@ -23,6 +23,8 @@ COPY --from=builder /build/webapi .
 
 EXPOSE 3000
 
+RUN mkdir -p db uploads/images
+
 VOLUME ["/app/db", "/app/uploads/images"]
 
 CMD ["./webapi"]
