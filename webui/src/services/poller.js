@@ -29,6 +29,8 @@ class Poller {
       }
     }
 
+    // TODO: Watch docment.visibilityState to start/stop this poller.
+
     this.timer = setTimeout(() => this.loop(), this.currentInterval);
   }
 
