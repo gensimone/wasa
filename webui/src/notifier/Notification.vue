@@ -24,7 +24,6 @@ export default {
 
   data() {
     return {
-      progress: 100,
       startTime: 0,
       remaining: this.duration,
       timeoutId: null,
@@ -45,7 +44,7 @@ export default {
   },
 
   beforeUnmount() {
-    this.clearTimers();
+    clearTimeout(this.timeoutId);
   },
 
   methods: {
@@ -53,32 +52,16 @@ export default {
     getIcon,
 
     startTimer() {
-      this.clearTimers();
+      clearTimeout(this.timeoutId);
       this.startTime = Date.now();
 
       this.timeoutId = setTimeout(() => {
         this.close();
       }, this.remaining);
-
-      this.updateProgress();
-    },
-
-    updateProgress() {
-      const elapsed = Date.now() - this.startTime;
-      const timeLeft = this.remaining - elapsed;
-
-      this.progress = Math.max((timeLeft / this.duration) * 100, 0);
-
-      if (timeLeft <= 0) {
-        this.close();
-        return;
-      }
-
-      this.frameId = requestAnimationFrame(this.updateProgress);
     },
 
     pauseTimer() {
-      this.clearTimers();
+      clearTimeout(this.timeoutId);
       const elapsed = Date.now() - this.startTime;
       this.remaining -= elapsed;
     },
@@ -104,14 +87,10 @@ export default {
     },
 
     close() {
-      this.clearTimers();
+      clearTimeout(this.timeoutId);
       this.$emit("close");
     },
 
-    clearTimers() {
-      clearTimeout(this.timeoutId);
-      cancelAnimationFrame(this.frameId);
-    },
   },
 };
 </script>
@@ -137,8 +116,6 @@ export default {
         class="notification-attachment"
       >
     </div>
-
-    <div class="progress" :style="{ width: progress + '%' }" />
   </div>
 </template>
 
@@ -170,7 +147,6 @@ export default {
   pointer-events: auto;
 }
 
-/* glow laterale */
 .notification::before {
   content: "";
   position: absolute;
@@ -179,10 +155,6 @@ export default {
   border-radius: inherit;
   background: var(--accent-color);
 }
-
-/* =========================
-   CONTENT
-========================= */
 
 .notification-thumbnail {
   width: 46px;
@@ -215,26 +187,6 @@ export default {
   object-fit: cover;
   align-self: flex-start;
 }
-
-/* =========================
-   PROGRESS
-========================= */
-
-.progress {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  width: 100%;
-
-  background: var(--accent-color);
-
-  transition: width 0.1s linear;
-}
-
-/* =========================
-   TYPES
-========================= */
 
 .notification.success {
   --accent-color: var(--success);
